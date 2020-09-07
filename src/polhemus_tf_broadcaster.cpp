@@ -278,7 +278,7 @@ int main(int argc, char** argv) {
   struct timeval tv;
   uint16_t product_id;
   std::string product_type;
-  std::string boresight_calibration_file_path;
+  std::string boresight_calibration_file;
   Polhemus *device;
   int retval = RETURN_ERROR;
 
@@ -289,12 +289,10 @@ int main(int argc, char** argv) {
 
   private_nh.getParam("product_type", product_type);
 
-  if (!private_nh.getParam("boresight_calibration_file_path", boresight_calibration_file_path))
+  if (!private_nh.getParam("boresight_calibration_file", boresight_calibration_file))
   {
-    ROS_ERROR("Could not get boresight calibration file path");
+    ROS_ERROR("Could not get boresight calibration file");
   }
-
-  ROS_INFO("boresight_calibration_file_path: %s", boresight_calibration_file_path.c_str());
 
   if (product_type == "liberty")
   {
@@ -384,7 +382,7 @@ int main(int argc, char** argv) {
                                       polhemus_ros_driver::calibrate::Response>("calibration",
                                                                                 boost::bind(&Polhemus::calibrate_srv,
                                                                                 device, _1, _2,
-                                                                                boresight_calibration_file_path));
+                                                                                boresight_calibration_file));
   ROS_INFO("[POLHEMUS] Service ready to calibrate the sensors.");
 
   private_nh.getParam("x_hs", x_hs);

@@ -75,9 +75,9 @@ public:
   virtual tf2::Quaternion get_quaternion(int index);
   virtual int set_source(int source);
   int send_saved_calibration(void);
-  bool calibrate_srv(polhemus_ros_driver::calibrate::Request &req, polhemus_ros_driver::calibrate::Response &res, std::string boresight_calibration_file_path);
+  bool calibrate_srv(polhemus_ros_driver::calibrate::Request &req, polhemus_ros_driver::calibrate::Response &res, std::string boresight_calibration_file);
   bool persist_srv(polhemus_ros_driver::persist::Request &req, polhemus_ros_driver::persist::Response &res);
-  bool calibrate(std::string boresight_calibration_file_path);
+  bool calibrate(std::string boresight_calibration_file);
   virtual bool persist_commands(void);
   libusb_device_handle *device_handle;
   int station_count;

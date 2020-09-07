@@ -2,17 +2,17 @@
   <arg name="x_hs" default="0" />
   <arg name="y_hs" default="0" />
   <arg name="z_hs" default="1" />
-  <arg name="device_name" default="liberty"/>
+  <arg name="product_type" default="liberty"/>
   <arg name="boresight_calibration_file_path" default="$(find polhemus_ros_driver)/config"/>
-  <arg name="boresight_calibration_file_name" default="$(arg device_name)_calibration.yaml"/>
+  <arg name="boresight_calibration_file_name" default="$(arg product_type)_calibration.yaml"/>
   <arg name="boresight_calibration_file" default="$(arg boresight_calibration_file_path)/$(arg boresight_calibration_file_name)"/>
 
   <node pkg="polhemus_ros_driver" type="polhemus_tf_broadcaster" name="polhemus_tf_broadcaster" output="screen">
-    <rosparam param="boresight_calibration_file_path" subst_value="True">$(arg boresight_calibration_file_path)</rosparam>
+    <rosparam param="boresight_calibration_file" subst_value="True">$(arg boresight_calibration_file)</rosparam>
     <param name="x_hs" value="$(arg x_hs)" type="int"/>
     <param name="y_hs" value="$(arg y_hs)" type="int"/>
     <param name="z_hs" value="$(arg z_hs)" type="int"/>
-    <param name="product_type" value="$(arg device_name)" type="string"/>
+    <param name="product_type" value="$(arg product_type)" type="string"/>
   </node>
 
   <rosparam command="load" file="$(arg boresight_calibration_file)" ns="calibration"/>
