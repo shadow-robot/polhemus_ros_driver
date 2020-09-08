@@ -291,7 +291,7 @@ int main(int argc, char** argv) {
 
   if (!private_nh.getParam("boresight_calibration_file", boresight_calibration_file))
   {
-    ROS_ERROR("Could not get boresight calibration file");
+    ROS_ERROR("[POLHEMUS] Could not get boresight calibration file");
   }
 
   if (product_type == "liberty")
