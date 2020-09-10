@@ -263,11 +263,18 @@ bool Polhemus::calibrate(std::string boresight_calibration_file)
     nh->setParam(z_name, yaw);
   }
 
-  ROS_INFO("[POLHEMUS] Calibration file saved at: %s\n", boresight_calibration_file.c_str());
 
   std::string cmd("rosparam dump ");
   cmd += boresight_calibration_file + " /calibration";
-  system(cmd.c_str());
+  
+  if (system(cmd.c_str()))
+  {
+    ROS_INFO("[POLHEMUS] Error saving calibration.");
+  }
+  else
+  {
+    ROS_INFO("[POLHEMUS] Calibration file saved at: %s\n", boresight_calibration_file.c_str());
+  }
 
   int ret = set_boresight(false, -1, 0, 0, 0);
 
