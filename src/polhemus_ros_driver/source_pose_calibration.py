@@ -19,7 +19,7 @@ class SourcePoseCalibration(object):
 
     # Currently orientation does not affect decalibration
     def decalibrate(self, x, y, z):
-        knuckle_thickness = (z - self.CONST_SOURCE_z_OFFSET) * 2
+        knuckle_thickness = (z - self.CONST_SOURCE_Z_OFFSET) * 2
         knuckle_to_source = -(x + self.CONST_SOURCE_X_OFFSET)
         self.check_if_values_within_range(knuckle_thickness, knuckle_to_source)
         return [knuckle_thickness, knuckle_to_source]
