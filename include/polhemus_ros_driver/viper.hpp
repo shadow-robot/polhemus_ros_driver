@@ -24,7 +24,7 @@ public:
   int device_reset(void);
   int device_data_mode(data_mode_e mode);
   int receive_pno_data_frame(void);
-  int fill_pno_data(geometry_msgs::TransformStamped *transform, int index);
+  int fill_pno_data(geometry_msgs::TransformStamped *transform, int &index);
   int define_data_type(data_type_e data_type);
   int set_hemisphere(int x, int y, int z);
 private:
@@ -37,7 +37,7 @@ private:
   int set_boresight(bool reset_origin, int station, float arg_1, float arg_2, float arg_3, float arg_4 = 0);
   int reset_boresight(void);
   tf2::Quaternion get_quaternion(int index);
-  int set_source(int source);
+  int set_source(int source, int station_id);
   int send_saved_calibration(void);
   bool persist_commands(void);
   CVPSeuPno pno;

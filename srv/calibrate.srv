@@ -1,4 +1,4 @@
 
 ---
 
-bool success   # indicate successful run of calibration
+bool success   # indicate successful run of making settings persistent

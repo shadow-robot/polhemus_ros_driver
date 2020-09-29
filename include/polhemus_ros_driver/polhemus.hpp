@@ -13,6 +13,7 @@
 #include <string>
 #include <geometry_msgs/TransformStamped.h>
 #include "polhemus_ros_driver/calibrate.h"
+#include "polhemus_ros_driver/set_source.h"
 #include "polhemus_ros_driver/persist.h"
 #include <tf2_ros/transform_listener.h>
 #include <tf2/LinearMath/Matrix3x3.h>
@@ -27,6 +28,7 @@
 #define VPUSB_WRITE_TIMEOUT_MS 50
 #define VPUSB_READ_TIMEOUT_MS 50
 #define PI 3.14159265359
+#define SENSORS_PER_GLOVE 6
 
 #define RETURN_ERROR -1
 
@@ -61,7 +63,7 @@ public:
   /* read until the device doesn't send anything else */
   void device_clear_input(void);
   virtual int receive_pno_data_frame(void);
-  virtual int fill_pno_data(geometry_msgs::TransformStamped *transform, int index);
+  virtual int fill_pno_data(geometry_msgs::TransformStamped *transform, int &index);
 
   int device_read(void *pbuf, int &count, bool bTOisErr/*=false*/);
   int device_write(uint8_t *buf, int size, int timeout);
@@ -73,9 +75,10 @@ public:
   virtual int set_boresight(bool reset_origin, int station, float arg_1, float arg_2, float arg_3, float arg_4 = 0);
   virtual int reset_boresight(void);
   virtual tf2::Quaternion get_quaternion(int index);
-  virtual int set_source(int source);
+  virtual int set_source(int source, int station_id);
   int send_saved_calibration(void);
   bool calibrate_srv(polhemus_ros_driver::calibrate::Request &req, polhemus_ros_driver::calibrate::Response &res, std::string boresight_calibration_file);
+  bool src_select_srv(polhemus_ros_driver::set_source::Request &req, polhemus_ros_driver::set_source::Response &res);
   bool persist_srv(polhemus_ros_driver::persist::Request &req, polhemus_ros_driver::persist::Response &res);
   bool calibrate(std::string boresight_calibration_file);
   virtual bool persist_commands(void);

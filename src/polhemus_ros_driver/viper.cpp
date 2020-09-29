@@ -112,7 +112,7 @@ int Viper::receive_pno_data_frame(void)
   return RETURN_ERROR;
 }
 
-int Viper::fill_pno_data(geometry_msgs::TransformStamped *transform, int index)
+int Viper::fill_pno_data(geometry_msgs::TransformStamped *transform, int &index)
 {
   // Set translation (in metres)
   int retval = 0;
@@ -126,6 +126,8 @@ int Viper::fill_pno_data(geometry_msgs::TransformStamped *transform, int index)
   transform->transform.rotation.x = pno.SensFrame(index)->pno.ori[1];
   transform->transform.rotation.y = pno.SensFrame(index)->pno.ori[2];
   transform->transform.rotation.z = pno.SensFrame(index)->pno.ori[3];
+
+  index = pno.SensFrame(index)->SFinfo.bfSnum;
 
   return retval;
 }
@@ -285,16 +287,22 @@ tf2::Quaternion Viper::get_quaternion(int index)
   return q;
 }
 
-int Viper::set_source(int source)
+int Viper::set_source(int source, int station_id)
 {
   int retval = RETURN_ERROR;
   viper_cmds_e cmd_type = CMD_SRC_SELECT;
   viper_cmd_actions_e action = CMD_ACTION_SET;
   viper_src_select_cfg_t cfg;
-  cfg.src_select_map = 0;
+  if (source < 1)
+  {
+    ROS_WARN("[POLHEMUS] Failed to select source, source value must > 0");
+    return retval;
+  }
+  source = 1 << source - 1;
+  cfg.src_select_map = source;
   CVPcmd viper_command;
 
-  viper_command.Fill(cmd_type, action, 0, 0, &cfg, sizeof(cfg));
+  viper_command.Fill(cmd_type, action, station_id, 0, &cfg, sizeof(cfg));
   viper_command.Prepare(g_txbuf, g_ntxcount);
 
   int nBytes = g_ntxcount;

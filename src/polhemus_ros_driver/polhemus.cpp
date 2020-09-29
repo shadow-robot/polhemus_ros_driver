@@ -311,6 +311,20 @@ bool Polhemus::calibrate_srv(polhemus_ros_driver::calibrate::Request &req, polhe
   return true;
 }
 
+bool Polhemus::src_select_srv(polhemus_ros_driver::set_source::Request &req, polhemus_ros_driver::set_source::Response &res)
+{
+  ROS_INFO("[POLHEMUS] Set source request...");
+  if (set_source(req.source, req.sensor))
+  {
+    res.success = false;
+  }
+  else
+  {
+    res.success = true;
+  }
+  return true;
+}
+
 bool Polhemus::persist_srv(polhemus_ros_driver::persist::Request &req, polhemus_ros_driver::persist::Response &res)
 {
   ROS_INFO("[POLHEMUS] Making config persistent");
@@ -346,7 +360,7 @@ int Polhemus::receive_pno_data_frame(void)
 {
 }
 
-int Polhemus::fill_pno_data(geometry_msgs::TransformStamped *transform, int station_id)
+int Polhemus::fill_pno_data(geometry_msgs::TransformStamped *transform, int &station_id)
 {
 }
 
@@ -366,7 +380,7 @@ bool Polhemus::persist_commands(void)
 {
 }
 
-int Polhemus::set_source(int source)
+int Polhemus::set_source(int source, int station_id)
 {
 }
 

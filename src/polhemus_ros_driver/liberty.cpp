@@ -114,7 +114,7 @@ int Liberty::receive_pno_data_frame(void)
   return retval;
 }
 
-int Liberty::fill_pno_data(geometry_msgs::TransformStamped *transform, int index)
+int Liberty::fill_pno_data(geometry_msgs::TransformStamped *transform, int &index)
 {
   int retval = 0;
 

@@ -44,7 +44,7 @@ public:
 	int device_binary_mode(void);
 	int device_data_mode(data_mode_e mode);
 	int receive_pno_data_frame(void);
-	int fill_pno_data(geometry_msgs::TransformStamped *transform, int index);
+	int fill_pno_data(geometry_msgs::TransformStamped *transform, int &index);
 	void generate_data_structure(void);
 	int define_data_type(data_type_e data_type);
 	int set_hemisphere(int x, int y, int z);
