@@ -303,7 +303,7 @@ int main(int argc, char** argv) {
     if (retval == RETURN_ERROR)
     {
       //error connecting
-      ROS_ERROR("[POLHEMUS] Error connecting to device.");
+      ROS_ERROR("[POLHEMUS] Error connecting to liberty device.");
       return 0;
     }
 
@@ -319,7 +319,7 @@ int main(int argc, char** argv) {
     if (retval == RETURN_ERROR)
     {
       //error connecting
-      ROS_ERROR("[POLHEMUS] Error connecting to device.\n");
+      ROS_ERROR("[POLHEMUS] Error connecting to viper device.\n");
       return 0;
     }
 
