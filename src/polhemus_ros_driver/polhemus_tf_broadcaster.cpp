@@ -196,7 +196,8 @@ int discover_vip_pid(libusb_device_handle **usbhnd, vp_usbdevinfo &usbinfo, uint
 
   if (arrcount == 0)
   {
-    ROS_ERROR("[POLHEMUS] No Polhemus devices found. Please check that device is connected.\n");
+    ROS_ERROR("[POLHEMUS] Expected device not found. Please check that device is connected and 'product_type' "
+        "parameter is set correctly.\n");
     return RETURN_ERROR;
   }
 
