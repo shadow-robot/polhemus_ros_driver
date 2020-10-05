@@ -35,7 +35,7 @@ Open a new terminal. Start RVIZ (`$ rosrun rviz rviz`).
 
 # Launch file
 
-The launch file `start.launch` allows you to change the zenith of the hemisphere and select the product type, the options are 'liberty' or 'viper'. The path and file name of a boresight calibration can also be passed to this launch file, the file does not have to contain calibration data but it must exist. The parameter 'hands' tells the driver whether it is dealing with a Shadow Glove uni manual or bimanual system, the options are 'left', 'right' or 'both'.
+The launch file `start.launch` allows you to change the zenith of the hemisphere and select the product type, the options are 'liberty' or 'viper'. The path and file name of a boresight calibration can also be passed to this launch file, the file does not have to contain calibration data but it must exist. The parameter 'hands' tells the driver whether it is dealing with a Shadow Glove unimanual or bimanual system, the options are 'left', 'right' or 'both'.
 
 # Requirements
 
@@ -45,7 +45,7 @@ The launch file `start.launch` allows you to change the zenith of the hemisphere
 
 # Driver description
 
-The main loop is run in polhemus_tf_broadcaster.cpp, on startup the parameter for product_type is read from the parameter server, this would be either a viper or liberty device. The available USB devices are then searched and the driver detects if there are any Polhemus devices of that kind connected - if a device is found to be connected a new device object is then created.
+The main loop is run in [polhemus_tf_broadcaster.cpp](src/polhemus_ros_driver/polhemus_tf_broadcaster.cpp), on startup the parameter for product_type is read from the parameter server, this would be either a viper or liberty device. The available USB devices are then searched and the driver detects if there are any Polhemus devices of that kind connected - if a device is found to be connected a new device object is then created.
 
 - On connection, a reset command is sent to the Polhemus device, this is to guarantee that the device is not in continuous data streaming mode, the read buffer is then cleared.
 
