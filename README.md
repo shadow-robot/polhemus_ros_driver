@@ -71,9 +71,9 @@ The main loop is then started. This loop starts by reading a set of position and
 
 The stations are then looped over and a stamped transform is populated with the received data. The Liberty system is only configured for one Shadow Glove to be connected. For Viper, half of the available sensor slots are alocated to a right glove and half to a left glove. Source 1 is automatically assigned to the first set of sensors and source 3 is assigned to the second set.  If there is a bimanual system connected, transforms will be published relative to two different frames.
 
-# Communication protocols.
+# Communication protocols
 
-The communication protocols for the Liberty and Viper systems are vastly different. All Liberty commands are sent as a string. Descriptions of all the available Liberty commands are in the user manual. Responses are only received from the Liberty if the command is directly requesting data. If a command were to fail, there is no way to determine this.
+The communication protocols for the Liberty and Viper systems are vastly different. All Liberty commands are sent as a string. Descriptions of all the available Liberty commands are in the [user manual](http://polhemus.com/_assets/img/LIBERTY_User_Manual_URM03PH156-H.pdf). Responses are only received from the Liberty if the command is directly requesting data. If a command were to fail, there is no way to determine this.
 
 With the Viper system, the commands have a set format. Each command has a type, an associated action, 2 optional arguments and a config. There are additional sections of the commands such as a preamble, size and a CRC but a level of abstraction in the viper protocol means that these fields are filled automatically. The viper_protocol.h contains all of the options for these paramters in the form of enums and structs. The optional arguments aren't frequently used. When the first optional argument is used, it is usually set to the station id which the command is directed to, a -1 in this field meant all stations.
 
