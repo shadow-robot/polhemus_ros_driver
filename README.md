@@ -30,7 +30,7 @@ Currently this driver works with the Liberty and Viper systems.
 
 Open a new terminal. Start RVIZ (`$ rosrun rviz rviz`).
 
-1. Global options: change *Fixed Frame* to `polhemus_base`. Note that the Polhemus z-frame faces downwards and you need to publish a static transform to flip the orientation e.g. to polhemus_world (cf. example in launch).
+1. Global options: change *Fixed Frame* to `polhemus_base`. If there are two gloves connected and therefore two sources, they will be names `polhemus_base_0` and `polhemus_base_1`. Note that the Polhemus z-frame faces downwards and you need to publish a static transform to flip the orientation e.g. to polhemus_world (cf. example in launch).
 2. Add -> *By display type* -> rviz -> TF.
 
 # Launch file
@@ -78,7 +78,7 @@ The communication protocols for the Liberty and Viper systems are vastly differe
 With the Viper system, the commands have a set format. Each command has a type, an associated action, 2 optional arguments and a config. There are additional sections of the commands such as a preamble, size and a CRC but a level of abstraction in the viper protocol means that these fields are filled automatically. The viper_protocol.h contains all of the options for these paramters in the form of enums and structs. The optional arguments aren't frequently used. When the first optional argument is used, it is usually set to the station id which the command is directed to, a -1 in this field meant all stations.
 
 # Polhemus device available functions
-Here is a description of all of the available functions in the Polhemus device code.
+Here is a description of all of the available functions in the [Polhemus device code](src/polhemus_ros_driver/polhemus.cpp).
 - device_write, using the libusb package, commands are written and sent to the Polhemus device. Arguments are a pointer to a buffer of bytes to be sent, the number of bytes to be sent and a timeout value.
 - device_init, initialise the usb device, the usb interface is configured and claimed.
 - device_send, an abstraction to the device_write command, takes a pointer to the command and the count of bytes to be sent.
