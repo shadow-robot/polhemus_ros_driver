@@ -505,7 +505,7 @@ int main(int argc, char** argv) {
           }
           else if (hands == "both")
           {
-            if (i < 8)
+            if (station_number < 8)
             {
               transformStamped.header.frame_id = "polhemus_base_0";
             }
