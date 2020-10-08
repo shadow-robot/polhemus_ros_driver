@@ -35,6 +35,7 @@
 #include <cstdlib>
 #include <sys/time.h>
 #include <time.h>
+#include <vector>
 #include <ros/ros.h>
 #include <tf2_ros/transform_broadcaster.h>
 #include <geometry_msgs/TransformStamped.h>
@@ -438,6 +439,8 @@ int main(int argc, char** argv) {
 
   static tf2_ros::TransformBroadcaster br;
   geometry_msgs::TransformStamped transformStamped;
+  std::vector<geometry_msgs::TransformStamped> tf_queue;
+  tf_queue.reserve(16);
   ros::Rate rate(240);
 
   int flag = 0;
@@ -505,7 +508,7 @@ int main(int argc, char** argv) {
           }
           else if (hands == "both")
           {
-            if (station_number < 6)
+            if (station_number < 8)
             {
               transformStamped.header.frame_id = "polhemus_base_0";
             }
@@ -522,9 +525,11 @@ int main(int argc, char** argv) {
         // Broadcast frame
         if (retval == 0)
         {
-          br.sendTransform(transformStamped);
+          tf_queue.push_back(transformStamped);
         }
       }
+      br.sendTransform(tf_queue);
+      tf_queue.clear();
     }
     ros::spinOnce();
     rate.sleep();
