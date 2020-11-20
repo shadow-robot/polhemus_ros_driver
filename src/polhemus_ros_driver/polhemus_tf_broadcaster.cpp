@@ -349,13 +349,6 @@ int main(int argc, char** argv) {
     ROS_ERROR("[POLHEMUS] Error resetting device.");
   }
 
-  retval = device->reset_boresight();
-  if (retval == RETURN_ERROR)
-  {
-    ROS_ERROR("[POLHEMUS] Error resetting boresight.");
-    return 1;
-  }
-
   device->device_binary_mode(); // activate binary mode
 
   retval = device->request_num_of_stations();
@@ -541,9 +534,12 @@ int main(int argc, char** argv) {
   {
     ROS_ERROR("[POLHEMUS] Error resetting device.");
   }
-  // // Shutdown
-  libusb_close(g_usbhnd);
+  // Shutdown
+  release_usb(&g_usbhnd, g_usbinfo);
+  ROS_INFO("USB device released");
+
   delete device;
+  ROS_INFO("Polhemus device deleted");
 
   return 0;
 }

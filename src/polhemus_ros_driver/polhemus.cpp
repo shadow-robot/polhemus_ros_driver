@@ -125,14 +125,14 @@ void Polhemus::device_clear_input(void)
 
 int Polhemus::send_saved_calibration(void)
 {
+  reset_boresight();
+
   int retval = RETURN_ERROR;
   if (nh->hasParam("/calibration/" + name + "_calibration/rotations"))
   {
-    reset_boresight();
     retval = receive_pno_data_frame();
-
+    retval = receive_pno_data_frame();
     device_reset();
-
   }
   else
   {
@@ -168,42 +168,33 @@ int Polhemus::send_saved_calibration(void)
       {
         ROS_INFO("[POLHEMUS] Calibrating station %d.", i);
 
+        tf2::Quaternion q = get_quaternion(i);
+        double roll, pitch, yaw;
+        tf2::Matrix3x3(q).getRPY(roll, pitch, yaw);
+
+        roll = (roll * 180) / PI;
+        pitch = (pitch * 180) / PI;
+        yaw = (yaw * 180) / PI;
+
+        x = roll - x;
+        y = pitch - y;
+        z = yaw - z;
+
         if (name == "viper")
         {
-          retval = define_data_type(DATA_TYPE_EULER);
+          define_data_type(DATA_TYPE_EULER);
+          retval = set_boresight(false, i, z, y, x);
+          define_data_type(DATA_TYPE_QUAT);
         }
         else
         {
-          retval = 0;
+          retval = set_boresight(false, i + 1, z, y, x);
         }
-        if (!retval)
+
+        if (retval == RETURN_ERROR)
         {
-          tf2::Quaternion q = get_quaternion(i);
-          double roll, pitch, yaw;
-          tf2::Matrix3x3(q).getRPY(roll, pitch, yaw);
-
-          roll = (roll * 180) / PI;
-          pitch = (pitch * 180) / PI;
-          yaw = (yaw * 180) / PI;
-
-          x = roll - x;
-          y = pitch - y;
-          z = yaw - z;
-
-          if (name == "viper")
-          {
-            retval = set_boresight(false, i, z, y, x);
-          }
-          else
-          {
-            retval = set_boresight(false, i + 1, z, y, x);
-          }
-
-          if (retval == RETURN_ERROR)
-          {
-            ROS_ERROR("[POLHEMUS] Error sending calibration from file.");
-            break;
-          }
+          ROS_ERROR("[POLHEMUS] Error sending calibration from file.");
+          break;
         }
       }
     }
@@ -213,10 +204,6 @@ int Polhemus::send_saved_calibration(void)
       ROS_WARN("[POLHEMUS] Station could not be found in calibration, please calibrate before proceeding!!!");
       break;
     }
-  }
-  if (name == "viper")
-  {
-    define_data_type(DATA_TYPE_QUAT);
   }
 
   device_data_mode(DATA_CONTINUOUS);
@@ -233,11 +220,6 @@ bool Polhemus::calibrate(std::string boresight_calibration_file)
   retval = receive_pno_data_frame();
 
   device_reset();
-
-  if (name == "viper")
-  {
-    define_data_type(DATA_TYPE_EULER);
-  }
 
   for (int i = 0; i < station_count; ++i)
   {
@@ -263,7 +245,6 @@ bool Polhemus::calibrate(std::string boresight_calibration_file)
     nh->setParam(z_name, yaw);
   }
 
-
   std::string cmd("rosparam dump ");
   cmd += boresight_calibration_file + " /calibration";
   
@@ -281,16 +262,6 @@ bool Polhemus::calibrate(std::string boresight_calibration_file)
   if (ret == RETURN_ERROR)
   {
     ROS_ERROR("[POLHEMUS] Calibration failed.");
-  }
-
-  if (name == "viper")
-  {
-    ret = define_data_type(DATA_TYPE_QUAT);
-    if (ret == RETURN_ERROR)
-    {
-      ROS_ERROR("[POLHEMUS] Setting data type to quaternion, failed.\n");
-      return retval;
-    }
   }
 
   // set data mode back to continuous
