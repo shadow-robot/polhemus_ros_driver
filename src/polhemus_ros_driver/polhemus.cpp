@@ -257,7 +257,9 @@ bool Polhemus::calibrate(std::string boresight_calibration_file)
     ROS_INFO("[POLHEMUS] Calibration file saved at: %s\n", boresight_calibration_file.c_str());
   }
 
+  define_data_type(DATA_TYPE_EULER);
   int ret = set_boresight(false, -1, 0, 0, 0);
+  define_data_type(DATA_TYPE_QUAT);
 
   if (ret == RETURN_ERROR)
   {
