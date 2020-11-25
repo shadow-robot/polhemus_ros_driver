@@ -72,13 +72,12 @@ typedef struct _vp_usbdevinfo {
 
 }vp_usbdevinfo;
 
-/* main loop running? */
-static int go_on;
+static bool ready_to_start;
 
 static void signal_handler(int s) {
   switch (s) {
   case SIGINT:
-    go_on = 0;
+    ready_to_start = false;
     break;
   }
 }
@@ -139,8 +138,7 @@ int create_vip_list(libusb_context* pctx, libusb_device **&devlist, uint16_t vid
   ssize_t devcount = libusb_get_device_list(pctx, &devlist);
   if (devcount < 0)
     return (int) devcount; // returns error code < 0
-  //struct libusb_device *found = NULL;
-  //struct libusb_device_handle *found_dev_handle = NULL;
+
   libusb_device *dev;
   int iFoundCount = 0;
 
@@ -380,7 +378,7 @@ int main(int argc, char** argv) {
   }
 
   // Calibration service
-  ros::ServiceServer service =
+  ros::ServiceServer boresight_calibration_service =
           private_nh.advertiseService<polhemus_ros_driver::calibrate::Request,
                                       polhemus_ros_driver::calibrate::Response>("calibration",
                                                                                 boost::bind(&Polhemus::calibrate_srv,
@@ -388,7 +386,7 @@ int main(int argc, char** argv) {
                                                                                 boresight_calibration_file));
   ROS_INFO("[POLHEMUS] Service ready to calibrate the sensors.");
 
-  ros::ServiceServer service_2 =
+  ros::ServiceServer source_select_service =
             private_nh.advertiseService<polhemus_ros_driver::set_source::Request,
                                         polhemus_ros_driver::set_source::Response>("setting_source",
                                                                                   boost::bind(&Polhemus::src_select_srv,
@@ -408,11 +406,6 @@ int main(int argc, char** argv) {
 
   device->generate_data_structure();
 
-  /* set up signal handler to catch the interrupt signal */
-  signal(SIGINT, signal_handler);
-
-  go_on = 1;
-
   ROS_INFO("[POLHEMUS] Enabling continuous data mode...");
   retval = device->device_data_mode(DATA_CONTINUOUS);
   if (retval == RETURN_ERROR)
@@ -430,6 +423,11 @@ int main(int argc, char** argv) {
   gettimeofday(&tv, NULL);
   ROS_INFO("[POLHEMUS] Begin time: %d.%06d\n", (unsigned int) (tv.tv_sec), (unsigned int) (tv.tv_usec));
 
+  /* set up signal handler to catch the interrupt signal */
+  signal(SIGINT, signal_handler);
+
+  ready_to_start = true;
+
   static tf2_ros::TransformBroadcaster br;
   geometry_msgs::TransformStamped transformStamped;
   std::vector<geometry_msgs::TransformStamped> tf_queue;
@@ -441,7 +439,7 @@ int main(int argc, char** argv) {
 
   // Start main loop
   while(ros::ok()) {
-    if (go_on == 0)
+    if (!ready_to_start)
       break;
 
     // Update polhemus sensor count

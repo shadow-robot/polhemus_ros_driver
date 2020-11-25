@@ -1,9 +1,9 @@
 <launch>
-  <arg name="x_hs" default="0" />
+  <arg name="x_hs" default="1" />
   <arg name="y_hs" default="0" />
-  <arg name="z_hs" default="1" />
+  <arg name="z_hs" default="0" />
   <arg name="hands" default="right"/>
-  <arg name="product_type" default="liberty"/>
+  <arg name="product_type" default="viper"/>
   <arg name="boresight_calibration_file_path" default="$(find polhemus_ros_driver)/config"/>
   <arg name="boresight_calibration_file_name" default="$(arg product_type)_calibration.yaml"/>
   <arg name="boresight_calibration_file" default="$(arg boresight_calibration_file_path)/$(arg boresight_calibration_file_name)"/>
