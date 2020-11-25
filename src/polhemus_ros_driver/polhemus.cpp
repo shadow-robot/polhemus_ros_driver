@@ -165,9 +165,19 @@ int Polhemus::send_saved_calibration(void)
     std::string calibrated_yaw_param_name = "/calibration/" + name + "_calibration/rotations/station_" + std::to_string(station_id) + "/calibrated_yaw";
     nh->getParam(calibrated_yaw_param_name, calibrated_yaw);
 
-
     // retrieve current sensor angle
-    tf2::Quaternion current_quaternion = get_quaternion(station_id);
+    tf2::Quaternion current_quaternion;
+    try
+    {
+      current_quaternion = get_quaternion(station_id);
+    }
+    catch(const char* msg)
+    {
+      ROS_ERROR_STREAM("Station " << station_id << ": " << msg);
+      return -1;
+      break;
+    }
+
     double current_roll, current_pitch, current_yaw;
     tf2::Matrix3x3(current_quaternion).getRPY(current_roll, current_pitch, current_yaw);
 
@@ -194,6 +204,7 @@ int Polhemus::send_saved_calibration(void)
     if (retval == RETURN_ERROR)
     {
       ROS_ERROR("[POLHEMUS] Error sending calibration from file.");
+      return -1;
       break;
     }
   }
@@ -244,6 +255,7 @@ bool Polhemus::calibrate(std::string boresight_calibration_file)
   if (system(cmd.c_str()))
   {
     ROS_ERROR("[POLHEMUS] Error saving calibration.");
+    return -1;
   }
   else
   {
