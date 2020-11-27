@@ -129,9 +129,17 @@ int Polhemus::send_saved_calibration(void)
   if (nh->hasParam("/calibration/" + name + "_calibration/rotations"))
   {
     retval = receive_pno_data_frame();
+    ros::Time start_time = ros::Time::now();
+
     while (retval < SENSORS_PER_GLOVE)
     {
       retval = receive_pno_data_frame();
+      retval = 4;
+      if (ros::Time::now().toSec() - start_time.toSec() >= CALIBRATE_TIMEOUT_IN_SECS)
+      {
+        ROS_ERROR("[POLHEMUS] Caliration - error getting complete frame in required time.");
+        return -1;
+      }
     }
 
     device_reset();
@@ -176,7 +184,7 @@ int Polhemus::send_saved_calibration(void)
     catch(std::runtime_error &error)
     {
       ROS_ERROR_STREAM("Caught runtime error for station " << station_id << ": " << error.what());
-      throw error;
+      throw;
     }
 
     double station_roll, station_pitch, station_yaw;
@@ -220,9 +228,16 @@ bool Polhemus::calibrate(std::string boresight_calibration_file)
   reset_boresight();
 
   retval = receive_pno_data_frame();
+  ros::Time start_time = ros::Time::now();
+
   while (retval < SENSORS_PER_GLOVE)
   {
     retval = receive_pno_data_frame();
+    if (ros::Time::now().toSec() - start_time.toSec() >= CALIBRATE_TIMEOUT_IN_SECS)
+    {
+      ROS_ERROR("[POLHEMUS] Caliration - error getting complete frame in required time.");
+      return -1;
+    }
   }
 
   device_reset();

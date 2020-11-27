@@ -29,7 +29,7 @@
 #define VPUSB_READ_TIMEOUT_MS 100
 #define PI 3.14159265359
 #define SENSORS_PER_GLOVE 6
-
+#define CALIBRATE_TIMEOUT_IN_SECS 3
 #define RETURN_ERROR -1
 
 /* make control character out of ordinary character */

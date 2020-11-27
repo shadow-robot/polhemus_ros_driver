@@ -269,13 +269,6 @@ int discover_vip_pid(libusb_device_handle **usbhnd, vp_usbdevinfo &usbinfo, uint
   return retval;
 }
 
-void release_polhemus_device(Polhemus *device, libusb_device_handle *g_usbhnd, vp_usbdevinfo g_usbinfo)
-{
-  ROS_INFO("Releasing Polhemus USB device");
-  release_usb(&g_usbhnd, g_usbinfo);
-  delete device;
-}
-
 int main(int argc, char** argv) {
   libusb_device_handle *g_usbhnd = 0;
   vp_usbdevinfo g_usbinfo;
@@ -306,7 +299,7 @@ int main(int argc, char** argv) {
   {
     product_id = LIBERTY_PRODUCT;
     retval = discover_vip_pid(&g_usbhnd, g_usbinfo, VENDOR, product_id);
-    if (retval == RETURN_ERROR)
+    if (RETURN_ERROR == retval)
     {
       ROS_ERROR("[POLHEMUS] Error connecting to liberty device.");
       return -1;
@@ -431,8 +424,9 @@ int main(int argc, char** argv) {
     ROS_ERROR("[POLHEMUS] Failed to load saved calibration.");
     ROS_INFO("Shutting down Polhemus device");
     device->device_reset();
-    release_polhemus_device(device, g_usbhnd, g_usbinfo);
-    return 0;
+    release_usb(&g_usbhnd, g_usbinfo);
+    delete device;
+    return -1;
   }
 
   gettimeofday(&tv, NULL);
@@ -542,7 +536,8 @@ int main(int argc, char** argv) {
   // shutdown if SIGINT
   ROS_INFO("Shutting down Polhemus device");
   device->device_reset();
-  release_polhemus_device(device, g_usbhnd, g_usbinfo);
+  release_usb(&g_usbhnd, g_usbinfo);
+  delete device;
 
   return 0;
 }
