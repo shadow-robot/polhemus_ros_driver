@@ -125,13 +125,15 @@ void Polhemus::device_clear_input(void)
 
 int Polhemus::send_saved_calibration(void)
 {
-  reset_boresight();
-
   int retval = RETURN_ERROR;
   if (nh->hasParam("/calibration/" + name + "_calibration/rotations"))
   {
     retval = receive_pno_data_frame();
-    retval = receive_pno_data_frame();
+    while (retval < SENSORS_PER_GLOVE)
+    {
+      retval = receive_pno_data_frame();
+    }
+
     device_reset();
   }
   else
@@ -150,7 +152,7 @@ int Polhemus::send_saved_calibration(void)
       break;
     }
     
-    ROS_INFO("[POLHEMUS] Calibrating station %d.", station_id);
+    ROS_INFO("[POLHEMUS] Reading saved calibration data and calibrating station %d...", station_id);
 
     // retrieve calibration angles
     float calibrated_roll;
@@ -165,30 +167,29 @@ int Polhemus::send_saved_calibration(void)
     std::string calibrated_yaw_param_name = "/calibration/" + name + "_calibration/rotations/station_" + std::to_string(station_id) + "/calibrated_yaw";
     nh->getParam(calibrated_yaw_param_name, calibrated_yaw);
 
-    // retrieve current sensor angle
-    tf2::Quaternion current_quaternion;
+    // retrieve current sensor orientation
+    tf2::Quaternion station_quaternion;
     try
     {
-      current_quaternion = get_quaternion(station_id);
+      station_quaternion = get_station_quaternion(station_id);
     }
-    catch(const char* msg)
+    catch(std::runtime_error &error)
     {
-      ROS_ERROR_STREAM("Station " << station_id << ": " << msg);
-      return -1;
-      break;
+      ROS_ERROR_STREAM("Caught runtime error for station " << station_id << ": " << error.what());
+      throw error;
     }
 
-    double current_roll, current_pitch, current_yaw;
-    tf2::Matrix3x3(current_quaternion).getRPY(current_roll, current_pitch, current_yaw);
+    double station_roll, station_pitch, station_yaw;
+    tf2::Matrix3x3(station_quaternion).getRPY(station_roll, station_pitch, station_yaw);
 
-    current_roll = (current_roll * 180) / PI;
-    current_pitch = (current_pitch * 180) / PI;
-    current_yaw = (current_yaw * 180) / PI;
+    station_roll = (station_roll * 180) / PI;
+    station_pitch = (station_pitch * 180) / PI;
+    station_yaw = (station_yaw * 180) / PI;
 
     // compute correction needed to calibrate sensor to 0
-    float correction_roll = current_roll - calibrated_roll;
-    float correction_pitch = current_pitch - calibrated_pitch;
-    float correction_yaw = current_yaw - calibrated_yaw;
+    float correction_roll = station_roll - calibrated_roll;
+    float correction_pitch = station_pitch - calibrated_pitch;
+    float correction_yaw = station_yaw - calibrated_yaw;
 
     if (name == "viper")
     {
@@ -201,11 +202,10 @@ int Polhemus::send_saved_calibration(void)
       retval = set_boresight(false, station_id + 1, correction_yaw, correction_pitch, correction_roll);
     }
 
-    if (retval == RETURN_ERROR)
+    if (RETURN_ERROR == retval)
     {
       ROS_ERROR("[POLHEMUS] Error sending calibration from file.");
       return -1;
-      break;
     }
   }
 
@@ -215,12 +215,15 @@ int Polhemus::send_saved_calibration(void)
 
 bool Polhemus::calibrate(std::string boresight_calibration_file)
 {
-  bool retval = false;
+  int retval = RETURN_ERROR;
 
   reset_boresight();
 
   retval = receive_pno_data_frame();
-  retval = receive_pno_data_frame();
+  while (retval < SENSORS_PER_GLOVE)
+  {
+    retval = receive_pno_data_frame();
+  }
 
   device_reset();
 
@@ -228,52 +231,54 @@ bool Polhemus::calibrate(std::string boresight_calibration_file)
   {
     ROS_INFO("[POLHEMUS] Calibrating station %d.", station_id);
 
-    tf2::Quaternion current_quaternion = get_quaternion(station_id);
+    tf2::Quaternion station_quaternion = get_station_quaternion(station_id);
 
-    double current_roll, current_pitch, current_yaw;
-    tf2::Matrix3x3(current_quaternion).getRPY(current_roll, current_pitch, current_yaw);
+    double station_roll, station_pitch, station_yaw;
+    tf2::Matrix3x3(station_quaternion).getRPY(station_roll, station_pitch, station_yaw);
 
     // convert to degrees
-    current_roll = (current_roll * 180) / PI;
-    current_pitch = (current_pitch * 180) / PI;
-    current_yaw = (current_yaw * 180) / PI;
+    station_roll = (station_roll * 180) / PI;
+    station_pitch = (station_pitch * 180) / PI;
+    station_yaw = (station_yaw * 180) / PI;
 
     // save values to config file
     std::string calibrated_roll_param_name = "/calibration/" + name + "_calibration/rotations/station_" + std::to_string(station_id) + "/calibrated_roll";
-    nh->setParam(calibrated_roll_param_name, current_roll);
+    nh->setParam(calibrated_roll_param_name, station_roll);
 
     std::string calibrated_pitch_param_name = "/calibration/" + name + "_calibration/rotations/station_" + std::to_string(station_id) + "/calibrated_pitch";
-    nh->setParam(calibrated_pitch_param_name, current_pitch);
+    nh->setParam(calibrated_pitch_param_name, station_pitch);
   
     std::string calibrated_yaw_param_name = "/calibration/" + name + "_calibration/rotations/station_" + std::to_string(station_id) + "/calibrated_yaw";
-    nh->setParam(calibrated_yaw_param_name, current_yaw);
+    nh->setParam(calibrated_yaw_param_name, station_yaw);
   }
 
   std::string cmd("rosparam dump ");
   cmd += boresight_calibration_file + " /calibration";
   
-  if (system(cmd.c_str()))
-  {
+  int dump_calibration_param_status = system(cmd.c_str());
+  if (dump_calibration_param_status < 0)
+  { 
     ROS_ERROR("[POLHEMUS] Error saving calibration.");
     return -1;
   }
   else
   {
     ROS_INFO("[POLHEMUS] Calibration file saved at: %s\n", boresight_calibration_file.c_str());
+
   }
 
   define_data_type(DATA_TYPE_EULER);
-  int ret = set_boresight(false, -1, 0, 0, 0);
+  retval = set_boresight(false, -1, 0, 0, 0);
   define_data_type(DATA_TYPE_QUAT);
 
-  if (ret == RETURN_ERROR)
+  if (RETURN_ERROR == retval)
   {
     ROS_ERROR("[POLHEMUS] Calibration failed.");
   }
 
   // set data mode back to continuous
-  ret = device_data_mode(DATA_CONTINUOUS);
-  if (ret == RETURN_ERROR)
+  retval = device_data_mode(DATA_CONTINUOUS);
+  if (RETURN_ERROR == retval)
   {
     ROS_ERROR("[POLHEMUS] Setting data mode to continuous, failed.\n");
     return retval;
@@ -362,6 +367,6 @@ int Polhemus::set_source(int source, int station_id)
 {
 }
 
-tf2::Quaternion Polhemus::get_quaternion(int index)
+tf2::Quaternion Polhemus::get_station_quaternion(int station_id)
 {
 }

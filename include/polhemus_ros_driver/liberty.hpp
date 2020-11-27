@@ -50,7 +50,7 @@ public:
 	int set_hemisphere(int x, int y, int z);
 	int set_boresight(bool reset_origin, int station, float arg_1, float arg_2, float arg_3, float arg_4 = 0);
 	int reset_boresight(void);
-	tf2::Quaternion get_quaternion(int index);
+	tf2::Quaternion get_station_quaternion(int station_id);
 	int send_saved_calibration(void);
 private:
 	liberty_pno_frame_t *stations;

@@ -25,8 +25,8 @@
 #define TIMEOUT 1000
 #define CRC_BYTES 4
 #define SEUID 0
-#define VPUSB_WRITE_TIMEOUT_MS 50
-#define VPUSB_READ_TIMEOUT_MS 50
+#define VPUSB_WRITE_TIMEOUT_MS 100
+#define VPUSB_READ_TIMEOUT_MS 100
 #define PI 3.14159265359
 #define SENSORS_PER_GLOVE 6
 
@@ -74,7 +74,7 @@ public:
   virtual int request_num_of_stations(void);
   virtual int set_boresight(bool reset_origin, int station, float arg_1, float arg_2, float arg_3, float arg_4 = 0);
   virtual int reset_boresight(void);
-  virtual tf2::Quaternion get_quaternion(int index);
+  virtual tf2::Quaternion get_station_quaternion(int station_id);
   virtual int set_source(int source, int station_id);
   int send_saved_calibration(void);
   bool calibrate_srv(polhemus_ros_driver::calibrate::Request &req, polhemus_ros_driver::calibrate::Response &res, std::string boresight_calibration_file);

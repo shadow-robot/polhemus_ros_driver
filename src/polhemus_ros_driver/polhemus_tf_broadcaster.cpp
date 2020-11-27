@@ -269,16 +269,10 @@ int discover_vip_pid(libusb_device_handle **usbhnd, vp_usbdevinfo &usbinfo, uint
   return retval;
 }
 
-void reset_and_release_polhemus_device(Polhemus *device, libusb_device_handle *g_usbhnd, vp_usbdevinfo g_usbinfo)
+void release_polhemus_device(Polhemus *device, libusb_device_handle *g_usbhnd, vp_usbdevinfo g_usbinfo)
 {
-  ROS_INFO("Shutting down Polhemus device");
-  int retval = device->device_reset();
-  if (retval == RETURN_ERROR)
-  {
-    ROS_ERROR("[POLHEMUS] Error resetting device.");
-  }
+  ROS_INFO("Releasing Polhemus USB device");
   release_usb(&g_usbhnd, g_usbinfo);
-  ROS_INFO("Release USB");
   delete device;
 }
 
@@ -294,8 +288,6 @@ int main(int argc, char** argv) {
   std::string boresight_calibration_file;
   Polhemus *device;
   int retval = RETURN_ERROR;
-
-  bool ready_to_start = true;
 
   // Setup ros
   ros::init(argc, argv, "polhemus_tf_broadcaster");
@@ -317,8 +309,7 @@ int main(int argc, char** argv) {
     if (retval == RETURN_ERROR)
     {
       ROS_ERROR("[POLHEMUS] Error connecting to liberty device.");
-      ready_to_start = false;
-      return 0;
+      return -1;
     }
 
     device = new Liberty(product_type, LIBERTY_RX_BUF_SIZE, LIBERTY_TX_BUF_SIZE);
@@ -330,10 +321,10 @@ int main(int argc, char** argv) {
   {
     product_id = VIPER_PRODUCT;
     retval = discover_vip_pid(&g_usbhnd, g_usbinfo, VENDOR, product_id);
-    if (retval == RETURN_ERROR)
+    if (RETURN_ERROR == retval)
     {
       ROS_ERROR("[POLHEMUS] Error connecting to viper device.\n");
-      return 0;
+      return -1;
     }
 
     device = new Viper(product_type, VIPER_RX_BUF_SIZE, VIPER_RX_BUF_SIZE);
@@ -355,19 +346,26 @@ int main(int argc, char** argv) {
   device->device_handle = g_usbhnd;
 
   retval = device->device_reset();
-  if (retval == RETURN_ERROR)
+  if (RETURN_ERROR == retval)
   {
     ROS_ERROR("[POLHEMUS] Error resetting device.");
-    return 0;
+    return -1;
+  }
+
+  retval = device->reset_boresight();
+  if (RETURN_ERROR == retval)
+  {
+    ROS_ERROR("[POLHEMUS] Error resetting device.");
+    return -1;
   }
 
   device->device_binary_mode(); // activate binary mode
 
   retval = device->request_num_of_stations();
-  if (retval == RETURN_ERROR)
+  if (RETURN_ERROR == retval)
   {
     ROS_ERROR("[POLHEMUS] Error reading number of stations.");
-    return 0;
+    return -1;
   }
   else
   {
@@ -378,16 +376,16 @@ int main(int argc, char** argv) {
   if ((hands == "both" && nstations != 2*SENSORS_PER_GLOVE) || (hands != "both" && nstations != SENSORS_PER_GLOVE))
   {
     ROS_ERROR("[POLHEMUS] Number of sensors detected do not match the number expected.");
-    return 0;
+    return -1;
   }
-
+  
   // define quaternion data type
   ROS_INFO("[POLHEMUS] Setting data type to quaternion");
   retval = device->define_data_type(DATA_TYPE_QUAT);
-  if (retval == RETURN_ERROR)
+  if (RETURN_ERROR == retval)
   {
     ROS_ERROR("[POLHEMUS] Error setting data type.");
-    return 0;
+    return -1;
   }
 
   // Calibration service
@@ -411,27 +409,29 @@ int main(int argc, char** argv) {
 
   ROS_INFO("[POLHEMUS] Setting the output hemisphere");
   retval = device->set_hemisphere(x_hs, y_hs, z_hs);
-  if (retval == RETURN_ERROR)
+  if (RETURN_ERROR == retval)
   {
     ROS_ERROR("[POLHEMUS] Error setting hemisphere.");
-    return 0;
+    return -1;
   }
 
   device->generate_data_structure();
 
   ROS_INFO("[POLHEMUS] Enabling continuous data mode...");
   retval = device->device_data_mode(DATA_CONTINUOUS);
-  if (retval == RETURN_ERROR)
+  if (RETURN_ERROR == retval)
   {
     ROS_ERROR("[POLHEMUS] Error setting data mode to continuous.");
-    return 0;
+    return -1;
   }
 
   retval = device->send_saved_calibration();
-  if (retval == RETURN_ERROR)
+  if (RETURN_ERROR == retval)
   {
     ROS_ERROR("[POLHEMUS] Failed to load saved calibration.");
-    reset_and_release_polhemus_device(device, g_usbhnd, g_usbinfo);
+    ROS_INFO("Shutting down Polhemus device");
+    device->device_reset();
+    release_polhemus_device(device, g_usbhnd, g_usbinfo);
     return 0;
   }
 
@@ -540,7 +540,9 @@ int main(int argc, char** argv) {
   }
 
   // shutdown if SIGINT
-  reset_and_release_polhemus_device(device, g_usbhnd, g_usbinfo);
+  ROS_INFO("Shutting down Polhemus device");
+  device->device_reset();
+  release_polhemus_device(device, g_usbhnd, g_usbinfo);
 
   return 0;
 }
