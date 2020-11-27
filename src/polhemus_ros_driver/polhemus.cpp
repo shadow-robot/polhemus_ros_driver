@@ -134,10 +134,9 @@ int Polhemus::send_saved_calibration(void)
     while (retval < SENSORS_PER_GLOVE)
     {
       retval = receive_pno_data_frame();
-      retval = 4;
       if (ros::Time::now().toSec() - start_time.toSec() >= CALIBRATE_TIMEOUT_IN_SECS)
       {
-        ROS_ERROR("[POLHEMUS] Caliration - error getting complete frame in required time.");
+        ROS_ERROR("[POLHEMUS] Calibration - error getting complete frame in required time.");
         return -1;
       }
     }
