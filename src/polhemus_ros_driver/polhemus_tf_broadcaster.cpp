@@ -113,7 +113,6 @@ void find_endpoints(libusb_config_descriptor *conf_desc, int iface, uint8_t & ep
         {
           if (!ep_in)
           {
-            //printf("Ep in is false, endpoinst address is: %d", p_ep->bEndpointAddress);
             ep_in = p_ep->bEndpointAddress;
           }
         } else
@@ -418,7 +417,7 @@ int main(int argc, char** argv) {
     return -1;
   }
 
-  retval = device->send_saved_calibration();
+  retval = device->send_saved_calibration(hands);
   if (RETURN_ERROR == retval)
   {
     ROS_ERROR("[POLHEMUS] Failed to load saved calibration.");

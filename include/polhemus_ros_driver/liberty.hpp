@@ -51,7 +51,8 @@ public:
 	int set_boresight(bool reset_origin, int station, float arg_1, float arg_2, float arg_3, float arg_4 = 0);
 	int reset_boresight(void);
 	tf2::Quaternion get_station_quaternion(int station_id);
-	int send_saved_calibration(void);
+    bool calibrate(std::string boresight_calibration_file);
+	int send_saved_calibration(std::string hands);
 private:
 	liberty_pno_frame_t *stations;
 

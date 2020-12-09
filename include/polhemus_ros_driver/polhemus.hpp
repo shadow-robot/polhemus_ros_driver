@@ -76,11 +76,14 @@ public:
   virtual int reset_boresight(void);
   virtual tf2::Quaternion get_station_quaternion(int station_id);
   virtual int set_source(int source, int station_id);
-  int send_saved_calibration(void);
+  int set_device_to_receive_saved_calibration(std::string hands);
+  int set_device_for_calibration(void);
+  int save_current_calibration_to_file(int station_id, int station_number);
+  virtual int send_saved_calibration(std::string hands);
   bool calibrate_srv(polhemus_ros_driver::calibrate::Request &req, polhemus_ros_driver::calibrate::Response &res, std::string boresight_calibration_file);
   bool src_select_srv(polhemus_ros_driver::set_source::Request &req, polhemus_ros_driver::set_source::Response &res);
   bool persist_srv(polhemus_ros_driver::persist::Request &req, polhemus_ros_driver::persist::Response &res);
-  bool calibrate(std::string boresight_calibration_file);
+  virtual bool calibrate(std::string boresight_calibration_file);
   virtual bool persist_commands(void);
   libusb_device_handle *device_handle;
   int station_count;

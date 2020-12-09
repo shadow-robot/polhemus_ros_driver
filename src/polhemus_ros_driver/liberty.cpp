@@ -252,3 +252,120 @@ tf2::Quaternion Liberty::get_station_quaternion(int station_id)
 
   return q;
 }
+
+int Liberty::send_saved_calibration(std::string hands)
+{
+  int retval = RETURN_ERROR;
+  retval = set_device_to_receive_saved_calibration(hands);
+  if (RETURN_ERROR == retval)
+    return -1;
+
+  // send the calibration saved in calibration.yaml
+  // read from param server the x, y and z for all stations, so we need to loop stations and send boresight command
+  for (int station_id = 0; station_id < station_count; ++station_id)
+  {
+    if (!nh->hasParam("/calibration/" + name + "_calibration/rotations/station_" + std::to_string(station_id)))
+    {
+      ROS_WARN("[POLHEMUS] No previous calibration data available, please calibrate before proceeding!!!");
+      break;
+    }
+    
+    ROS_INFO("[POLHEMUS] Reading saved calibration data and calibrating station %d...", station_id);
+
+    // retrieve calibration angles
+    float calibrated_roll;
+    std::string calibrated_roll_param_name = "/calibration/" + name + "_calibration/rotations/station_" + std::to_string(station_id) + "/calibrated_roll";
+    nh->getParam(calibrated_roll_param_name, calibrated_roll);
+
+    float calibrated_pitch;
+    std::string calibrated_pitch_param_name = "/calibration/" + name + "_calibration/rotations/station_" + std::to_string(station_id) + "/calibrated_pitch";
+    nh->getParam(calibrated_pitch_param_name, calibrated_pitch);
+
+    float calibrated_yaw;
+    std::string calibrated_yaw_param_name = "/calibration/" + name + "_calibration/rotations/station_" + std::to_string(station_id) + "/calibrated_yaw";
+    nh->getParam(calibrated_yaw_param_name, calibrated_yaw);
+
+    // retrieve current sensor orientation
+    tf2::Quaternion station_quaternion;
+    try
+    {
+      station_quaternion = get_station_quaternion(station_id);
+    }
+    catch(std::runtime_error &error)
+    {
+      ROS_ERROR_STREAM("Caught runtime error for station " << station_id << ": " << error.what());
+      throw;
+    }
+
+    double station_roll, station_pitch, station_yaw;
+    tf2::Matrix3x3(station_quaternion).getRPY(station_roll, station_pitch, station_yaw);
+
+    station_roll = (station_roll * 180) / PI;
+    station_pitch = (station_pitch * 180) / PI;
+    station_yaw = (station_yaw * 180) / PI;
+
+    // compute correction needed to calibrate sensor to 0
+    float correction_roll = station_roll - calibrated_roll;
+    float correction_pitch = station_pitch - calibrated_pitch;
+    float correction_yaw = station_yaw - calibrated_yaw;
+
+    retval = set_boresight(false, station_id + 1, correction_yaw, correction_pitch, correction_roll);
+
+    if (RETURN_ERROR == retval)
+    {
+      ROS_ERROR("[POLHEMUS] Error sending calibration from file.");
+      return -1;
+    }
+  }
+
+  device_data_mode(DATA_CONTINUOUS);
+  return 0;
+}
+
+bool Liberty::calibrate(std::string boresight_calibration_file)
+{
+  int retval = RETURN_ERROR;
+  retval = set_device_for_calibration();
+  if (RETURN_ERROR == retval)
+    return -1;
+
+  for (int station_number = 0; station_number < station_count; ++station_number)
+  {
+    int station_id = stations[station_number].head.station - 1;
+    save_current_calibration_to_file(station_id, station_number);
+  }
+
+  std::string cmd("rosparam dump ");
+  cmd += boresight_calibration_file + " /calibration";
+  
+  int dump_calibration_param_status = system(cmd.c_str());
+  if (dump_calibration_param_status < 0)
+  { 
+    ROS_ERROR("[POLHEMUS] Error saving calibration.");
+    return -1;
+  }
+  else
+  {
+    ROS_INFO("[POLHEMUS] Calibration file saved at: %s\n", boresight_calibration_file.c_str());
+
+  }
+
+  define_data_type(DATA_TYPE_EULER);
+  retval = set_boresight(false, -1, 0, 0, 0);
+  define_data_type(DATA_TYPE_QUAT);
+
+  if (RETURN_ERROR == retval)
+  {
+    ROS_ERROR("[POLHEMUS] Calibration failed.");
+  }
+
+  // set data mode back to continuous
+  retval = device_data_mode(DATA_CONTINUOUS);
+  if (RETURN_ERROR == retval)
+  {
+    ROS_ERROR("[POLHEMUS] Setting data mode to continuous, failed.\n");
+    return retval;
+  }
+
+  return true;
+}
