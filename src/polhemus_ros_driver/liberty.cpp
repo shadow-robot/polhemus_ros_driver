@@ -253,10 +253,10 @@ tf2::Quaternion Liberty::get_station_quaternion(int station_id)
   return q;
 }
 
-int Liberty::send_saved_calibration(std::string hands)
+int Liberty::send_saved_calibration(int number_of_hands)
 {
   int retval = RETURN_ERROR;
-  retval = set_device_to_receive_saved_calibration(hands);
+  retval = set_device_to_receive_saved_calibration(number_of_hands);
   if (RETURN_ERROR == retval)
     return -1;
 
@@ -344,11 +344,7 @@ bool Liberty::calibrate(std::string boresight_calibration_file)
     ROS_ERROR("[POLHEMUS] Error saving calibration.");
     return -1;
   }
-  else
-  {
-    ROS_INFO("[POLHEMUS] Calibration file saved at: %s\n", boresight_calibration_file.c_str());
-
-  }
+  ROS_INFO("[POLHEMUS] Calibration file saved at: %s\n", boresight_calibration_file.c_str());
 
   define_data_type(DATA_TYPE_EULER);
   retval = set_boresight(false, -1, 0, 0, 0);

@@ -123,14 +123,10 @@ void Polhemus::device_clear_input(void)
   }
 }
 
-int Polhemus::set_device_to_receive_saved_calibration(std::string hands)
+int Polhemus::set_device_to_receive_saved_calibration(int number_of_hands)
 {
   int retval = RETURN_ERROR;
-  int required_number_of_sensors = SENSORS_PER_GLOVE;
-  if (hands == "both")
-  {
-    required_number_of_sensors = 2*SENSORS_PER_GLOVE;
-  }
+  int required_number_of_sensors = number_of_hands*SENSORS_PER_GLOVE;
 
   if (nh->hasParam("/calibration/" + name + "_calibration/rotations"))
   {
@@ -287,7 +283,7 @@ tf2::Quaternion Polhemus::get_station_quaternion(int station_id)
 {
 }
 
-int Polhemus::send_saved_calibration(std::string hands)
+int Polhemus::send_saved_calibration(int number_of_hands)
 {
 }
 

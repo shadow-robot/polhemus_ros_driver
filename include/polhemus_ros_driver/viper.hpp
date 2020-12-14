@@ -39,7 +39,7 @@ private:
   tf2::Quaternion get_station_quaternion(int station_id);
   int set_source(int source, int station_id);
   bool calibrate(std::string boresight_calibration_file);
-  int send_saved_calibration(std::string hands);
+  int send_saved_calibration(int number_of_hands);
   bool persist_commands(void);
   CVPSeuPno pno;
   uint32_t sensor_map;
