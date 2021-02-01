@@ -368,12 +368,6 @@ int main(int argc, char** argv) {
     ROS_INFO("[POLHEMUS] Found %d stations.", device->station_count);
     nstations = device->station_count;
   }
-
-  if ((hands == "both" && nstations != 2*SENSORS_PER_GLOVE) || (hands != "both" && nstations != SENSORS_PER_GLOVE))
-  {
-    ROS_ERROR("[POLHEMUS] Number of sensors detected do not match the number expected.");
-    return -1;
-  }
   
   // define quaternion data type
   ROS_INFO("[POLHEMUS] Setting data type to quaternion");
