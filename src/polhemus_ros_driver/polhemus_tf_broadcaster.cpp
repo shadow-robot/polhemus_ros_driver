@@ -493,24 +493,13 @@ int main(int argc, char** argv) {
         retval = device->fill_pno_data(&transformStamped, station_number);
         if (product_type == "viper")
         {
-          if (hands == "right")
+          if (station_number < 8)
           {
             transformStamped.header.frame_id = "polhemus_base_0";
           }
-          else if (hands == "left")
+          else
           {
             transformStamped.header.frame_id = "polhemus_base_1";
-          }
-          else if (hands == "both")
-          {
-            if (station_number < 8)
-            {
-              transformStamped.header.frame_id = "polhemus_base_0";
-            }
-            else
-            {
-              transformStamped.header.frame_id = "polhemus_base_1";
-            }
           }
         }
         else
