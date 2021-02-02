@@ -56,6 +56,7 @@
 #define LIBERTY_PRODUCT 0xff20
 #define VIPER_PRODUCT 0xbf01
 
+#define FIRST_STATION_NUMBER_LINKED_TO_LEFT_HAND 8
 
 typedef struct _vp_usbdevinfo {
   int usbDevIndex;
@@ -493,7 +494,11 @@ int main(int argc, char** argv) {
         retval = device->fill_pno_data(&transformStamped, station_number);
         if (product_type == "viper")
         {
-          if (station_number < 8)
+          // We publish the first 5 sensors with frame_id polhemus_base_0 since they are
+          // linked to the first source and to the right hand. The rest of the sensors 
+          // are linked to the second source placed on the left hand.
+          // TODO: check if there is there is a way to get that info from api
+          if (station_number < FIRST_STATION_NUMBER_LINKED_TO_LEFT_HAND)
           {
             transformStamped.header.frame_id = "polhemus_base_0";
           }
