@@ -14,7 +14,7 @@ settings:
       - code_coverage
   
 trunks:
-  - name: master
+  - name: melodic-devel
     jobs:
       - name: code_coverage
       - name: style_check
