@@ -1,4 +1,3 @@
-
 /*
 
  Communication library for a Polhemus Liberty v2 (tm) Motion tracker
@@ -22,14 +21,11 @@
 
 */
 
+#ifndef POLHEMUS_ROS_DRIVER_LIBERTY_PROTOCOL_H
+#define POLHEMUS_ROS_DRIVER_LIBERTY_PROTOCOL_H
 
-
-
-#ifndef LIBERTY_PROTOCOL_H
-#define LIBERTY_PROTOCOL_H
-
-
-typedef struct __attribute__((packed)) liberty_header_t {
+typedef struct __attribute__((packed)) liberty_header_t
+{
     char LY[2];
     unsigned char station;
     unsigned char init_cmd;
@@ -39,7 +35,8 @@ typedef struct __attribute__((packed)) liberty_header_t {
 } liberty_header_t;
 
 // this the default answer format for one station (O*,2,4,1) */
-typedef struct __attribute__((packed)) liberty_default_pno_frame_t {
+typedef struct __attribute__((packed)) liberty_default_pno_frame_t
+{
     liberty_header_t head;
     float x;
     float y;
@@ -51,7 +48,8 @@ typedef struct __attribute__((packed)) liberty_default_pno_frame_t {
 } liberty_default_pno_frame_t;
 
 /* O*,8,9,11,3,7 */
-typedef struct __attribute__((packed)) liberty_pno_frame_t {
+typedef struct __attribute__((packed)) liberty_pno_frame_t
+{
     liberty_header_t head;
     uint32_t timestamp;
     uint32_t framecount;
@@ -63,7 +61,8 @@ typedef struct __attribute__((packed)) liberty_pno_frame_t {
 } liberty_pno_frame_t;
 
 // O*,8,9,11,3,5
-typedef struct __attribute__((packed)) liberty_euler_pno_frame_t {
+typedef struct __attribute__((packed)) liberty_euler_pno_frame_t
+{
     liberty_header_t head;
     uint32_t timestamp;
     uint32_t framecount;
@@ -76,10 +75,11 @@ typedef struct __attribute__((packed)) liberty_euler_pno_frame_t {
     float ro;
 } liberty_euler_pno_frame_t;
 
-typedef struct __attribute__((packed)) active_station_state_response_t {
+typedef struct __attribute__((packed)) active_station_state_response_t
+{
     liberty_header_t head;
     uint16_t detected;
     uint16_t active;
 } liberty_active_station_state_response_t;
 
-#endif
+#endif // POLHEMUS_ROS_DRIVER_LIBERTY_PROTOCOL_H
