@@ -3,8 +3,8 @@
 * Unauthorized copying of the content in this file, via any medium is strictly prohibited.
 */
 
-#ifndef VIPER_PROTOCOL_H
-#define VIPER_PROTOCOL_H
+#ifndef POLHEMUS_ROS_DRIVER_LIBERTY_PROTOCOL_H
+#define POLHEMUS_ROS_DRIVER_LIBERTY_PROTOCOL_H
 
 #define VIPER_CMD_PREAMBLE 0x43525056
 #define VIPER_PNO_PREAMBLE 0x50525056
@@ -12,14 +12,14 @@
 #define SENSORS_PER_SEU   16
 #define SOURCES_PER_SEU   4
 
- typedef struct vpFrameInfo
- {
-     uint8_t * pF;
-     uint32_t uiSize;
-     uint32_t uiFCountRx;
-     int32_t iFrameErr;
-     uint64_t ts;
- } vpFrameInfo;
+typedef struct vpFrameInfo
+{
+    uint8_t * pF;
+    uint32_t uiSize;
+    uint32_t uiFCountRx;
+    int32_t iFrameErr;
+    uint64_t ts;
+} vpFrameInfo;
 
 typedef struct __attribute__((packed)) viper_header_t
 {
@@ -803,5 +803,4 @@ public:
 
 };
 
-
-#endif
+#endif // POLHEMUS_ROS_DRIVER_LIBERTY_PROTOCOL_H
