@@ -1,3 +1,11 @@
+# CI Statuses
+
+Check | Status
+---|---
+Build|[<img src="https://codebuild.eu-west-2.amazonaws.com/badges?uuid=eyJlbmNyeXB0ZWREYXRhIjoiOUYwOE8rNjZQMGsyUXBQU1dmZnl6U3VybzBZM1YrM2FGc2duWm5IQU5KS05RNWFVTGxSZldqVW94TkszWkRiQk9tcjdmd1pTT0M2WEtRYStRR3RMMFBvPSIsIml2UGFyYW1ldGVyU3BlYyI6ImtLUStaZ1V0SjVyNUZiSnAiLCJtYXRlcmlhbFNldFNlcmlhbCI6MX0%3D&branch=melodic-devel"/>](https://eu-west-2.console.aws.amazon.com/codesuite/codebuild/projects/auto_polhemus_ros_driver_melodic-devel_install_check/)
+Style|[<img src="https://codebuild.eu-west-2.amazonaws.com/badges?uuid=eyJlbmNyeXB0ZWREYXRhIjoiUElOVlo1U1hBbmp6bDJuNndTODhTakJuZHdvODJ1aGpKYzZpUXRXUndqcTNuWXlOaGxZbmg2ampCWVV6VmtiWEY1SlBqSHpyNjJIem9jcklDSjBWSVBNPSIsIml2UGFyYW1ldGVyU3BlYyI6InZ0bDUrZDcrQ1dSZ0dPdVEiLCJtYXRlcmlhbFNldFNlcmlhbCI6MX0%3D&branch=melodic-devel"/>](https://eu-west-2.console.aws.amazon.com/codesuite/codebuild/projects/auto_polhemus_ros_driver_melodic-devel_style_check/)
+Code Coverage|[<img src="https://codebuild.eu-west-2.amazonaws.com/badges?uuid=eyJlbmNyeXB0ZWREYXRhIjoiQXBFSXJCcGc5K0EwalM4WGJiVjFJMDRvTHRzV0k4ZFJ6bGNYUWNUQmppUlZ0RHFZTFI1V3FscXhBZU9jUTk2c0ZyTllPQlUzMzMvSW1xMU45YXBZSWc4PSIsIml2UGFyYW1ldGVyU3BlYyI6Ijk3bkFUTUg0RktoOG1yYjIiLCJtYXRlcmlhbFNldFNlcmlhbCI6MX0%3D&branch=melodic-devel"/>](https://eu-west-2.console.aws.amazon.com/codesuite/codebuild/projects/auto_polhemus_ros_driver_melodic-devel_code_coverage/)
+
 # Polhemus ROS Driver
 
 This package publishes coordinate transforms for the Polhemus Liberty and Polhemus Viper sensors (stations) using the [`tf2` package](http://wiki.ros.org/tf2).
