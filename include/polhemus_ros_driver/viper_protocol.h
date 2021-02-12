@@ -3,8 +3,8 @@
 * Unauthorized copying of the content in this file, via any medium is strictly prohibited.
 */
 
-#ifndef POLHEMUS_ROS_DRIVER_LIBERTY_PROTOCOL_H
-#define POLHEMUS_ROS_DRIVER_LIBERTY_PROTOCOL_H
+#ifndef POLHEMUS_ROS_DRIVER_VIPER_PROTOCOL_H
+#define POLHEMUS_ROS_DRIVER_VIPER_PROTOCOL_H
 
 #define VIPER_CMD_PREAMBLE 0x43525056
 #define VIPER_PNO_PREAMBLE 0x50525056
@@ -803,4 +803,4 @@ public:
 
 };
 
-#endif // POLHEMUS_ROS_DRIVER_LIBERTY_PROTOCOL_H
+#endif // POLHEMUS_ROS_DRIVER_VIPER_PROTOCOL_H

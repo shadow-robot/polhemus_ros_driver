@@ -3,8 +3,7 @@
 * Unauthorized copying of the content in this file, via any medium is strictly prohibited.
 */
 
-
-#include <string.h>
+#include <string>
 #include <libusb-1.0/libusb.h>
 #include "polhemus_ros_driver/polhemus.hpp"
 #include <ros/console.h>
@@ -12,8 +11,10 @@
 
 #ifdef DEBUG
 #include <stdio.h>
-#define warn(as...) { fprintf(stderr, "%s:%d: ", __FILE__, __LINE__); \
-    fprintf(stderr, as); }
+#define warn(as...) { \
+    fprintf(stderr, "%s:%d: ", __FILE__, __LINE__); \
+    fprintf(stderr, as); \
+}
 #else
 #define warn(as...)
 #endif
@@ -29,11 +30,12 @@ Polhemus::~Polhemus(void)
 {
 }
 
-int Polhemus::count_bits(uint16_t v) {
+int Polhemus::count_bits(uint16_t v)
+{
   int c;
   for (c = 0; v; c++)
     {
-      v &= v - 1; // clear the least significant bit set
+      v &= v - 1;  // clear the least significant bit set
     }
   return c;
 }
@@ -117,7 +119,7 @@ int Polhemus::device_read(void *pbuf, int &size, bool bTOisErr)
 void Polhemus::device_clear_input(void)
 {
   g_nrxcount = rx_buffer_size;
-  while(g_nrxcount > 0)
+  while (g_nrxcount > 0)
   {
     device_read(g_rxbuf, g_nrxcount, true);
   }
