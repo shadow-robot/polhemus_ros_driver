@@ -787,7 +787,7 @@ public:
 
   viper_sensor_frame_data_a_t * SensFrameA(int i)
   {
-    if (i < static_cast<int>SensorCount())
+    if (i < static_cast<int>(SensorCount()))
     return reinterpret_cast<viper_sensor_frame_data_a_t*>(&(sarr[i]));
     else
     return 0;
