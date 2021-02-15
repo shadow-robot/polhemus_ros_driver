@@ -617,14 +617,14 @@ public:
   {
     if (IsNull())
       return false;
-    else if (((viper_frame_header_t*)pF)->preamble == VIPER_PNO_PREAMBLE)
+    else if ((reinterpret_cast<viper_frame_header_t*>(pF))->preamble == VIPER_PNO_PREAMBLE)
       return true;
     else
       return false;
   }
   uint32_t Preamble() const
   {
-    return ((viper_frame_header_t*)pF)->preamble;
+    return (reinterpret_cast<viper_frame_header_t*>(pF))->preamble;
   }
 
   bool IsNull() const
@@ -662,7 +662,7 @@ public:
   {
     if (IsCmd() && !IsNull())
     {
-      return ((viper_full_header_t*)pF)->size - sizeof(viper_header_t) - CRC_BYTES;
+      return (reinterpret_cast<viper_full_header_t*>(pF))->size - sizeof(viper_header_t) - CRC_BYTES;
     }
     else
       return 0;
@@ -678,7 +678,8 @@ public:
   viper_sensor_frame_data_t *pSen(int32_t s = 0)
   {
     if (IsPno() && !IsNull())
-      return (viper_sensor_frame_data_t *)&pF[sizeof(viper_pno_full_header_t) + (s * sizeof(viper_sensor_frame_data_t))];
+      return reinterpret_cast<viper_sensor_frame_data_t *>
+        (&pF[sizeof(viper_pno_full_header_t) + (s * sizeof(viper_sensor_frame_data_t))]);
     else
       return 0;
   }
