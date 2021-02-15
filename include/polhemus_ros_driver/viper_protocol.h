@@ -143,50 +143,50 @@ viper_pno_frame_t;
 
 typedef enum viper_cmd_actions_e
 {
-	CMD_ACTION_SET = 0,
-	CMD_ACTION_GET,
-	CMD_ACTION_RESET,
-	CMD_ACTION_ACK,
-	CMD_ACTION_NAK,
-	CMD_ACTION_MAX
+  CMD_ACTION_SET = 0,
+  CMD_ACTION_GET,
+  CMD_ACTION_RESET,
+  CMD_ACTION_ACK,
+  CMD_ACTION_NAK,
+  CMD_ACTION_MAX
 }
 viper_cmd_actions_e;
 
 typedef enum viper_cmds_e
 {
-	CMD_HEMISPHERE,
-	CMD_FILTER,
-	CMD_TIP_OFFSET,
-	CMD_INCREMENT,
-	CMD_BORESIGHT,
-	CMD_SENSOR_WHOAMI,
-	CMD_FRAMERATE,
-	CMD_UNITS,
-	CMD_SRC_ROTATION,
-	CMD_SYNC_MODE,
-	CMD_STATION_MAP,
-	CMD_STYLUS,
-	CMD_SEUID,
-	CMD_DUAL_OUTPUT,
-	CMD_SERIAL_CONFIG,
-	CMD_BLOCK_CFG,
-	CMD_FRAME_COUNT,
-	CMD_BIT,
-	CMD_SINGLE_PNO,
-	CMD_CONTINUOUS_PNO,
-	CMD_WHOAMI,
+  CMD_HEMISPHERE,
+  CMD_FILTER,
+  CMD_TIP_OFFSET,
+  CMD_INCREMENT,
+  CMD_BORESIGHT,
+  CMD_SENSOR_WHOAMI,
+  CMD_FRAMERATE,
+  CMD_UNITS,
+  CMD_SRC_ROTATION,
+  CMD_SYNC_MODE,
+  CMD_STATION_MAP,
+  CMD_STYLUS,
+  CMD_SEUID,
+  CMD_DUAL_OUTPUT,
+  CMD_SERIAL_CONFIG,
+  CMD_BLOCK_CFG,
+  CMD_FRAME_COUNT,
+  CMD_BIT,
+  CMD_SINGLE_PNO,
+  CMD_CONTINUOUS_PNO,
+  CMD_WHOAMI,
   CMD_INITIALIZE,
-	CMD_PERSIST,
-	CMD_ENABLE_MAP,
-	CMD_FTT_MODE,
-	CMD_MAP_STATUS,
-	CMD_SENSOR_BLOCKCFG,
-	CMD_SOURCE_CFG,
-	CMD_PREDFILTER_CFG,
-	CMD_PREDFILTER_EXT,
-	CMD_SRC_SELECT,
-	CMD_SNS_ORIGIN,
-	CMD_SNS_VIRTUAL,
+  CMD_PERSIST,
+  CMD_ENABLE_MAP,
+  CMD_FTT_MODE,
+  CMD_MAP_STATUS,
+  CMD_SENSOR_BLOCKCFG,
+  CMD_SOURCE_CFG,
+  CMD_PREDFILTER_CFG,
+  CMD_PREDFILTER_EXT,
+  CMD_SRC_SELECT,
+  CMD_SNS_ORIGIN,
+  CMD_SNS_VIRTUAL,
   CMD_MAX
 }
 viper_cmds_e;
@@ -196,7 +196,8 @@ typedef struct __attribute__((packed)) viper_station_map_t
   union
   {
     uint32_t stamap;
-    struct {
+    struct
+    {
       uint32_t sensor_map : 16;
       uint32_t reserved1 : 8;
       uint32_t source_map : 4;
@@ -265,8 +266,9 @@ public:
 
   void * operator ()(CVPcmd & rv)
   {
-    return (void*) &rv.preamble;
+    return reinterpret_cast<void*>(&rv.preamble);
   }
+
   const void * operator ()(const CVPcmd & rv)
   {
     return (const void*) &rv.preamble;
