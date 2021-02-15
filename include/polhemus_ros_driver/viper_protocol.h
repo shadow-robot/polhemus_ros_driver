@@ -131,7 +131,7 @@ typedef enum viper_cmd_actions_e
 	CMD_ACTION_ACK,
 	CMD_ACTION_NAK,
 	CMD_ACTION_MAX
- } viper_cmd_actions_e;
+} viper_cmd_actions_e;
 
 typedef enum viper_cmds_e
 {
@@ -173,23 +173,23 @@ typedef enum viper_cmds_e
 
 typedef struct __attribute__((packed)) viper_station_map_t
 {
-    union
-    {
-        uint32_t stamap;
-        struct {
-            uint32_t sensor_map : 16;
-            uint32_t reserved1 : 8;
-            uint32_t source_map : 4;
-            uint32_t reserved2 : 4;
-        } bf;
-    };
-}viper_station_map_t;
+  union
+  {
+    uint32_t stamap;
+    struct {
+      uint32_t sensor_map : 16;
+      uint32_t reserved1 : 8;
+      uint32_t source_map : 4;
+      uint32_t reserved2 : 4;
+    } bf;
+  };
+} viper_station_map_t;
 
 typedef struct __attribute__((packed)) viper_units_config_t
 {
-    uint32_t pos_units;
-    uint32_t ori_units;
-}viper_units_config_t;
+  uint32_t pos_units;
+  uint32_t ori_units;
+} viper_units_config_t;
 
 typedef struct __attribute__((packed)) viper_hemisphere_config_t
 {
@@ -205,7 +205,7 @@ typedef struct __attribute__((packed)) viper_src_select_cfg_t
 typedef struct __attribute__((packed)) viper_boresight_config_t
 {
     float params[4];
-}viper_boresight_config_t;
+} viper_boresight_config_t;
 
 typedef enum viper_ori_units_e
 {
@@ -337,9 +337,7 @@ public:
 
   void * ppay;
   uint32_t szpay;
-
 };
-
 
 class CStationMap: public viper_station_map_t
 {
@@ -406,8 +404,8 @@ public:
       if ((1 << i) & bf.source_map)
         src_detected_count++;
     }
-
   }
+
   void CountEnabled()
   {
     CountDetected();
@@ -418,21 +416,25 @@ public:
         en_count++;
     }
   }
+
   void InitEnabled()
   {
     en_map = bf.sensor_map;
     CountEnabled();
   }
+
   void InitDefault()
   {
     memcpy(this, &Default, sizeof(viper_station_map_t));
     CountDetected();
     InitEnabled();
   }
+
   uint32_t SensorMap()
   {
     return bf.sensor_map;
   }
+
   uint32_t SourceMap()
   {
     return bf.source_map;
@@ -470,7 +472,6 @@ public:
   static viper_station_map_t Default;
 };
 
-
 class CFrameInfo : public vpFrameInfo
 {
 public:
@@ -489,15 +490,6 @@ public:
     Init();
     pF = p; uiSize = size; uiFCountRx = fc; iFrameErr = FE; ts = ats;
   }
-
-  //CFrameInfo(const CFrameInfo & rv)
-  //{
-  //  pF = rv.pF;
-  //  uiSize = rv.uiSize;
-  //  uiFCountRx = rv.uiFCountRx;
-  //  iFrameErr = rv.iFrameErr;
-  //  ts = rv.ts;
-  //}
 
   CFrameInfo(vpFrameInfo & rv)
   {
@@ -603,7 +595,6 @@ public:
     return ((viper_frame_header_t*)pF)->preamble;
   }
 
-
   bool IsNull() const
   {
     return (pF == 0);
@@ -626,7 +617,6 @@ public:
     else
       return false;
   }
-
 
   uint8_t * PCmdPayload()
   {

@@ -58,7 +58,8 @@
 
 #define FIRST_STATION_NUMBER_LINKED_TO_LEFT_HAND 8
 
-typedef struct _vp_usbdevinfo {
+typedef struct _vp_usbdevinfo
+{
   int usbDevIndex;
   uint8_t usbBusNum;
   uint8_t usbDevNum;
@@ -69,9 +70,11 @@ typedef struct _vp_usbdevinfo {
   uint8_t ep_out;
   uint16_t epout_maxPktsize;
 
-  _vp_usbdevinfo() : usbDevIndex(-1), usbBusNum(0), usbDevNum(0), usbVID(0), usbPID(0), usbNumInterfaces(0), ep_in(0), ep_out(0), epout_maxPktsize(64) {};
-
-}vp_usbdevinfo;
+  _vp_usbdevinfo() : usbDevIndex(-1), usbBusNum(0), usbDevNum(0), usbVID(0),
+  usbPID(0), usbNumInterfaces(0), ep_in(0), ep_out(0), epout_maxPktsize(64)
+  {
+  };
+} vp_usbdevinfo;
 
 static bool keep_main_loop_running;
 
@@ -95,7 +98,6 @@ void release_usb(libusb_device_handle **usbhnd, vp_usbdevinfo &usbinfo)
   libusb_close (*usbhnd);
   *usbhnd = 0;
   usbinfo = vp_usbdevinfo();
-
 }
 
 void find_endpoints(libusb_config_descriptor *conf_desc, int iface, uint8_t & ep_in, uint8_t & ep_out,
@@ -125,7 +127,6 @@ void find_endpoints(libusb_config_descriptor *conf_desc, int iface, uint8_t & ep
           }
         }
       }
-
     }
   }
 }
@@ -200,7 +201,6 @@ int discover_vip_pid(libusb_device_handle **usbhnd, vp_usbdevinfo &usbinfo, uint
     return RETURN_ERROR;
   }
 
-
   for (int d = 0; d < (int) arrcount; d++)
   {
     libusb_device * dev = devlist[arrDevInfo[d].usbDevIndex];
@@ -212,7 +212,6 @@ int discover_vip_pid(libusb_device_handle **usbhnd, vp_usbdevinfo &usbinfo, uint
 
     if ((retval = libusb_open(dev, &handle)))
     {
-      ;
     }
     else if ((retval = libusb_get_config_descriptor(dev, 0, &conf_desc)))
     {
@@ -226,7 +225,6 @@ int discover_vip_pid(libusb_device_handle **usbhnd, vp_usbdevinfo &usbinfo, uint
       {
         if ((retval = libusb_claim_interface(handle, (int) i)))
         {
-          ;
         }
         else
         {
@@ -369,7 +367,7 @@ int main(int argc, char** argv) {
     ROS_INFO("[POLHEMUS] Found %d stations.", device->station_count);
     nstations = device->station_count;
   }
-  
+
   // define quaternion data type
   ROS_INFO("[POLHEMUS] Setting data type to quaternion");
   retval = device->define_data_type(DATA_TYPE_QUAT);
@@ -495,7 +493,7 @@ int main(int argc, char** argv) {
         if (product_type == "viper")
         {
           // We publish the first 5 sensors with frame_id polhemus_base_0 since they are
-          // linked to the first source and to the right hand. The rest of the sensors 
+          // linked to the first source and to the right hand. The rest of the sensors
           // are linked to the second source placed on the left hand.
           // TODO: check if there is there is a way to get that info from api
           if (station_number < FIRST_STATION_NUMBER_LINKED_TO_LEFT_HAND)

@@ -10,8 +10,11 @@
 
 #ifdef DEBUG
 #include <stdio.h>
-#define warn(as...) { fprintf(stderr, "%s:%d: ", __FILE__, __LINE__); \
-    fprintf(stderr, as); }
+#define warn(as...) \
+{ \
+  fprintf(stderr, "%s:%d: ", __FILE__, __LINE__); \
+  fprintf(stderr, as); \
+}
 #else
 #define warn(as...)
 #endif
@@ -205,7 +208,6 @@ int Viper::request_num_of_stations(void)
         CStationMap cmap(reinterpret_cast<viper_station_map_t*>
           (fi.PCmdPayload()));
         cstamap = cmap;
-
       }
     }
   }

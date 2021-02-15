@@ -220,11 +220,11 @@ int Liberty::set_boresight(bool reset_origin, int station, float arg_1, float ar
 
   if (station == -1)
   {
-    snprintf((char *)command, size, "b*,%d,%d,%d,%d\r", int(arg_1), int(arg_2), int(arg_3), reset_origin);
+    snprintf(reinterpret_cast<char *>(command), size, "b*,%d,%d,%d,%d\r", int(arg_1), int(arg_2), int(arg_3), reset_origin);
   }
   else
   {
-    snprintf((char *)command, size, "b%d,%d,%d,%d,%d\r", station, int(arg_1), int(arg_2), int(arg_3), reset_origin);
+    snprintf(reinterpret_cast<char *>(command), size, "b%d,%d,%d,%d,%d\r", station, int(arg_1), int(arg_2), int(arg_3), reset_origin);
   }
 
   size = 1;
@@ -274,7 +274,7 @@ int Liberty::send_saved_calibration(int number_of_hands)
       ROS_WARN("[POLHEMUS] No previous calibration data available, please calibrate before proceeding!!!");
       break;
     }
-    
+
     ROS_INFO("[POLHEMUS] Reading saved calibration data and calibrating station %d...", station_id);
 
     // retrieve calibration angles
@@ -342,10 +342,10 @@ bool Liberty::calibrate(std::string boresight_calibration_file)
 
   std::string cmd("rosparam dump ");
   cmd += boresight_calibration_file + " /calibration";
-  
+
   int dump_calibration_param_status = system(cmd.c_str());
   if (dump_calibration_param_status < 0)
-  { 
+  {
     ROS_ERROR("[POLHEMUS] Error saving calibration.");
     return -1;
   }
