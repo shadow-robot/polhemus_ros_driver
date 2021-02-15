@@ -389,7 +389,7 @@ public:
     CountDetected();
   }
 
-  CStationMap(const viper_station_map_t * prv)
+  explicit CStationMap(const viper_station_map_t * prv)
   {
     stamap = prv->stamap;
     CountDetected();
@@ -523,7 +523,7 @@ public:
     pF = p; uiSize = size; uiFCountRx = fc; iFrameErr = FE; ts = ats;
   }
 
-  CFrameInfo(vpFrameInfo & rv)
+  explicit CFrameInfo(vpFrameInfo & rv)
   {
     memcpy(&pF, &rv.pF, sizeof(vpFrameInfo));
   }
@@ -707,13 +707,13 @@ public:
     memcpy(&hdr, &rv.hdr, sizeof(viper_pno_t));
   }
 
-  CVPSeuPno(const viper_pno_t * prv)
+  explicit CVPSeuPno(const viper_pno_t * prv)
   {
     Init();
     memcpy(&hdr, prv, sizeof(viper_pno_t));
   }
 
-  CVPSeuPno(uint8_t *p)
+  explicit CVPSeuPno(uint8_t *p)
   {
     Init();
     memcpy(&hdr, p, sizeof(viper_pno_t));
