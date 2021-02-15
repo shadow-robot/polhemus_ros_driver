@@ -74,11 +74,13 @@ typedef struct _vp_usbdevinfo
   usbPID(0), usbNumInterfaces(0), ep_in(0), ep_out(0), epout_maxPktsize(64)
   {
   };
-} vp_usbdevinfo;
+}
+vp_usbdevinfo;
 
 static bool keep_main_loop_running;
 
-static void signal_handler(int s) {
+static void signal_handler(int s)
+{
   switch (s) {
   case SIGINT:
     keep_main_loop_running = false;

@@ -712,7 +712,7 @@ public:
     if (!p)
     return 0;
 
-    viper_frame_header_t *ph = (viper_frame_header_t*)p;
+    viper_frame_header_t *ph = reinterpret_cast<viper_frame_header_t*>(p);
     if (ph->preamble != VIPER_PNO_PREAMBLE)
     return 0;
 
@@ -733,10 +733,6 @@ public:
   {
     if (!p)
     return 0;
-
-    //viper_frame_header_t *ph = (viper_frame_header_t*)p;
-    //if (ph->preamble != VIPER_PNO_PREAMBLE)
-    //  return 0;
 
     Init();
     uint32_t index = 0;
@@ -769,7 +765,7 @@ public:
 
   viper_sensor_frame_data_t * SensFrame(int i)
   {
-    if (i < (int)SensorCount())
+    if (i < static_cast<int>(SensorCount()))
     return &(sarr[i]);
     else
     return 0;

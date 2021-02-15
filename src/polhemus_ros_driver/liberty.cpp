@@ -1,4 +1,3 @@
-
 /*
 
  Communication library for a Polhemus Liberty v2 (tm) Motion tracker
@@ -22,8 +21,9 @@
 
 */
 
-
 #include <polhemus_ros_driver/liberty.hpp>
+
+#include <string>
 
 #ifdef DEBUG
 #include <stdio.h>
@@ -220,11 +220,15 @@ int Liberty::set_boresight(bool reset_origin, int station, float arg_1, float ar
 
   if (station == -1)
   {
-    snprintf(reinterpret_cast<char *>(command), size, "b*,%d,%d,%d,%d\r", int(arg_1), int(arg_2), int(arg_3), reset_origin);
+    snprintf(reinterpret_cast<char *>(command), size, "b*,%d,%d,%d,%d\r",
+      static_cast<int>(arg_1), static_cast<int>(arg_2),
+      static_cast<int>(arg_3), reset_origin);
   }
   else
   {
-    snprintf(reinterpret_cast<char *>(command), size, "b%d,%d,%d,%d,%d\r", station, int(arg_1), int(arg_2), int(arg_3), reset_origin);
+    snprintf(reinterpret_cast<char *>(command), size, "b%d,%d,%d,%d,%d\r",
+      station, static_cast<int>(arg_1), static_cast<int>(arg_2),
+      static_cast<int>(arg_3), reset_origin);
   }
 
   size = 1;
@@ -279,15 +283,18 @@ int Liberty::send_saved_calibration(int number_of_hands)
 
     // retrieve calibration angles
     float calibrated_roll;
-    std::string calibrated_roll_param_name = "/calibration/" + name + "_calibration/rotations/station_" + std::to_string(station_id) + "/calibrated_roll";
+    std::string calibrated_roll_param_name = "/calibration/" + name +
+      "_calibration/rotations/station_" + std::to_string(station_id) + "/calibrated_roll";
     nh->getParam(calibrated_roll_param_name, calibrated_roll);
 
     float calibrated_pitch;
-    std::string calibrated_pitch_param_name = "/calibration/" + name + "_calibration/rotations/station_" + std::to_string(station_id) + "/calibrated_pitch";
+    std::string calibrated_pitch_param_name = "/calibration/" + name +
+      "_calibration/rotations/station_" + std::to_string(station_id) + "/calibrated_pitch";
     nh->getParam(calibrated_pitch_param_name, calibrated_pitch);
 
     float calibrated_yaw;
-    std::string calibrated_yaw_param_name = "/calibration/" + name + "_calibration/rotations/station_" + std::to_string(station_id) + "/calibrated_yaw";
+    std::string calibrated_yaw_param_name = "/calibration/" + name +
+      "_calibration/rotations/station_" + std::to_string(station_id) + "/calibrated_yaw";
     nh->getParam(calibrated_yaw_param_name, calibrated_yaw);
 
     // retrieve current sensor orientation
