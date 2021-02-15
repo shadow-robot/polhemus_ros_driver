@@ -230,26 +230,26 @@ viper_src_select_cfg_t;
 
 typedef struct __attribute__((packed)) viper_boresight_config_t
 {
-    float params[4];
+  float params[4];
 }
 viper_boresight_config_t;
 
 typedef enum viper_ori_units_e
 {
-    ORI_EULER_DEGREE = 0,
-    ORI_EULER_RADIAN,
-    ORI_QUATERNION,
-    ORI_MAX
+  ORI_EULER_DEGREE = 0,
+  ORI_EULER_RADIAN,
+  ORI_QUATERNION,
+  ORI_MAX
 }
 viper_ori_units_e;
 
 typedef enum viper_pos_units_e
 {
-    POS_INCH = 0,
-    POS_FOOT,
-    POS_CM,
-    POS_METER,
-    POS_MAX
+  POS_INCH = 0,
+  POS_FOOT,
+  POS_CM,
+  POS_METER,
+  POS_MAX
 }
 viper_pos_units_e;
 
@@ -309,7 +309,8 @@ public:
       ppay = pp;
       szpay = szp;
       size += szp;
-    } else
+    }
+    else
     {
       ppay = 0;
       szpay = 0;
@@ -683,7 +684,7 @@ public:
   {
     if (IsPno() && !IsNull())
     {
-      return ((viper_pno_full_header_t*)pF)->size - CRC_BYTES;
+      return (reinterpret_cast<viper_pno_full_header_t*>(pF))->size - CRC_BYTES;
     }
     else
       return 0;
