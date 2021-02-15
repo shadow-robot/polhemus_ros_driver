@@ -5,6 +5,7 @@
 
 from math import pi
 
+
 class SourcePoseCalibration(object):
     def __init__(self):
         self.CONST_SOURCE_ORIENTATION = [0, 0.1, -pi]
@@ -15,7 +16,11 @@ class SourcePoseCalibration(object):
 
     def calibrate(self, knuckle_thickness, knuckle_to_source):
         self.check_if_values_within_range(knuckle_thickness, knuckle_to_source)
-        return [-(knuckle_to_source + self.CONST_SOURCE_X_OFFSET), 0, knuckle_thickness / 2 + self.CONST_SOURCE_Z_OFFSET] + self.CONST_SOURCE_ORIENTATION
+        return [
+            -(knuckle_to_source + self.CONST_SOURCE_X_OFFSET),
+            0,
+            knuckle_thickness / 2 + self.CONST_SOURCE_Z_OFFSET
+        ] + self.CONST_SOURCE_ORIENTATION
 
     # Currently orientation does not affect decalibration
     def decalibrate(self, x, y, z):

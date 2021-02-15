@@ -6,6 +6,8 @@
 #include <polhemus_ros_driver/viper.hpp>
 #include <ros/console.h>
 
+#include <string>
+
 #ifdef DEBUG
 #include <stdio.h>
 #define warn(as...) { fprintf(stderr, "%s:%d: ", __FILE__, __LINE__); \
@@ -14,10 +16,13 @@
 #define warn(as...)
 #endif
 
-#define VALIDATE_CONTEXT(pctx, ctx) {pctx=(CVPcontext*)ctx;if (!(CVPcontext::findPctx(pctx))) return E_VPERR_INVALID_CONTEXT; }
+#define VALIDATE_CONTEXT(pctx, ctx) { \
+  pctx = reinterpret_cast<CVPcontext*>(ctx); \
+  if (!(CVPcontext::findPctx(pctx))) return E_VPERR_INVALID_CONTEXT; \
+}
 
-
-Viper::Viper(std::string name, uint16_t rx_buffer_size, uint16_t tx_buffer_size) : Polhemus(name, rx_buffer_size, tx_buffer_size)
+Viper::Viper(std::string name, uint16_t rx_buffer_size, uint16_t tx_buffer_size)
+    : Polhemus(name, rx_buffer_size, tx_buffer_size)
 {
 }
 
@@ -117,7 +122,8 @@ int Viper::fill_pno_data(geometry_msgs::TransformStamped *transform, int &index)
   // Set translation (in metres)
   int retval = 0;
 
-  transform->child_frame_id = "polhemus_station_" + std::to_string(pno.SensFrame(index)->SFinfo.bfSnum);
+  transform->child_frame_id = "polhemus_station_" +
+    std::to_string(pno.SensFrame(index)->SFinfo.bfSnum);
   transform->transform.translation.x = pno.SensFrame(index)->pno.pos[0];
   transform->transform.translation.y = pno.SensFrame(index)->pno.pos[1];
   transform->transform.translation.z = pno.SensFrame(index)->pno.pos[2];
@@ -196,7 +202,8 @@ int Viper::request_num_of_stations(void)
 
       if (fi.cmd() == CMD_STATION_MAP)
       {
-        CStationMap cmap((viper_station_map_t*) fi.PCmdPayload());
+        CStationMap cmap(reinterpret_cast<viper_station_map_t*>
+          (fi.PCmdPayload()));
         cstamap = cmap;
 
       }
@@ -231,7 +238,8 @@ int Viper::set_hemisphere(int x, int y, int z)
   return retval;
 }
 
-int Viper::set_boresight(bool reset_origin, int station, float arg_1, float arg_2, float arg_3, float arg_4)
+int Viper::set_boresight(bool reset_origin, int station,
+    float arg_1, float arg_2, float arg_3, float arg_4)
 {
   int retval = RETURN_ERROR;
   viper_cmds_e cmd_type = CMD_BORESIGHT;
@@ -243,7 +251,8 @@ int Viper::set_boresight(bool reset_origin, int station, float arg_1, float arg_
   cfg.params[3] = arg_4;
   CVPcmd viper_command;
 
-  viper_command.Fill(cmd_type, action, station, reset_origin, &cfg, sizeof(cfg));
+  viper_command.Fill(cmd_type, action, station,
+    reset_origin, &cfg, sizeof(cfg));
   viper_command.Prepare(g_txbuf, g_ntxcount);
 
   int nBytes = g_ntxcount;
@@ -290,7 +299,8 @@ tf2::Quaternion Viper::get_station_quaternion(int station_id)
   }
   else
   {
-    throw std::runtime_error("Could not retrieve current sensor orientation, empty sensor frame!");
+    throw std::runtime_error(
+      "Could not retrieve current sensor orientation, empty sensor frame!");
   }
 }
 
@@ -382,15 +392,21 @@ int Viper::send_saved_calibration(int number_of_hands)
 
     // retrieve calibration angles
     float calibrated_roll;
-    std::string calibrated_roll_param_name = "/calibration/" + name + "_calibration/rotations/station_" + std::to_string(station_id) + "/calibrated_roll";
+    std::string calibrated_roll_param_name = "/calibration/" + name +
+      "_calibration/rotations/station_" + std::to_string(station_id) +
+      "/calibrated_roll";
     nh->getParam(calibrated_roll_param_name, calibrated_roll);
 
     float calibrated_pitch;
-    std::string calibrated_pitch_param_name = "/calibration/" + name + "_calibration/rotations/station_" + std::to_string(station_id) + "/calibrated_pitch";
+    std::string calibrated_pitch_param_name = "/calibration/" + name +
+      "_calibration/rotations/station_" + std::to_string(station_id) +
+      "/calibrated_pitch";
     nh->getParam(calibrated_pitch_param_name, calibrated_pitch);
 
     float calibrated_yaw;
-    std::string calibrated_yaw_param_name = "/calibration/" + name + "_calibration/rotations/station_" + std::to_string(station_id) + "/calibrated_yaw";
+    std::string calibrated_yaw_param_name = "/calibration/" + name +
+      "_calibration/rotations/station_" + std::to_string(station_id) +
+      "/calibrated_yaw";
     nh->getParam(calibrated_yaw_param_name, calibrated_yaw);
 
     // retrieve current sensor orientation
@@ -447,10 +463,10 @@ bool Viper::calibrate(std::string boresight_calibration_file)
 
   std::string cmd("rosparam dump ");
   cmd += boresight_calibration_file + " /calibration";
-  
+
   int dump_calibration_param_status = system(cmd.c_str());
   if (dump_calibration_param_status < 0)
-  { 
+  {
     ROS_ERROR("[POLHEMUS] Error saving calibration.");
     return -1;
   }
