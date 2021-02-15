@@ -321,7 +321,6 @@ public:
   {
     CVPcmd *ptx = reinterpret_cast<CVPcmd*>(buf);
 
-    //*ptx = *this;
     uint32_t crc_count = sizeof(viper_full_header_t);
     memcpy(ptx, (const void *) this, sizeof(viper_full_header_t));
     if (ppay)
@@ -384,17 +383,14 @@ public:
 
   CStationMap(const CStationMap & rv)
   {
-    //memcpy(&sensor_map, &rv.sensor_map, sizeof(STATION_MAP));
     stamap = rv.stamap;
     en_count = rv.en_count;
     en_map = rv.en_map;
     CountDetected();
-
   }
 
   CStationMap(const viper_station_map_t * prv)
   {
-    //memcpy(&station_map, prv, sizeof(STATION_MAP_CONFIG));
     stamap = prv->stamap;
     CountDetected();
     en_count = sns_detected_count;
@@ -405,10 +401,12 @@ public:
   {
     return (viper_station_map_t *) this;
   }
+
   operator void *()
   {
-    return (void *) ((viper_station_map_t *) this);
+    return reinterpret_cast<void *>(this);
   }
+
   bool operator ==(const viper_station_map_t *prv)
   {
     return (prv->stamap == stamap);
@@ -420,6 +418,7 @@ public:
     CountDetected();
     InitEnabled();
   }
+
   void CountDetected()
   {
     sns_detected_count = 0;
@@ -475,24 +474,27 @@ public:
     return en_map;
   }
 
-  //bool IsEnabled(int32_t sns)  { return ((1 << sns) & enabled_map) != 0; }
   bool IsDetected(int32_t sns)
   {
     return ((1 << sns) & bf.sensor_map) != 0;
   }
+
   bool IsEnabled(int32_t sns)
   {
     return ((1 << sns) & (en_map & bf.sensor_map)) != 0;
   }
+
   bool IsSrcDetected(int32_t src)
   {
     return ((1 << src) & bf.source_map) != 0;
   }
+
   uint32_t SnsDetectedCount()
   {
     CountDetected();
     return sns_detected_count;
   }
+
   void SetEnabled(uint32_t s)
   {
     en_map &= (1 << s);
