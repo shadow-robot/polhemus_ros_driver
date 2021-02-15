@@ -202,7 +202,8 @@ typedef struct __attribute__((packed)) viper_station_map_t
       uint32_t reserved1 : 8;
       uint32_t source_map : 4;
       uint32_t reserved2 : 4;
-    } bf;
+    }
+    bf;
   };
 }
 viper_station_map_t;
@@ -230,7 +231,8 @@ viper_src_select_cfg_t;
 typedef struct __attribute__((packed)) viper_boresight_config_t
 {
     float params[4];
-} viper_boresight_config_t;
+}
+viper_boresight_config_t;
 
 typedef enum viper_ori_units_e
 {
@@ -238,7 +240,8 @@ typedef enum viper_ori_units_e
     ORI_EULER_RADIAN,
     ORI_QUATERNION,
     ORI_MAX
-} viper_ori_units_e;
+}
+viper_ori_units_e;
 
 typedef enum viper_pos_units_e
 {
@@ -247,8 +250,8 @@ typedef enum viper_pos_units_e
     POS_CM,
     POS_METER,
     POS_MAX
-} viper_pos_units_e;
-
+}
+viper_pos_units_e;
 
 class CVPcmd: public viper_full_header_t
 {

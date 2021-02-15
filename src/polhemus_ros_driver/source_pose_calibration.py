@@ -31,8 +31,8 @@ class SourcePoseCalibration(object):
 
     def check_if_values_within_range(self, knuckle_thickness, knuckle_to_source):
         if (not self.knuckle_thickness_accepted_range[0] <= knuckle_thickness
-            <= self.knuckle_thickness_accepted_range[1]):
+                <= self.knuckle_thickness_accepted_range[1]):
             raise ValueError("Knuckle thickness outside of accepted range")
         if (not self.knuckle_to_source_accepted_range[0] <= knuckle_to_source
-            <= self.knuckle_to_source_accepted_range[1]):
+                <= self.knuckle_to_source_accepted_range[1]):
             raise ValueError("Knuckle to source value outside of accepted range")
