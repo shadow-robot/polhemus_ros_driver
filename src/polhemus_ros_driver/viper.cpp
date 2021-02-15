@@ -19,7 +19,8 @@
 #define warn(as...)
 #endif
 
-#define VALIDATE_CONTEXT(pctx, ctx) { \
+#define VALIDATE_CONTEXT(pctx, ctx) \
+{ \
   pctx = reinterpret_cast<CVPcontext*>(ctx); \
   if (!(CVPcontext::findPctx(pctx))) return E_VPERR_INVALID_CONTEXT; \
 }

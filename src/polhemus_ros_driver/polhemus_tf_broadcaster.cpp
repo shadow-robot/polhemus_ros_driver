@@ -81,7 +81,8 @@ static bool keep_main_loop_running;
 
 static void signal_handler(int s)
 {
-  switch (s) {
+  switch (s)
+  {
   case SIGINT:
     keep_main_loop_running = false;
     break;
@@ -97,7 +98,7 @@ void release_usb(libusb_device_handle **usbhnd, vp_usbdevinfo &usbinfo)
   for (int i = 0; i < usbinfo.usbNumInterfaces; i++)
     r = libusb_release_interface(*usbhnd, i);
 
-  libusb_close (*usbhnd);
+  libusb_close(*usbhnd);
   *usbhnd = 0;
   usbinfo = vp_usbdevinfo();
 }
@@ -120,7 +121,8 @@ void find_endpoints(libusb_config_descriptor *conf_desc, int iface, uint8_t & ep
           {
             ep_in = p_ep->bEndpointAddress;
           }
-        } else
+        }
+        else
         {
           if (!ep_out)
           {
@@ -140,7 +142,7 @@ int create_vip_list(libusb_context* pctx, libusb_device **&devlist, uint16_t vid
   int retval = RETURN_ERROR;
   ssize_t devcount = libusb_get_device_list(pctx, &devlist);
   if (devcount < 0)
-    return (int) devcount; // returns error code < 0
+    return static_cast<int>(devcount);  // returns error code < 0
 
   libusb_device *dev;
   int iFoundCount = 0;
@@ -159,7 +161,7 @@ int create_vip_list(libusb_context* pctx, libusb_device **&devlist, uint16_t vid
       iFoundCount++;
       iFoundArrIndex++;
       // populate the array if size permits
-      if (iFoundCount <= (int) arrcount)
+      if (iFoundCount <= static_cast<int>(arrcount))
       {
         vp_usbdevinfo * p = &arrDevInfo[iFoundArrIndex];
         p->usbDevIndex = i;
@@ -203,7 +205,7 @@ int discover_vip_pid(libusb_device_handle **usbhnd, vp_usbdevinfo &usbinfo, uint
     return RETURN_ERROR;
   }
 
-  for (int d = 0; d < (int) arrcount; d++)
+  for (int d = 0; d < static_cast<int>(arrcount); d++)
   {
     libusb_device * dev = devlist[arrDevInfo[d].usbDevIndex];
     libusb_device_handle * handle = 0;
@@ -232,7 +234,7 @@ int discover_vip_pid(libusb_device_handle **usbhnd, vp_usbdevinfo &usbinfo, uint
         {
           claimed_ifaces++;
 
-          find_endpoints(conf_desc, (int) i, ep_in, ep_out, out_pktsize);
+          find_endpoints(conf_desc, static_cast<int>(i), ep_in, ep_out, out_pktsize);
         }
       }
 
@@ -269,7 +271,8 @@ int discover_vip_pid(libusb_device_handle **usbhnd, vp_usbdevinfo &usbinfo, uint
   return retval;
 }
 
-int main(int argc, char** argv) {
+int main(int argc, char** argv)
+{
   libusb_device_handle *g_usbhnd = 0;
   vp_usbdevinfo g_usbinfo;
   int i, nstations;
@@ -356,7 +359,7 @@ int main(int argc, char** argv) {
     return -1;
   }
 
-  device->device_binary_mode(); // activate binary mode
+  device->device_binary_mode();  // activate binary mode
 
   retval = device->request_num_of_stations();
   if (RETURN_ERROR == retval)
@@ -443,7 +446,8 @@ int main(int argc, char** argv) {
   int station_number = 0;
 
   // Start main loop
-  while(ros::ok()) {
+  while (ros::ok())
+  {
     if (!keep_main_loop_running)
       break;
 

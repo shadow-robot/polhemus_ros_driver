@@ -289,7 +289,7 @@ public:
 
   void Prepare(uint8_t buf[], int & txbytes)
   {
-    CVPcmd *ptx = (CVPcmd*) buf;
+    CVPcmd *ptx = reinterpret_cast<CVPcmd*>(buf);
 
     //*ptx = *this;
     uint32_t crc_count = sizeof(viper_full_header_t);
@@ -300,7 +300,7 @@ public:
       crc_count += szpay;
     }
 
-    uint32_t *pcrc = (uint32_t*) &buf[crc_count];
+    uint32_t *pcrc = reinterpret_cast<uint32_t*>(&buf[crc_count]);
     *pcrc = CalcCRC_Bytes(buf, crc_count);
 
     txbytes = crc_count + sizeof(uint32_t);
