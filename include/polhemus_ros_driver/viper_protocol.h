@@ -117,24 +117,27 @@ typedef struct __attribute__((packed)) viper_pno_t
 }
 viper_pno_t;
 
-typedef struct __attribute__((packed)) viper_frame_t {
+typedef struct __attribute__((packed)) viper_frame_t
+{
   viper_full_header_t full_header;
-    uint8_t data[];
+  uint8_t data[];
 }
 viper_frame_t;
 
-typedef struct __attribute__((packed)) viper_pno_full_header_t {
-    uint32_t preamble;
-    uint32_t size;
-    viper_pno_header_t command_header;
+typedef struct __attribute__((packed)) viper_pno_full_header_t
+{
+  uint32_t preamble;
+  uint32_t size;
+  viper_pno_header_t command_header;
 }
 viper_pno_full_header_t;
 
-typedef struct __attribute__((packed)) viper_pno_frame_t {
-    uint32_t preamble;
-    uint32_t size;
-    viper_pno_header_t header;
-    viper_pno_data_t pno_data[];
+typedef struct __attribute__((packed)) viper_pno_frame_t
+{
+  uint32_t preamble;
+  uint32_t size;
+  viper_pno_header_t header;
+  viper_pno_data_t pno_data[];
 }
 viper_pno_frame_t;
 
@@ -277,14 +280,14 @@ public:
 
   operator viper_full_header_t *()
   {
-    return (viper_full_header_t *) this;
+    return reinterpret_cast<viper_full_header_t *>(this);
   }
 
   void Init(uint32_t pre = VIPER_CMD_PREAMBLE)
   {
     ppay = 0;
     szpay = 0;
-    preamble = pre; // VIPER_CMD_PREAMBLE;
+    preamble = pre;  // VIPER_CMD_PREAMBLE;
 
     size = sizeof(viper_header_t) + CRC_BYTES;
   }
@@ -708,7 +711,9 @@ public:
   }
 
   operator viper_pno_t * ()
-  { return (viper_pno_t *)this;}
+  {
+    return reinterpret_cast<viper_pno_t *>(this);
+  }
 
   CVPSeuPno & operator= (const CVPSeuPno & rv)
   {

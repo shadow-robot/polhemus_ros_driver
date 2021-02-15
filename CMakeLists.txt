@@ -13,6 +13,7 @@ endif()
 
 find_package(catkin REQUIRED COMPONENTS
   genmsg
+  std_msgs
   geometry_msgs
   tf2
   tf2_ros
