@@ -27,18 +27,23 @@
 
 #ifdef DEBUG
 #include <stdio.h>
-#define warn(as...) { fprintf(stderr, "%s:%d: ", __FILE__, __LINE__); \
-    fprintf(stderr, as); }
+#define warn(as...) \
+{ \
+  fprintf(stderr, "%s:%d: ", __FILE__, __LINE__); \
+  fprintf(stderr, as); \
+}
 #else
 #define warn(as...)
 #endif
 
-
-Liberty::Liberty(std::string name, uint16_t rx_buffer_size, uint16_t tx_buffer_size) : Polhemus(name, rx_buffer_size, tx_buffer_size)
+Liberty::Liberty(std::string name, uint16_t rx_buffer_size, uint16_t tx_buffer_size)
+    : Polhemus(name, rx_buffer_size, tx_buffer_size)
 {
 }
 
-Liberty::~Liberty(void) {}
+Liberty::~Liberty(void)
+{
+}
 
 /** this resets previous `c' commands and puts the device in binary mode
  *
@@ -67,7 +72,7 @@ int Liberty::device_binary_mode(void)
 
 void Liberty::generate_data_structure(void)
 {
-  stations = (liberty_pno_frame_t*) (malloc(sizeof(liberty_pno_frame_t) * station_count));
+  stations = reinterpret_cast<liberty_pno_frame_t*>(malloc(sizeof(liberty_pno_frame_t) * station_count));
 }
 
 int Liberty::device_data_mode(data_mode_e mode)
@@ -198,7 +203,7 @@ int Liberty::set_hemisphere(int x, int y, int z)
 
   int buf_cmd_size = initial_cmd_size + negative_sign_counter;
   unsigned char command[buf_cmd_size];
-  sprintf((char *)command, "h*,%d,%d,%d\r", x, y, z);
+  snprintf(reinterpret_cast<char *>(command), sizeof(command), "h*,%d,%d,%d\r", x, y, z);
 
   int size = sizeof(command)-1;
 
