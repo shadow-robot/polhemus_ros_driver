@@ -25,6 +25,7 @@
   <depend>tf2</depend>
   <depend>tf2_ros</depend>
   <depend>roscpp</depend>
+  <depend>std_msgs</depend>
   <depend>geometry_msgs</depend>
   <depend>libusb-1.0</depend>
   <depend>fxload</depend>

@@ -21,7 +21,8 @@ typedef struct vpFrameInfo
     uint32_t uiFCountRx;
     int32_t iFrameErr;
     uint64_t ts;
-} vpFrameInfo;
+}
+vpFrameInfo;
 
 typedef struct __attribute__((packed)) viper_header_t
 {
@@ -30,33 +31,38 @@ typedef struct __attribute__((packed)) viper_header_t
     uint32_t action;
     uint32_t arg1;
     uint32_t arg2;
-} viper_header_t;
+}
+viper_header_t;
 
 typedef struct __attribute__((packed)) viper_frame_header_t
 {
     uint32_t preamble;
     uint32_t size;
-}viper_frame_header_t;
+}
+viper_frame_header_t;
 
 typedef struct __attribute__((packed)) viper_full_header_t
 {
     uint32_t preamble;
     uint32_t size;
     viper_header_t command_header;
-} viper_full_header_t;
+}
+viper_full_header_t;
 
 typedef struct __attribute__((packed)) viper_pno_data_t
 {
     float pos[3];
     float ori[4];
-}viper_pno_data_t;
+}
+viper_pno_data_t;
 
 typedef struct __attribute__((packed)) viper_pno_data_a_t
 {
     float pos[3];
     int16_t ori[4];
     int16_t acc;
-}viper_pno_data_a_t;
+}
+viper_pno_data_a_t;
 
 typedef struct __attribute__((packed)) viper_sensor_frame_info_t
 {
@@ -68,19 +74,22 @@ typedef struct __attribute__((packed)) viper_sensor_frame_info_t
     uint32_t    bfBtnState1  : 1;
     uint32_t    bfDistortion : 8;
     uint32_t    bfAuxInput   : 10;
-} viper_sensor_frame_info_t;
+}
+viper_sensor_frame_info_t;
 
 typedef struct __attribute__((packed)) viper_sensor_frame_data_t
 {
     viper_sensor_frame_info_t SFinfo;  // 4 bytes
     viper_pno_data_t pno;    // 28 bytes
-}viper_sensor_frame_data_t;
+}
+viper_sensor_frame_data_t;
 
 typedef struct __attribute__((packed)) viper_sensor_frame_data_a_t
 {
     viper_sensor_frame_info_t SFinfo;  // 4 bytes
     viper_pno_data_a_t pno_a;    // 28 bytes
-}viper_sensor_frame_data_a_t;
+}
+viper_sensor_frame_data_a_t;
 
 typedef struct __attribute__((packed)) viper_hpo_info_t
 {
@@ -88,7 +97,8 @@ typedef struct __attribute__((packed)) viper_hpo_info_t
     uint32_t bfReserved0 : 4;
     uint32_t bfReserved1 : 8;
     uint32_t bfReserved2 : 16;
-} viper_hpo_info_t;
+}
+viper_hpo_info_t;
 
 typedef struct __attribute__((packed)) viper_pno_header_t
 {
@@ -96,32 +106,37 @@ typedef struct __attribute__((packed)) viper_pno_header_t
     uint32_t frame;
     viper_hpo_info_t hp_info;
     uint32_t sensor_count;
-} viper_pno_header_t;
+}
+viper_pno_header_t;
 
 typedef struct __attribute__((packed)) viper_pno_t
 {
     viper_frame_header_t hdr;
     viper_pno_header_t seupno;
     viper_sensor_frame_data_t sarr[SENSORS_PER_SEU];
-}viper_pno_t;
+}
+viper_pno_t;
 
 typedef struct __attribute__((packed)) viper_frame_t {
   viper_full_header_t full_header;
     uint8_t data[];
-} viper_frame_t;
+}
+viper_frame_t;
 
 typedef struct __attribute__((packed)) viper_pno_full_header_t {
     uint32_t preamble;
     uint32_t size;
     viper_pno_header_t command_header;
-} viper_pno_full_header_t;
+}
+viper_pno_full_header_t;
 
 typedef struct __attribute__((packed)) viper_pno_frame_t {
     uint32_t preamble;
     uint32_t size;
     viper_pno_header_t header;
     viper_pno_data_t pno_data[];
-} viper_pno_frame_t;
+}
+viper_pno_frame_t;
 
 typedef enum viper_cmd_actions_e
 {
@@ -131,7 +146,8 @@ typedef enum viper_cmd_actions_e
 	CMD_ACTION_ACK,
 	CMD_ACTION_NAK,
 	CMD_ACTION_MAX
-} viper_cmd_actions_e;
+}
+viper_cmd_actions_e;
 
 typedef enum viper_cmds_e
 {
@@ -169,7 +185,8 @@ typedef enum viper_cmds_e
 	CMD_SNS_ORIGIN,
 	CMD_SNS_VIRTUAL,
   CMD_MAX
-} viper_cmds_e;
+}
+viper_cmds_e;
 
 typedef struct __attribute__((packed)) viper_station_map_t
 {
@@ -183,24 +200,28 @@ typedef struct __attribute__((packed)) viper_station_map_t
       uint32_t reserved2 : 4;
     } bf;
   };
-} viper_station_map_t;
+}
+viper_station_map_t;
 
 typedef struct __attribute__((packed)) viper_units_config_t
 {
   uint32_t pos_units;
   uint32_t ori_units;
-} viper_units_config_t;
+}
+viper_units_config_t;
 
 typedef struct __attribute__((packed)) viper_hemisphere_config_t
 {
     uint32_t track_enabled;
     float params[3];
-}viper_hemisphere_config_t;
+}
+viper_hemisphere_config_t;
 
 typedef struct __attribute__((packed)) viper_src_select_cfg_t
 {
     uint32_t src_select_map;
-}viper_src_select_cfg_t;
+}
+viper_src_select_cfg_t;
 
 typedef struct __attribute__((packed)) viper_boresight_config_t
 {

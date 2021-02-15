@@ -45,6 +45,7 @@
 #include <polhemus_ros_driver/viper_protocol.h>
 #include "polhemus_ros_driver/liberty_protocol.h"
 
+#include <string>
 
 /* Vendor 0x0f44 -> Polhemus */
 #define VENDOR 0xf44
@@ -227,7 +228,7 @@ int discover_vip_pid(libusb_device_handle **usbhnd, vp_usbdevinfo &usbinfo, uint
       claimed_ifaces = 0;
       for (uint8_t i = 0; (i < nb_ifaces) && (retval == 0); i++)
       {
-        if ((retval = libusb_claim_interface(handle, (int) i)))
+        if ((retval = libusb_claim_interface(handle, static_cast<int>(i))))
         {
         }
         else
@@ -501,7 +502,7 @@ int main(int argc, char** argv)
           // We publish the first 5 sensors with frame_id polhemus_base_0 since they are
           // linked to the first source and to the right hand. The rest of the sensors
           // are linked to the second source placed on the left hand.
-          // TODO: check if there is there is a way to get that info from api
+          // TODO(mykolas): check if there is there is a way to get that info from api
           if (station_number < FIRST_STATION_NUMBER_LINKED_TO_LEFT_HAND)
           {
             transformStamped.header.frame_id = "polhemus_base_0";

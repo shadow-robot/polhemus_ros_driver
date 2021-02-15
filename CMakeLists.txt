@@ -37,7 +37,7 @@ generate_messages(
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES polhemus
-  CATKIN_DEPENDS geometry_msgs tf2 tf2_ros roscpp
+  CATKIN_DEPENDS std_msgs geometry_msgs tf2 tf2_ros roscpp message_runtime
 )
 
 include_directories(
@@ -69,5 +69,5 @@ install(DIRECTORY include/polhemus_ros_driver
 install(TARGETS polhemus_tf_broadcaster polhemus
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
-install(FILES launch/start.launch 
+install(FILES launch/start.launch
    DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/launch)
