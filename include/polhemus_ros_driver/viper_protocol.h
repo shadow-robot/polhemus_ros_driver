@@ -256,7 +256,7 @@ viper_pos_units_e;
 class CVPcmd: public viper_full_header_t
 {
 public:
-  CVPcmd(uint32_t pre = VIPER_CMD_PREAMBLE) :
+  explicit CVPcmd(uint32_t pre = VIPER_CMD_PREAMBLE) :
       ppay(0), szpay(0)
   {
     Init(pre);
