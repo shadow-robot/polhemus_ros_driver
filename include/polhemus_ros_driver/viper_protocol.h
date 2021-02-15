@@ -787,8 +787,8 @@ public:
 
   viper_sensor_frame_data_a_t * SensFrameA(int i)
   {
-    if (i < (int)SensorCount())
-    return (viper_sensor_frame_data_a_t*)(&(sarr[i]));
+    if (i < static_cast<int>SensorCount())
+    return reinterpret_cast<viper_sensor_frame_data_a_t*>(&(sarr[i]));
     else
     return 0;
   }
@@ -802,7 +802,6 @@ public:
   {
     memset(&hdr, 0, sizeof(viper_pno_t));
   }
-
 };
 
-#endif // POLHEMUS_ROS_DRIVER_VIPER_PROTOCOL_H
+#endif  // POLHEMUS_ROS_DRIVER_VIPER_PROTOCOL_H

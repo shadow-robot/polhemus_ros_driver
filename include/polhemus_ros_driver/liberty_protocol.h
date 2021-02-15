@@ -32,7 +32,8 @@ typedef struct __attribute__((packed)) liberty_header_t
     unsigned char error;
     unsigned char reserved;
     uint16_t size;
-} liberty_header_t;
+}
+liberty_header_t;
 
 // this the default answer format for one station (O*,2,4,1) */
 typedef struct __attribute__((packed)) liberty_default_pno_frame_t
@@ -45,7 +46,8 @@ typedef struct __attribute__((packed)) liberty_default_pno_frame_t
     float elevation;
     float roll;
     char cr_lf[2];
-} liberty_default_pno_frame_t;
+}
+liberty_default_pno_frame_t;
 
 /* O*,8,9,11,3,7 */
 typedef struct __attribute__((packed)) liberty_pno_frame_t
@@ -58,7 +60,8 @@ typedef struct __attribute__((packed)) liberty_pno_frame_t
     float y;
     float z;
     float quaternion[4];
-} liberty_pno_frame_t;
+}
+liberty_pno_frame_t;
 
 // O*,8,9,11,3,5
 typedef struct __attribute__((packed)) liberty_euler_pno_frame_t
@@ -73,13 +76,15 @@ typedef struct __attribute__((packed)) liberty_euler_pno_frame_t
     float az;
     float el;
     float ro;
-} liberty_euler_pno_frame_t;
+}
+liberty_euler_pno_frame_t;
 
 typedef struct __attribute__((packed)) active_station_state_response_t
 {
     liberty_header_t head;
     uint16_t detected;
     uint16_t active;
-} liberty_active_station_state_response_t;
+}
+liberty_active_station_state_response_t;
 
-#endif // POLHEMUS_ROS_DRIVER_LIBERTY_PROTOCOL_H
+#endif  // POLHEMUS_ROS_DRIVER_LIBERTY_PROTOCOL_H
