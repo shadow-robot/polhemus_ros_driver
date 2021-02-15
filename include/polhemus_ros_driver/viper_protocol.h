@@ -399,7 +399,7 @@ public:
 
   operator viper_station_map_t *()
   {
-    return (viper_station_map_t *) this;
+    return reinterpret_cast<viper_station_map_t *>(this);
   }
 
   operator void *()
@@ -517,7 +517,7 @@ public:
     iFrameErr = FE;
   }
 
-  CFrameInfo(uint8_t* p, uint32_t size, uint32_t fc=0, int32_t FE=0, uint64_t ats=0)
+  CFrameInfo(uint8_t* p, uint32_t size, uint32_t fc = 0, int32_t FE = 0, uint64_t ats = 0)
   {
     Init();
     pF = p; uiSize = size; uiFCountRx = fc; iFrameErr = FE; ts = ats;
@@ -564,7 +564,7 @@ public:
   uint32_t cmd() const
   {
     if (IsCmd())
-      return ((viper_full_header_t*)pF)->command_header.cmd;
+      return (reinterpret_cast<viper_full_header_t*>(pF))->command_header.cmd;
     else
       return (uint32_t)-1;
   }
@@ -572,7 +572,7 @@ public:
   uint32_t action() const
   {
     if (IsCmd())
-      return ((viper_full_header_t*)pF)->command_header.action;
+      return (reinterpret_cast<viper_full_header_t*>(pF))->command_header.action;
     else
       return (uint32_t)-1;
   }
@@ -580,7 +580,7 @@ public:
   uint32_t devid() const
   {
     if (IsCmd() || IsPno())
-      return ((viper_full_header_t*)pF)->command_header.seuid;
+      return (reinterpret_cast<viper_full_header_t*>(pF))->command_header.seuid;
     else
       return (uint32_t)-1;
   }
@@ -590,7 +590,7 @@ public:
     if (IsNull() || IsCmd())
       return 0;
     else
-      return ((viper_pno_full_header_t*)pF)->command_header.frame;
+      return (reinterpret_cast<viper_pno_full_header_t*>(pF))->command_header.frame;
   }
 
   int32_t err() const
@@ -607,7 +607,7 @@ public:
   {
     if (IsNull())
       return false;
-    else if (((viper_frame_header_t*)pF)->preamble == VIPER_CMD_PREAMBLE)
+    else if ((reinterpret_cast<viper_frame_header_t*>(pF))->preamble == VIPER_CMD_PREAMBLE)
       return true;
     else
       return false;
