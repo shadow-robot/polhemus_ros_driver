@@ -29,4 +29,5 @@
   <depend>geometry_msgs</depend>
   <depend>libusb-1.0</depend>
   <depend>fxload</depend>
+  <depend>yaml</depend>
 </package>
