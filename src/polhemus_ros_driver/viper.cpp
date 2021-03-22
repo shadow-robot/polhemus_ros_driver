@@ -79,15 +79,15 @@ int Viper::receive_data_frame(viper_cmds_e cmd_type)
   g_nrxcount = VIPER_RX_BUF_SIZE;
   retval = device_read(g_rxbuf, g_nrxcount, true);
 
-  if (retval == 0)
+  if (retval != 0)
   {
     CFrameInfo fi(g_rxbuf, g_nrxcount);
     if ((fi.cmd() != cmd_type) || !(fi.IsAck()))
     {
       ROS_ERROR("[POLHEMUS] Error in message reply...\n");
-      ROS_DEBUG("reply cmd: %d\n", fi.cmd());
-      ROS_DEBUG("reply action: %d\n", fi.action());
-      ROS_DEBUG("cmd sent: %d\n", cmd_type);
+      ROS_ERROR("reply cmd: %d\n", fi.cmd());
+      ROS_ERROR("reply action: %d\n", fi.action());
+      ROS_ERROR("cmd sent: %d\n", cmd_type);
       retval = RETURN_ERROR;
     }
   }

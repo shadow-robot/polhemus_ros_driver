@@ -86,7 +86,8 @@ int Polhemus::device_init(void)
 
 int Polhemus::device_send(uint8_t *cmd, int &count)
 {
-  if (device_write(cmd, count, TIMEOUT))
+  int retval = device_write(cmd, count, TIMEOUT);
+  if (RETURN_ERROR == retval)
   {
     ROS_WARN("[POLHEMUS] Sending cmd `%d' to device failed", *cmd);
     return RETURN_ERROR;
@@ -159,20 +160,22 @@ int Polhemus::set_device_for_calibration(void)
 {
   int retval = RETURN_ERROR;
 
-    reset_boresight();
+  reset_boresight();
+  reset_boresight();
+  reset_boresight();
 
+  retval = receive_pno_data_frame();
+  ros::Time start_time = ros::Time::now();
+
+  while (retval < SENSORS_PER_GLOVE)
+  {
     retval = receive_pno_data_frame();
-    ros::Time start_time = ros::Time::now();
-
-    while (retval < SENSORS_PER_GLOVE)
+    if (ros::Time::now().toSec() - start_time.toSec() >= CALIBRATE_TIMEOUT_IN_SECS)
     {
-      retval = receive_pno_data_frame();
-      if (ros::Time::now().toSec() - start_time.toSec() >= CALIBRATE_TIMEOUT_IN_SECS)
-      {
-        ROS_ERROR("[POLHEMUS] Caliration - error getting complete frame in required time.");
-        return -1;
-      }
+      ROS_ERROR("[POLHEMUS] Calibration - error getting complete frame in required time.");
+      return -1;
     }
+  }
 
   device_reset();
 }
