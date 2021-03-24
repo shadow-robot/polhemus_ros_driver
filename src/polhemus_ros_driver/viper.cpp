@@ -457,6 +457,7 @@ bool Viper::calibrate(std::string boresight_calibration_file)
 {
   int retval = RETURN_ERROR;
 
+  // set data mode to single to allow correct boresight reset
   device_data_mode(DATA_SINGLE);
 
   retval = set_device_for_calibration();
