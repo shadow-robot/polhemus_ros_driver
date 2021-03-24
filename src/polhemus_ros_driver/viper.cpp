@@ -282,10 +282,12 @@ int Viper::reset_boresight(void)
   int nBytes = g_ntxcount;
   uint8_t *pbuf = g_txbuf;
   retval = device_send(pbuf, nBytes);
+
   if (retval == 0)
   {
     retval = receive_data_frame(cmd_type);
   }
+
   return retval;
 }
 
@@ -454,6 +456,9 @@ int Viper::send_saved_calibration(int number_of_hands)
 bool Viper::calibrate(std::string boresight_calibration_file)
 {
   int retval = RETURN_ERROR;
+
+  device_data_mode(DATA_SINGLE);
+
   retval = set_device_for_calibration();
   if (RETURN_ERROR == retval)
     return -1;

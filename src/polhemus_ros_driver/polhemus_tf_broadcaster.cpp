@@ -356,7 +356,7 @@ int main(int argc, char** argv)
   retval = device->reset_boresight();
   if (RETURN_ERROR == retval)
   {
-    ROS_ERROR("[POLHEMUS] Error resetting device.");
+    ROS_ERROR("[POLHEMUS] Error resetting boresight.");
     return -1;
   }
 

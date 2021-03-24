@@ -161,8 +161,6 @@ int Polhemus::set_device_for_calibration(void)
   int retval = RETURN_ERROR;
 
   reset_boresight();
-  reset_boresight();
-  reset_boresight();
 
   retval = receive_pno_data_frame();
   ros::Time start_time = ros::Time::now();
