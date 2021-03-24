@@ -79,7 +79,7 @@ int Viper::receive_data_frame(viper_cmds_e cmd_type)
   g_nrxcount = VIPER_RX_BUF_SIZE;
   retval = device_read(g_rxbuf, g_nrxcount, true);
 
-  if (retval != 0)
+  if (retval == 0)
   {
     CFrameInfo fi(g_rxbuf, g_nrxcount);
     if ((fi.cmd() != cmd_type) || !(fi.IsAck()))
