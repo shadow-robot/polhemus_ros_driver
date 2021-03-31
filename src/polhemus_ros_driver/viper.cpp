@@ -84,10 +84,10 @@ int Viper::receive_data_frame(viper_cmds_e cmd_type)
     CFrameInfo fi(g_rxbuf, g_nrxcount);
     if ((fi.cmd() != cmd_type) || !(fi.IsAck()))
     {
-      ROS_ERROR("[POLHEMUS] Error in message reply...\n");
-      ROS_ERROR("reply cmd: %d\n", fi.cmd());
-      ROS_ERROR("reply action: %d\n", fi.action());
-      ROS_ERROR("cmd sent: %d\n", cmd_type);
+      ROS_ERROR("[POLHEMUS] Error in message reply...");
+      ROS_ERROR("reply cmd: %d", fi.cmd());
+      ROS_ERROR("reply action: %d", fi.action());
+      ROS_ERROR("cmd sent: %d", cmd_type);
       retval = RETURN_ERROR;
     }
   }
