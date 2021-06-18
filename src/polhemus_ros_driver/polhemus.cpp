@@ -254,6 +254,7 @@ int Polhemus::define_data_type(data_type_e data_type)
 
 int Polhemus::device_binary_mode(void)
 {
+  return 0;
 }
 
 void Polhemus::generate_data_structure(void)
