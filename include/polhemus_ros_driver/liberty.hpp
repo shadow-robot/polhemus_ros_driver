@@ -25,6 +25,7 @@
 #ifndef LIBERTY_H
 #define LIBERTY_H
 
+#include <string>
 #include <polhemus_ros_driver/polhemus.hpp>
 #include "polhemus_ros_driver/liberty_protocol.h"
 
@@ -35,26 +36,26 @@
 #define LIBERTY_CONTINUOUS_PRINT_OUTPUT_CMD 67
 #define LIBERTY_ACTIVE_STATION_STATE_CMD 21
 
-class Liberty : public Polhemus {
+class Liberty : public Polhemus
+{
 public:
-   Liberty(std::string name, uint16_t rx_buffer_size, uint16_t tx_buffer_size);
-	~Liberty(void);
-	int request_num_of_stations(void);
-	int device_reset(void);
-	int device_binary_mode(void);
-	int device_data_mode(data_mode_e mode);
-	int receive_pno_data_frame(void);
-	int fill_pno_data(geometry_msgs::TransformStamped *transform, int &index);
-	void generate_data_structure(void);
-	int define_data_type(data_type_e data_type);
-	int set_hemisphere(int x, int y, int z);
-	int set_boresight(bool reset_origin, int station, float arg_1, float arg_2, float arg_3, float arg_4 = 0);
-	int reset_boresight(void);
-	tf2::Quaternion get_station_quaternion(int station_id);
+    Liberty(std::string name, uint16_t rx_buffer_size, uint16_t tx_buffer_size);
+    ~Liberty(void);
+    int request_num_of_stations(void);
+    int device_reset(void);
+    int device_binary_mode(void);
+    int device_data_mode(data_mode_e mode);
+    int receive_pno_data_frame(void);
+    int fill_pno_data(geometry_msgs::TransformStamped *transform, int &index);
+    void generate_data_structure(void);
+    int define_data_type(data_type_e data_type);
+    int set_hemisphere(int x, int y, int z);
+    int set_boresight(bool reset_origin, int station, float arg_1, float arg_2, float arg_3, float arg_4 = 0);
+    int reset_boresight(void);
+    tf2::Quaternion get_station_quaternion(int station_id);
     bool calibrate(std::string boresight_calibration_file);
-	int send_saved_calibration(int number_of_hands);
+    int send_saved_calibration(int number_of_hands);
 private:
-	liberty_pno_frame_t *stations;
-
+    liberty_pno_frame_t *stations;
 };
 #endif

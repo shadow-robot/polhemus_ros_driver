@@ -11,6 +11,7 @@
 #include <libusb-1.0/libusb.h>
 #include <stdio.h>
 #include <string>
+#include <vector>
 #include <geometry_msgs/TransformStamped.h>
 #include "polhemus_ros_driver/calibrate.h"
 #include "polhemus_ros_driver/set_source.h"
@@ -35,16 +36,20 @@
 /* make control character out of ordinary character */
 #define control(c) ((c) & 0x1f)
 
-typedef enum data_mode_e {
+typedef enum data_mode_e 
+{
     DATA_CONTINUOUS,
     DATA_SINGLE,
     DATA_RESET
-} data_mode_e;
+} 
+data_mode_e;
 
-typedef enum data_type_e {
+typedef enum data_type_e 
+{
     DATA_TYPE_QUAT,
     DATA_TYPE_EULER
-} data_type_e;
+} 
+data_type_e;
 
 class Polhemus
 {
@@ -80,7 +85,8 @@ public:
   int set_device_for_calibration(void);
   int save_current_calibration_to_file(int station_id, int station_number);
   virtual int send_saved_calibration(int number_of_hands);
-  bool calibrate_srv(polhemus_ros_driver::calibrate::Request &req, polhemus_ros_driver::calibrate::Response &res, std::string boresight_calibration_file);
+  bool calibrate_srv(polhemus_ros_driver::calibrate::Request &req, polhemus_ros_driver::calibrate::Response &res,
+    std::string boresight_calibration_file);
   bool src_select_srv(polhemus_ros_driver::set_source::Request &req, polhemus_ros_driver::set_source::Response &res);
   bool persist_srv(polhemus_ros_driver::persist::Request &req, polhemus_ros_driver::persist::Response &res);
   virtual bool calibrate(std::string boresight_calibration_file);

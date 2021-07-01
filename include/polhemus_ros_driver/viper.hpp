@@ -6,6 +6,7 @@
 #ifndef VIPER_H
 #define VIPER_H
 
+#include <string>
 #include <polhemus_ros_driver/polhemus.hpp>
 #include <polhemus_ros_driver/viper_protocol.h>
 
