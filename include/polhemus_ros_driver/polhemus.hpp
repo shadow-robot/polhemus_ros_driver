@@ -36,19 +36,19 @@
 /* make control character out of ordinary character */
 #define control(c) ((c) & 0x1f)
 
-typedef enum data_mode_e 
+typedef enum data_mode_e
 {
     DATA_CONTINUOUS,
     DATA_SINGLE,
     DATA_RESET
-} 
+}
 data_mode_e;
 
-typedef enum data_type_e 
+typedef enum data_type_e
 {
     DATA_TYPE_QUAT,
     DATA_TYPE_EULER
-} 
+}
 data_type_e;
 
 class Polhemus
