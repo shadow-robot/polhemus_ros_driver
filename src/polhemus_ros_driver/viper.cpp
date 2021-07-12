@@ -25,10 +25,10 @@
   if (!(CVPcontext::findPctx(pctx))) return E_VPERR_INVALID_CONTEXT; \
 }
 
-Viper::Viper(std::string name, uint16_t rx_buffer_size, uint16_t tx_buffer_size, ros::NodeHandle private_nodehandle)
-    : Polhemus(name, rx_buffer_size, tx_buffer_size), private_nodehandle(private_nodehandle)
+Viper::Viper(std::string name, uint16_t rx_buffer_size, uint16_t tx_buffer_size, ros::NodeHandle driver_nh)
+    : Polhemus(name, rx_buffer_size, tx_buffer_size), driver_nh(driver_nh)
 {
-  source_select_service = private_nodehandle.advertiseService("setting_source", &Viper::src_select_srv, this);
+  source_select_service = driver_nh.advertiseService("setting_source", &Viper::src_select_srv, this);
 }
 
 Viper::~Viper(void) {}
