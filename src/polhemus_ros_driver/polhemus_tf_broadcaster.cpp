@@ -390,12 +390,6 @@ int main(int argc, char** argv)
                                                                                 boresight_calibration_file));
   ROS_INFO("[POLHEMUS] Service ready to calibrate the sensors.");
 
-  // ros::ServiceServer source_select_service =
-  //           private_nh.advertiseService<polhemus_ros_driver::set_source::Request,
-  //                                       polhemus_ros_driver::set_source::Response>("setting_source",
-  //                                                                                 boost::bind(&Viper::src_select_srv,
-  //                                                                                 device, _1, _2));
-
   private_nh.getParam("x_hs", x_hs);
   private_nh.getParam("y_hs", y_hs);
   private_nh.getParam("z_hs", z_hs);
