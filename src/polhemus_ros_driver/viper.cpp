@@ -28,6 +28,7 @@
 Viper::Viper(std::string name, uint16_t rx_buffer_size, uint16_t tx_buffer_size)
     : Polhemus(name, rx_buffer_size, tx_buffer_size)
 {
+  source_select_service = nh->advertiseService("setting_source", &Viper::src_select_srv, this);
 }
 
 Viper::~Viper(void) {}
@@ -498,5 +499,27 @@ bool Viper::calibrate(std::string boresight_calibration_file)
     return retval;
   }
 
+  return true;
+}
+
+bool Viper::src_select_srv(polhemus_ros_driver::set_source::Request &req,
+    polhemus_ros_driver::set_source::Response &res)
+{
+  ROS_INFO("[POLHEMUS] Set source request...");
+  if (set_source(req.source, req.sensor))
+  {
+    res.success = false;
+  }
+  else
+  {
+    res.success = true;
+  }
+  return true;
+}
+
+bool Viper::persist_srv(polhemus_ros_driver::persist::Request &req, polhemus_ros_driver::persist::Response &res)
+{
+  ROS_INFO("[POLHEMUS] Making config persistent");
+  res.success = persist_commands();
   return true;
 }

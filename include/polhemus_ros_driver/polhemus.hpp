@@ -61,36 +61,31 @@ public:
 
   /* set up usb interface and configuration, send initial magic and reset */
   int device_init(void);
-  virtual int device_binary_mode(void);
-  virtual int device_data_mode(data_mode_e mode);
+  // virtual int device_binary_mode(void);
+  virtual int device_data_mode(data_mode_e mode) = 0;
   /* send a command */
   int device_send(uint8_t *cmd, int &count);
   /* read until the device doesn't send anything else */
   void device_clear_input(void);
-  virtual int receive_pno_data_frame(void);
-  virtual int fill_pno_data(geometry_msgs::TransformStamped *transform, int &index);
+  virtual int receive_pno_data_frame(void) = 0;
+  virtual int fill_pno_data(geometry_msgs::TransformStamped *transform, int &index) = 0;
 
   int device_read(void *pbuf, int &count, bool bTOisErr/*=false*/);
   int device_write(uint8_t *buf, int size, int timeout);
-  virtual int device_reset(void);
-  virtual int define_data_type(data_type_e data_type);
-  virtual void generate_data_structure(void);
-  virtual int set_hemisphere(int x, int y, int z);
-  virtual int request_num_of_stations(void);
-  virtual int set_boresight(bool reset_origin, int station, float arg_1, float arg_2, float arg_3, float arg_4 = 0);
-  virtual int reset_boresight(void);
-  virtual tf2::Quaternion get_station_quaternion(int station_id);
-  virtual int set_source(int source, int station_id);
+  virtual int device_reset(void) = 0;
+  virtual int define_data_type(data_type_e data_type) = 0;
+  virtual int set_hemisphere(int x, int y, int z) = 0;
+  virtual int request_num_of_stations(void) = 0;
+  virtual int set_boresight(bool reset_origin, int station, float arg_1, float arg_2, float arg_3, float arg_4 = 0) = 0;
+  virtual int reset_boresight(void) = 0;
+  virtual tf2::Quaternion get_station_quaternion(int station_id) = 0;
   int set_device_to_receive_saved_calibration(int number_of_hands);
   int set_device_for_calibration(void);
-  int save_current_calibration_to_file(int station_id, int station_number);
-  virtual int send_saved_calibration(int number_of_hands);
+  void save_current_calibration_to_file(int station_id, int station_number);
+  virtual int send_saved_calibration(int number_of_hands) = 0;
   bool calibrate_srv(polhemus_ros_driver::calibrate::Request &req, polhemus_ros_driver::calibrate::Response &res,
     std::string boresight_calibration_file);
-  bool src_select_srv(polhemus_ros_driver::set_source::Request &req, polhemus_ros_driver::set_source::Response &res);
-  bool persist_srv(polhemus_ros_driver::persist::Request &req, polhemus_ros_driver::persist::Response &res);
-  virtual bool calibrate(std::string boresight_calibration_file);
-  virtual bool persist_commands(void);
+  virtual bool calibrate(std::string boresight_calibration_file) = 0;
   libusb_device_handle *device_handle;
   int station_count;
   uint8_t endpoint_in;

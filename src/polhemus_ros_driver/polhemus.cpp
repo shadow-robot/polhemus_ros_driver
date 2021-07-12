@@ -69,21 +69,6 @@ int Polhemus::device_write(uint8_t *buf, int size, int timeout)
   return retval;
 }
 
-int Polhemus::device_init(void)
-{
-  if (libusb_set_configuration(device_handle, CONFIGURATION) != 0)
-    ROS_ERROR("[POLHEMUS] Could not set usb configuration to %d", CONFIGURATION);
-
-  if (libusb_claim_interface(device_handle, INTERFACE) != 0)
-  {
-    ROS_ERROR("[POLHEMUS] Could not claim usb interface %d", INTERFACE);
-    return RETURN_ERROR;
-  }
-
-  device_reset();
-  return 0;
-}
-
 int Polhemus::device_send(uint8_t *cmd, int &count)
 {
   int retval = device_write(cmd, count, TIMEOUT);
@@ -176,9 +161,10 @@ int Polhemus::set_device_for_calibration(void)
   }
 
   device_reset();
+  return retval;
 }
 
-int Polhemus::save_current_calibration_to_file(int station_id, int station_number)
+void Polhemus::save_current_calibration_to_file(int station_id, int station_number)
 {
   ROS_INFO("[POLHEMUS] Calibrating station %d.", station_id);
 
@@ -212,91 +198,4 @@ bool Polhemus::calibrate_srv(polhemus_ros_driver::calibrate::Request &req,
   ROS_INFO("[POLHEMUS] Calibration request...");
   res.success = calibrate(boresight_calibration_file);
   return true;
-}
-
-bool Polhemus::src_select_srv(polhemus_ros_driver::set_source::Request &req,
-    polhemus_ros_driver::set_source::Response &res)
-{
-  ROS_INFO("[POLHEMUS] Set source request...");
-  if (set_source(req.source, req.sensor))
-  {
-    res.success = false;
-  }
-  else
-  {
-    res.success = true;
-  }
-  return true;
-}
-
-bool Polhemus::persist_srv(polhemus_ros_driver::persist::Request &req, polhemus_ros_driver::persist::Response &res)
-{
-  ROS_INFO("[POLHEMUS] Making config persistent");
-  res.success = persist_commands();
-  return true;
-}
-
-int Polhemus::device_reset(void)
-{
-}
-
-int Polhemus::request_num_of_stations(void)
-{
-}
-
-int Polhemus::set_hemisphere(int x, int y, int z)
-{
-}
-
-int Polhemus::define_data_type(data_type_e data_type)
-{
-}
-
-int Polhemus::device_binary_mode(void)
-{
-  return 0;
-}
-
-void Polhemus::generate_data_structure(void)
-{
-}
-
-int Polhemus::receive_pno_data_frame(void)
-{
-}
-
-int Polhemus::fill_pno_data(geometry_msgs::TransformStamped *transform, int &station_id)
-{
-}
-
-int Polhemus::device_data_mode(data_mode_e mode)
-{
-}
-
-int Polhemus::set_boresight(bool reset_origin, int station, float arg_1, float arg_2, float arg_3, float arg_4)
-{
-}
-
-int Polhemus::reset_boresight(void)
-{
-}
-
-bool Polhemus::persist_commands(void)
-{
-}
-
-int Polhemus::set_source(int source, int station_id)
-{
-}
-
-tf2::Quaternion Polhemus::get_station_quaternion(int station_id)
-{
-}
-
-int Polhemus::send_saved_calibration(int number_of_hands)
-{
-}
-
-bool Polhemus::calibrate(std::string boresight_calibration_file)
-{
 }

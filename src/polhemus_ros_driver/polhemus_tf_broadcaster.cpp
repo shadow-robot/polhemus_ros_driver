@@ -360,8 +360,6 @@ int main(int argc, char** argv)
     return -1;
   }
 
-  device->device_binary_mode();  // activate binary mode
-
   retval = device->request_num_of_stations();
   if (RETURN_ERROR == retval)
   {
@@ -392,11 +390,11 @@ int main(int argc, char** argv)
                                                                                 boresight_calibration_file));
   ROS_INFO("[POLHEMUS] Service ready to calibrate the sensors.");
 
-  ros::ServiceServer source_select_service =
-            private_nh.advertiseService<polhemus_ros_driver::set_source::Request,
-                                        polhemus_ros_driver::set_source::Response>("setting_source",
-                                                                                  boost::bind(&Polhemus::src_select_srv,
-                                                                                  device, _1, _2));
+  // ros::ServiceServer source_select_service =
+  //           private_nh.advertiseService<polhemus_ros_driver::set_source::Request,
+  //                                       polhemus_ros_driver::set_source::Response>("setting_source",
+  //                                                                                 boost::bind(&Viper::src_select_srv,
+  //                                                                                 device, _1, _2));
 
   private_nh.getParam("x_hs", x_hs);
   private_nh.getParam("y_hs", y_hs);
@@ -409,8 +407,6 @@ int main(int argc, char** argv)
     ROS_ERROR("[POLHEMUS] Error setting hemisphere.");
     return -1;
   }
-
-  device->generate_data_structure();
 
   ROS_INFO("[POLHEMUS] Enabling continuous data mode...");
   retval = device->device_data_mode(DATA_CONTINUOUS);
