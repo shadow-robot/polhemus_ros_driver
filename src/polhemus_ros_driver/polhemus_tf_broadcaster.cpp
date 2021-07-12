@@ -328,7 +328,7 @@ int main(int argc, char** argv)
       return -1;
     }
 
-    device = new Viper(product_type, VIPER_RX_BUF_SIZE, VIPER_RX_BUF_SIZE);
+    device = new Viper(product_type, VIPER_RX_BUF_SIZE, VIPER_RX_BUF_SIZE, private_nh);
 
     ROS_INFO("[POLHEMUS] Initialising Viper device.");
     device->endpoint_in = g_usbinfo.ep_in;

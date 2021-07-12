@@ -19,8 +19,9 @@
 class Viper: public Polhemus
 {
 public:
-  Viper(std::string name, uint16_t rx_buffer_size, uint16_t tx_buffer_size);
+  Viper(std::string name, uint16_t rx_buffer_size, uint16_t tx_buffer_size, ros::NodeHandle private_nodehandle);
   ~Viper(void);
+  ros::NodeHandle private_nodehandle;
   int request_num_of_stations(void);
   int device_reset(void);
   int device_data_mode(data_mode_e mode);
