@@ -391,7 +391,7 @@ int Viper::send_saved_calibration(int number_of_hands)
     {
       ROS_ERROR("No pno frame");
     }
-    
+
     if (!nh->hasParam(name + "_calibration/rotations/station_" + std::to_string(station_id)))
     {
       ROS_WARN_STREAM("PARAM: " << nh->getNamespace());
