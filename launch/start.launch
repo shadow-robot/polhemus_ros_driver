@@ -4,11 +4,12 @@
   <arg name="z_hs" default="0" />
   <arg name="hands" default="right"/>
   <arg name="product_type" default="viper"/>
+  <arg name="node_name" default="polhemus_tf_broadcaster"/>
   <arg name="boresight_calibration_file_path" default="$(find polhemus_ros_driver)/config"/>
   <arg name="boresight_calibration_file_name" default="$(arg product_type)_calibration.yaml"/>
   <arg name="boresight_calibration_file" default="$(arg boresight_calibration_file_path)/$(arg boresight_calibration_file_name)"/>
 
-  <node pkg="polhemus_ros_driver" type="polhemus_tf_broadcaster" name="polhemus_tf_broadcaster" output="screen">
+  <node pkg="polhemus_ros_driver" type="polhemus_tf_broadcaster" name="$(arg node_name)" output="screen">
     <rosparam param="boresight_calibration_file" subst_value="True">$(arg boresight_calibration_file)</rosparam>
     <param name="x_hs" value="$(arg x_hs)" type="int"/>
     <param name="y_hs" value="$(arg y_hs)" type="int"/>
@@ -17,5 +18,5 @@
     <param name="product_type" value="$(arg product_type)" type="string"/>
   </node>
 
-  <rosparam command="load" file="$(arg boresight_calibration_file)" ns="calibration"/>
+  <rosparam command="load" file="$(arg boresight_calibration_file)" ns="$(arg node_name)"/>
 </launch>

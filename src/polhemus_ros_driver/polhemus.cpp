@@ -117,7 +117,7 @@ int Polhemus::set_device_to_receive_saved_calibration(int number_of_hands)
   int retval = RETURN_ERROR;
   int required_number_of_sensors = number_of_hands*SENSORS_PER_GLOVE;
 
-  if (nh->hasParam("/calibration/" + name + "_calibration/rotations"))
+  if (nh->hasParam(name + "_calibration/rotations"))
   {
     retval = receive_pno_data_frame();
     ros::Time start_time = ros::Time::now();

@@ -60,7 +60,7 @@ public:
   ros::NodeHandle *nh;
 
   /* set up usb interface and configuration, send initial magic and reset */
-  int device_init(void);
+  virtual void device_init(void) = 0;
   virtual int device_data_mode(data_mode_e mode) = 0;
   /* send a command */
   int device_send(uint8_t *cmd, int &count);

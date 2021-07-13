@@ -37,13 +37,18 @@
 #endif
 
 Liberty::Liberty(std::string name, uint16_t rx_buffer_size, uint16_t tx_buffer_size)
-    : Polhemus(name, rx_buffer_size, tx_buffer_size), stations(reinterpret_cast<liberty_pno_frame_t*>(malloc(sizeof(liberty_pno_frame_t) * station_count)))
-
+    : Polhemus(name, rx_buffer_size, tx_buffer_size)
 {
 }
 
 Liberty::~Liberty(void)
 {
+}
+
+void Liberty::device_init()
+{
+  stations = reinterpret_cast<liberty_pno_frame_t*>(malloc(sizeof(liberty_pno_frame_t) * station_count));
+  device_binary_mode();
 }
 
 /** this resets previous `c' commands and puts the device in binary mode
@@ -166,8 +171,6 @@ int Liberty::define_data_type(data_type_e data_type)
 
 int Liberty::request_num_of_stations(void)
 {
-  device_binary_mode();  // activate binary mode before requesting number of stations
-
   int retval = RETURN_ERROR;
   unsigned char command[] = { control('u'), '0', '\r', '\0' };
   active_station_state_response_t resp;

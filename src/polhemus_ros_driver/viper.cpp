@@ -25,13 +25,17 @@
   if (!(CVPcontext::findPctx(pctx))) return E_VPERR_INVALID_CONTEXT; \
 }
 
-Viper::Viper(std::string name, uint16_t rx_buffer_size, uint16_t tx_buffer_size, ros::NodeHandle driver_nh)
-    : Polhemus(name, rx_buffer_size, tx_buffer_size), driver_nh(driver_nh)
+Viper::Viper(std::string name, uint16_t rx_buffer_size, uint16_t tx_buffer_size)
+    : Polhemus(name, rx_buffer_size, tx_buffer_size)
 {
-  source_select_service = driver_nh.advertiseService("setting_source", &Viper::src_select_srv, this);
 }
 
 Viper::~Viper(void) {}
+
+void Viper::device_init()
+{
+  source_select_service = nh->advertiseService("setting_source", &Viper::src_select_srv, this);
+}
 
 int Viper::device_reset(void)
 {
@@ -387,9 +391,10 @@ int Viper::send_saved_calibration(int number_of_hands)
     {
       ROS_ERROR("No pno frame");
     }
-
-    if (!nh->hasParam("/calibration/" + name + "_calibration/rotations/station_" + std::to_string(station_id)))
+    
+    if (!nh->hasParam(name + "_calibration/rotations/station_" + std::to_string(station_id)))
     {
+      ROS_WARN_STREAM("PARAM: " << nh->getNamespace());
       ROS_WARN("[POLHEMUS] No previous calibration data available, please calibrate before proceeding!!!");
       break;
     }
@@ -398,19 +403,19 @@ int Viper::send_saved_calibration(int number_of_hands)
 
     // retrieve calibration angles
     float calibrated_roll;
-    std::string calibrated_roll_param_name = "/calibration/" + name +
+    std::string calibrated_roll_param_name = name +
       "_calibration/rotations/station_" + std::to_string(station_id) +
       "/calibrated_roll";
     nh->getParam(calibrated_roll_param_name, calibrated_roll);
 
     float calibrated_pitch;
-    std::string calibrated_pitch_param_name = "/calibration/" + name +
+    std::string calibrated_pitch_param_name = name +
       "_calibration/rotations/station_" + std::to_string(station_id) +
       "/calibrated_pitch";
     nh->getParam(calibrated_pitch_param_name, calibrated_pitch);
 
     float calibrated_yaw;
-    std::string calibrated_yaw_param_name = "/calibration/" + name +
+    std::string calibrated_yaw_param_name = name +
       "_calibration/rotations/station_" + std::to_string(station_id) +
       "/calibrated_yaw";
     nh->getParam(calibrated_yaw_param_name, calibrated_yaw);
