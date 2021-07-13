@@ -394,7 +394,6 @@ int Viper::send_saved_calibration(int number_of_hands)
 
     if (!nh->hasParam(name + "_calibration/rotations/station_" + std::to_string(station_id)))
     {
-      ROS_WARN_STREAM("PARAM: " << nh->getNamespace());
       ROS_WARN("[POLHEMUS] No previous calibration data available, please calibrate before proceeding!!!");
       break;
     }
