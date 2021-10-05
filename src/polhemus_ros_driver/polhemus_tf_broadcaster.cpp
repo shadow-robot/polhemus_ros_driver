@@ -430,14 +430,14 @@ int main(int argc, char** argv)
   /* set up signal handler to catch the interrupt signal */
   signal(SIGINT, signal_handler);
   static tf2_ros::TransformBroadcaster br;
+  ros::Publisher tf_polhemus_publisher_ = nh.advertise<tf2_msgs::TFMessage>("/tf_polhemus", 50);
   geometry_msgs::TransformStamped transformStamped;
+  tf2_msgs::TFMessage tf_polhemus_relay_queue;
   std::vector<geometry_msgs::TransformStamped> tf_queue;
   tf_queue.reserve(16);
   ros::Rate rate(240);
   int flag = 0;
   int station_number = 0;
-
-  ros::Publisher tf_polhemus_publisher_ = nh.advertise<tf2_msgs::TFMessage>("/tf_polhemus", 50);
 
   // Start main loop
   while (ros::ok())
@@ -516,15 +516,8 @@ int main(int argc, char** argv)
         }
       }
 
-
-      tf2_msgs::TFMessage v;
-      v.transforms = std::vector<geometry_msgs::TransformStamped>();
-      for (int i=0;i<tf_queue.size();i++){
-        v.transforms.push_back(tf_queue.at(i));
-      }
-      tf_polhemus_publisher_.publish(v);
-
-      //br.sendTransform(tf_queue);
+      tf_polhemus_relay_queue.transforms = tf_queue;
+      tf_polhemus_publisher_.publish(tf_polhemus_relay_queue);
       tf_queue.clear();
     }
     ros::spinOnce();
