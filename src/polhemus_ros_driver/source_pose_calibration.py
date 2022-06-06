@@ -20,7 +20,7 @@ class SourcePoseCalibration(object):
         return [
             -(knuckle_to_source + self.CONST_SOURCE_X_OFFSET),
             0,
-            knuckle_thickness // 2 + self.CONST_SOURCE_Z_OFFSET
+            knuckle_thickness / 2 + self.CONST_SOURCE_Z_OFFSET
         ] + self.CONST_SOURCE_ORIENTATION
 
     # Currently orientation does not affect decalibration
