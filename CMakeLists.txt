@@ -15,6 +15,7 @@ find_package(catkin REQUIRED COMPONENTS
   genmsg
   std_msgs
   geometry_msgs
+  actionlib_msgs
   tf2
   tf2_ros
   roscpp
@@ -30,15 +31,22 @@ add_service_files(
   persist.srv
 )
 
+add_action_files(
+  FILES
+  Calibrate.action
+)
+
 generate_messages(
   DEPENDENCIES
   std_msgs
+  geometry_msgs
+  actionlib_msgs
 )
 
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES polhemus
-  CATKIN_DEPENDS std_msgs geometry_msgs tf2 tf2_ros roscpp message_runtime
+  CATKIN_DEPENDS std_msgs geometry_msgs actionlib_msgs tf2 tf2_ros roscpp message_runtime
 )
 
 include_directories(
