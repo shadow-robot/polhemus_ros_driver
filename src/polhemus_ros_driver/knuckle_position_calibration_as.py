@@ -9,9 +9,11 @@ import actionlib
 import tf
 import numpy as np
 import math
-from visualization_msgs.msg import MarkerArray, Marker
-from geometry_msgs.msg import Pose
+from visualization_msgs.msg import *
+from geometry_msgs.msg import Pose, Point
+from std_msgs.msg import ColorRGBA
 from polhemus_ros_driver.msg import *
+from interactive_markers.interactive_marker_server import *
 
 
 class KnuckleMarker():
@@ -48,40 +50,120 @@ class SrGloveCalibration():
         self._pub = rospy.Publisher('/visualization_marker', Marker, queue_size=10000)
         self._id = 0
         self._initialize_finger_data()
-        self._calibration_running = True
 
-        self._as = actionlib.SimpleActionServer("shadow_glove_calibration", CalibrateAction, 
-                                                execute_cb=self.collect_data, auto_start = False)
+        self._setup_interactive_markers()
+        self._as = actionlib.SimpleActionServer("shadow_glove_calibration", CalibrateAction,
+                                                execute_cb=self.collect_data, auto_start=False)
         self._as.start()
 
-    def execute_cb(self, goal):
-
-        rate = rospy.Rate(1)
-        success = True
-
-        feedback = CalibrateFeedback()
-        for i in range(0,50):
-            if self._as.is_preempt_requested():
-                rospy.loginfo("Preempted")
-                self._as.set_preempted()
-                success = False
-                break
-            self._as.publish_feedback(feedback)
-            print(i)
-            rate.sleep()
-
-        if success:
-            self._result = i == 50
-            self._as.set_succeeded(self._result)
-        
     def _initialize_finger_data(self):
         for index, finger in enumerate(self._fingers):
             self._finger_data[finger] = dict()
             self._finger_data[finger]['polhemus_tf_name'] = f"polhemus_station_{index + 9*self._index + 1}"
-            self._finger_data[finger]['knuckle_position'] = 0
             self._finger_data[finger]['data'] = []
-            self._finger_data[finger]['marker'] = None
             self._finger_data[finger]['center'] = None
+            self._finger_data[finger]['length'] = 0
+
+    def _create_marker(self, finger, color):
+
+        int_marker = InteractiveMarker()
+        int_marker.header.frame_id = self._base
+        int_marker.name = self._finger_data[finger]['polhemus_tf_name']
+        int_marker.description = f"{finger}_solution"
+        int_marker.scale = 0.01
+
+        size_ratio = 0.2
+        marker = Marker()
+        marker.type = Marker.CUBE
+        marker.scale.x = int_marker.scale * size_ratio
+        marker.scale.y = int_marker.scale * size_ratio
+        marker.scale.z = int_marker.scale * size_ratio
+
+        if isinstance(color, str):
+            if color == 'yellow':
+                marker.color = ColorRGBA(1, 1, 0, 1)
+            elif color == 'red':
+                marker.color = ColorRGBA(1, 0, 0, 1)
+            elif color == 'blue':
+                marker.color = ColorRGBA(0, 0, 1, 1)
+            elif color == 'green':
+                marker.color = ColorRGBA(0, 1, 0, 1)
+        elif isinstance(color, list):
+            marker.color.r = color[0]
+            marker.color.g = color[1]
+            marker.color.b = color[2]
+            marker.color.a = color[3]
+
+        control = InteractiveMarkerControl()
+        control.always_visible = True
+        control.markers.append(marker)
+        int_marker.controls.append(control)
+
+        control = InteractiveMarkerControl()
+        control.orientation.w = 1
+        control.orientation.x = 1
+        control.orientation.y = 0
+        control.orientation.z = 0
+        control.name = "rotate_x"
+        control.interaction_mode = InteractiveMarkerControl.ROTATE_AXIS
+        int_marker.controls.append(control)
+
+        control = InteractiveMarkerControl()
+        control.orientation.w = 1
+        control.orientation.x = 1
+        control.orientation.y = 0
+        control.orientation.z = 0
+        control.name = "move_x"
+        control.interaction_mode = InteractiveMarkerControl.MOVE_AXIS
+        int_marker.controls.append(control)
+
+        control = InteractiveMarkerControl()
+        control.orientation.w = 1
+        control.orientation.x = 0
+        control.orientation.y = 1
+        control.orientation.z = 0
+        control.name = "rotate_z"
+        control.interaction_mode = InteractiveMarkerControl.ROTATE_AXIS
+        int_marker.controls.append(control)
+
+        control = InteractiveMarkerControl()
+        control.orientation.w = 1
+        control.orientation.x = 0
+        control.orientation.y = 1
+        control.orientation.z = 0
+        control.name = "move_z"
+        control.interaction_mode = InteractiveMarkerControl.MOVE_AXIS
+        int_marker.controls.append(control)
+
+        control = InteractiveMarkerControl()
+        control.orientation.w = 1
+        control.orientation.x = 0
+        control.orientation.y = 0
+        control.orientation.z = 1
+        control.name = "rotate_y"
+        control.interaction_mode = InteractiveMarkerControl.ROTATE_AXIS
+        int_marker.controls.append(control)
+
+        control = InteractiveMarkerControl()
+        control.orientation.w = 1
+        control.orientation.x = 0
+        control.orientation.y = 0
+        control.orientation.z = 1
+        control.name = "move_y"
+        control.interaction_mode = InteractiveMarkerControl.MOVE_AXIS
+        int_marker.controls.append(control)
+
+        return int_marker
+
+    def processFeedback(self, feedback):
+        print(feedback)
+
+    def _setup_interactive_markers(self):
+        self._im_server = InteractiveMarkerServer("im_server")
+        colors = ['yellow', 'red', 'blue', 'green']
+        for color, finger in zip(colors, self._fingers):
+            self._finger_data[finger]['center'] = self._create_marker(finger, color)
+            self._im_server.insert(self._finger_data[finger]['center'], self.processFeedback)
 
     def _knuckle_marker_to_marker(self, marker):
         mark = Marker()
@@ -140,52 +222,86 @@ class SrGloveCalibration():
             distance = math.sqrt(x*x+y*y+z*z)
         return distance
 
+    def reset_data(self):
+        for finger in self._fingers:
+            self._finger_data[finger]['data'] = []
+            self._finger_data[finger]['length'] = 0
+
     def collect_data(self, goal):
+        self.reset_data()
+        self._remove_all_markers()
+
         colors = ['yellow', 'red', 'blue', 'green']
-        time = 10  # seconds
+        time = 20  # seconds
         rospy.loginfo("Starting data collection..")
 
         rate = rospy.Rate(100)
         start = rospy.Time.now().secs
 
-        while rospy.Time.now().secs - start < time and self._calibration_running:
-            for color_index, finger in enumerate(self._fingers):           
+        _feedback = CalibrateFeedback()
+        _result = CalibrateResult()
+
+        while rospy.Time.now().secs - start < time:
+
+            for color_index, finger in enumerate(self._fingers):
                 self._listener.waitForTransform(self._base, self._finger_data[finger]['polhemus_tf_name'],
                                                 rospy.Time(), rospy.Duration(0.1))
                 (trans, _) = self._listener.lookupTransform(self._base, self._finger_data[finger]['polhemus_tf_name'],
                                                             rospy.Time(0))
                 self._finger_data[finger]['data'].append(trans)
-                self._finger_data[finger]['marker'] = KnuckleMarker(trans, namespace="data_point")
-                self._finger_data[finger]['marker'].set_color(colors[color_index])
-                self._pub.publish(self._knuckle_marker_to_marker(self._finger_data[finger]['marker']))
+                data_point_marker = KnuckleMarker(trans, namespace="data_point")
+                data_point_marker.set_color(colors[color_index])
+                self._pub.publish(self._knuckle_marker_to_marker(data_point_marker))
                 rate.sleep()
 
             if self._as.is_preempt_requested():
-                rospy.loginfo("Calbration stopped..")
+                rospy.loginfo("Calbration stopped ..")
                 self._as.set_preempted()
                 success = False
                 break
 
-        self._result = 50 == 50
-        self._as.set_succeeded(self._result)
+            _feedback.progress = (rospy.Time.now().secs - start)/time
+            if len(self._finger_data[finger]['data']) % 25 == 0:
+                self._fit_data()
+                _feedback.quality = self.get_calibration_quality()
+            self._as.publish_feedback(_feedback)
+
+        if not self._as.is_preempt_requested():
+            _result.success = True
+            self._as.set_succeeded(_result)
 
         rospy.loginfo("Finshed collecting data.")
 
+    def get_calibration_quality(self):
+        '''
+        Figure out a way to estimate how good the current calibration is
+        '''
+
+        return np.std([0, 1, 2])
+
     def _fit_data(self, color=[1, 1, 1, 1], marker_namespace=""):
-        rospy.loginfo("Fitting data..")
-        for finger in self._fingers:
-            r, cords, _ = self._sphere_fit(np.array(self._finger_data[finger]['data']))
-            self._finger_data[finger]['marker'] = KnuckleMarker(cords, 0.003, namespace=marker_namespace)
-            self._finger_data[finger]['marker'].set_color(color)
-            cords = np.around(cords, 3)
-            print(finger, r, [float(cords[0]), float(cords[1]), float(cords[2])])
-            self._finger_data[finger]['center'] = self._finger_data[finger]['marker']
-            self._pub.publish(self._knuckle_marker_to_marker(self._finger_data[finger]['center']))
-        rospy.loginfo("Done!")
+        colors = ['yellow', 'red', 'blue', 'green']
+        for color_index, finger in enumerate(self._fingers):
+
+            position = self._finger_data[finger]['center'].pose.position
+            position = [position.x, position.y, position.z]
+            solution_marker = KnuckleMarker(position, namespace="solution")
+            solution_marker.set_color(colors[color_index])
+            self._pub.publish(self._knuckle_marker_to_marker(solution_marker))
+
+            r, center, _ = self._sphere_fit(np.array(self._finger_data[finger]['data']))
+
+            center = np.around(center, 3)
+            print(finger, r, [float(center[0]), float(center[1]), float(center[2])])
+
+            pose = Pose()
+            pose.position = Point(center[0], center[1], center[2])
+            self._im_server.setPose(self._finger_data[finger]['center'].name, pose)
+            self._im_server.applyChanges()
 
     def _filter_data(self):
         threshold = 0.001
-        colors = ['blue', 'green', 'yellow', 'red']
+        colors = ['yellow', 'red', 'blue', 'green']
         for i, finger in enumerate(self._fingers):
             data = self._finger_data[finger]['data']
             r, cords, _ = self._sphere_fit(np.array(data))
@@ -213,16 +329,14 @@ class SrGloveCalibration():
         self._fit_data([255/255, 20/255, 47/255, 1], "filtered_solution")
 
     def get_distances_between_knuckles(self):
+        distances = []
         for i in range(0, len(self._fingers)-1):
             point_1 = self._finger_data[self._fingers[i]]['center'].get_position()
             point_2 = self._finger_data[self._fingers[i+1]]['center'].get_position()
-            distance = self.calculate_distance(point_1, point_2)
-            print(self._fingers[i], self._fingers[i+1], distance)
+            distances.append(self.calculate_distance(point_1, point_2))
+        return distances
 
 
 if __name__ == "__main__":
     rospy.init_node('glove_calibration_node')
     calib = SrGloveCalibration()
-    #calib.calibrate()
-    #calib.get_distances_between_knuckles()
-    rospy.spin()

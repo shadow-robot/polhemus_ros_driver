@@ -6,3 +6,4 @@ bool success
 ---
 #feedback
 float32 progress
+float32 quality
