@@ -70,16 +70,16 @@ class SrGloveCalibration():
             self._finger_data[finger]['polhemus_tf_name'] = f"polhemus_station_{i + 9*self._index + 1}"
             self._finger_data[finger]['center'] = self._create_marker(finger, self._colors[i])
             self._finger_data[finger]['length'] = 0
+            self._finger_data[finger]['residual'] = 0
             self._finger_data[finger]['data'] = []
 
-            self._im_server.insert(self._finger_data[finger]['center'], self._processFeedback)
+            self._im_server.insert(self._finger_data[finger]['center'], feedback_cb=self._process_feedback)
 
     def _create_marker(self, finger, color):
 
         int_marker = InteractiveMarker()
         int_marker.header.frame_id = self._base
-        int_marker.name = f"{finger}_solution"
-        int_marker.description = int_marker.name
+        int_marker.name = int_marker.description = f"{finger}_solution"
         int_marker.scale = 0.01
 
         size_ratio = 0.2
@@ -165,27 +165,24 @@ class SrGloveCalibration():
 
         return int_marker
 
-    def _processFeedback(self, feedback):
+    def _process_feedback(self, feedback):
         pass
 
     def _calibration(self, goal):
         self._reset_data()
         self._remove_all_markers()
-
-        time = 10  # seconds
-        rospy.loginfo("Starting data collection..")
+        rospy.loginfo("Starting calibration..")
 
         rate = rospy.Rate(100)
         publishing_rate = rostopic.ROSTopicHz(-1).get_hz('/tf')
         if publishing_rate:
             rate = rospy.Rate(publishing_rate)
 
-        start = rospy.Time.now().secs
-
+        start = rospy.Time.now().to_sec()
         _feedback = CalibrateFeedback()
         _result = CalibrateResult()
 
-        while rospy.Time.now().secs - start < time:
+        while rospy.Time.now().secs - start < goal.time:
 
             for color_index, finger in enumerate(self._fingers):
                 self._listener.waitForTransform(self._base, self._finger_data[finger]['polhemus_tf_name'],
@@ -200,11 +197,11 @@ class SrGloveCalibration():
             if self._as.is_preempt_requested():
                 rospy.loginfo("Calbration stopped ..")
                 self._as.set_preempted()
-                success = False
+                _result.success = False
                 break
 
-            _feedback.progress = (rospy.Time.now().secs - start)/time
-            if len(self._finger_data[finger]['data']) % 25 == 0:
+            _feedback.progress = (rospy.Time.now().to_sec() - start)
+            if len(self._finger_data[finger]['data']) % 50 == 0:
                 self._get_knuckle_positions()
                 _feedback.quality = self.get_calibration_quality()
             self._as.publish_feedback(_feedback)
@@ -213,7 +210,7 @@ class SrGloveCalibration():
             _result.success = True
             self._as.set_succeeded(_result)
 
-        rospy.loginfo("Finshed collecting data.")
+        rospy.loginfo("Finshed calibration.")
 
     def _reset_data(self):
         for finger in self._fingers:
@@ -232,10 +229,11 @@ class SrGloveCalibration():
                                          self._colors[color_index])
             self._pub.publish(solution_marker)
 
-            r, center, _ = self._sphere_fit(np.array(self._finger_data[finger]['data']))
-
+            r, center, residules = self._sphere_fit(np.array(self._finger_data[finger]['data'])) # [-20:]
+            self._finger_data[finger]['residual'] = residules
             center = np.around(center, 3)
-            print(finger, r, [float(center[0]), float(center[1]), float(center[2])])
+            #if finger == 'ff':
+               #print(finger, r, float(residules),  [float(center[0]), float(center[1]), float(center[2])])
 
             pose = Pose()
             pose.position = Point(center[0], center[1], center[2])
@@ -255,16 +253,17 @@ class SrGloveCalibration():
 
         f = np.zeros((len(x), 1))
         f[:, 0] = (x*x) + (y*y) + (z*z)
-        C, residules, _, _ = np.linalg.lstsq(A, f)
+        C, residules, _, _ = np.linalg.lstsq(A, f, rcond=None)
 
         radius = math.sqrt((C[0]*C[0])+(C[1]*C[1])+(C[2]*C[2])+C[3])
         return radius, C[0:3], residules
 
     def get_calibration_quality(self):
-        '''
-        Figure out a way to estimate how good the current calibration is
-        '''
-        return np.std([0, 1, 2])
+        finger = 'ff'
+        quality = []
+        for finger in self._fingers:
+            quality.append(self._finger_data[finger]['residual'] / len(self._finger_data[finger]['data']))
+        return quality
 
     def get_distances_between_knuckles(self):
         distances = []
