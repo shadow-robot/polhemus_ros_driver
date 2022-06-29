@@ -4,8 +4,11 @@
   <arg if="$(eval arg('hand_side') == 'lh')" name="base_index" default="1"/>
   <arg if="$(eval arg('hand_side') == 'rh')" name="base_index" default="0"/>
 
-  <node pkg="tf2_ros" type="static_transform_publisher" name="$(anon polhemus_world_tf_broadcaster)"
-        args="0 0 0.1 0 0 3.141592653589793 world polhemus_base_$(arg base_index)" />
+  <node pkg="tf2_ros" type="static_transform_publisher" name="$(anon polhemus_world_tf_broadcaster_1)"
+        args="0 0 0.1 0 0 3.141592653589793 world polhemus_base_0" />
+
+  <node pkg="tf2_ros" type="static_transform_publisher" name="$(anon polhemus_world_tf_broadcaster_2)"
+        args="0 0 0.1 0 0 3.141592653589793 world polhemus_base_1" />
 
   <node name="sr_knuckle_calibration" pkg="polhemus_ros_driver" type="knuckle_position_calibration_as.py" output="screen">
       <param name="base_index" type="int" value="$(arg base_index)" />

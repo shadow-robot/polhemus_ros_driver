@@ -1,0 +1,18 @@
+<launch>
+  <arg name="rosbag_path" default="$(find polhemus_ros_driver)/config/polhemus_movements.bag"/>
+  <arg name="tf_topic_name" default="/tf_polhemus"/>
+  <arg name="bimanual" default="false"/>
+  <arg name="polhemus_base_right_tf_name" default="polhemus_base_0"/>
+  <arg name="polhemus_base_left_tf_name" default="polhemus_base_1"/>
+
+  <node pkg="tf2_ros" type="static_transform_publisher" name="knuckle_to_polhemus_base_right_tf_broadcaster" args="-0.05 0 0.025 1 0 0 0 rh_mf_knuckle_glove $(arg polhemus_base_right_tf_name)" />
+  <node pkg="tf2_ros" type="static_transform_publisher" name="knuckle_glove_right_tf_broadcaster" args="0.01 0 0.1 -0.5 -0.5 -0.5 0.5 rh_palm rh_mf_knuckle_glove" />
+  <node pkg="tf2_ros" type="static_transform_publisher" name="knuckle_to_polhemus_base_tf_broadcaster" args="-0.05 0 0.025 1 0 0 0 lh_mf_knuckle_glove $(arg polhemus_base_left_tf_name)" />
+  <node pkg="tf2_ros" type="static_transform_publisher" name="knuckle_glove_tf_broadcaster" args="0.01 0 0.1 -0.5 -0.5 -0.5 0.5 lh_palm lh_mf_knuckle_glove" />
+
+  <include file="$(find sr_utilities_common)/launch/real_time_tf_republisher.launch">
+    <arg name="tf_topic_name" value="$(arg tf_topic_name)"/>
+    <arg name="rosbag_path" value="$(arg rosbag_path)"/>
+    <arg name="tf_name_regexes" default="[polhemus]"/>
+  </include>
+</launch>
