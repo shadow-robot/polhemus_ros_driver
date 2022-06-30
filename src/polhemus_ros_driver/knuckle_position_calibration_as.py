@@ -11,7 +11,7 @@ import tf
 import numpy as np
 import math
 from visualization_msgs.msg import *
-from geometry_msgs.msg import Pose, Point, Vector3
+from geometry_msgs.msg import Pose, Point, Quaternion, Vector3
 from std_msgs.msg import ColorRGBA
 from polhemus_ros_driver.msg import *
 from interactive_markers.interactive_marker_server import *
@@ -171,18 +171,16 @@ class SrGloveCalibration():
         pass
 
     def _calibration(self, goal):
-        rospy.logwarn("received goal")
         self._reset_data()
         self._remove_all_markers()
         rospy.loginfo("Starting calibration..")
 
         rate = rospy.Rate(50)
-        start = rospy.Time.now().secs
+        start = rospy.Time.now().to_sec()
         _feedback = CalibrateFeedback()
         _result = CalibrateResult()
 
-        while rospy.Time.now().secs - start < goal.time:
-
+        while rospy.Time.now().to_sec() - start < goal.time:
             for color_index, finger in enumerate(self._fingers):
                 try:
                     self._listener.waitForTransform(self._base, self._finger_data[finger]['polhemus_tf_name'],
@@ -202,7 +200,7 @@ class SrGloveCalibration():
                 _result.success = False
                 break
 
-            _feedback.progress = ((rospy.Time.now().secs - start)) / goal.time
+            _feedback.progress = ((rospy.Time.now().to_sec() - start)) / goal.time
             if len(self._finger_data[finger]['data']) % 25 == 0:
                 self._get_knuckle_positions()
                 _feedback.quality = self.get_calibration_quality()
@@ -236,6 +234,7 @@ class SrGloveCalibration():
             center = np.around(center, 3)
             pose = Pose()
             pose.position = Point(center[0], center[1], center[2])
+            pose.orientation = Quaternion(0,0,0,1)
             self._im_server.setPose(self._finger_data[finger]['center'].name, pose)
             self._im_server.applyChanges()
 
