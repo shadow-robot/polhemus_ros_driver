@@ -15,7 +15,7 @@ from geometry_msgs.msg import Pose, Point, Quaternion, Vector3
 from std_msgs.msg import ColorRGBA
 from polhemus_ros_driver.msg import *
 from interactive_markers.interactive_marker_server import *
-
+import numpy as np
 
 class DataMarker(Marker):
 
@@ -48,9 +48,15 @@ class DataMarker(Marker):
 
 
 class SrGloveCalibration():
+
+    _QUALITY_GOOD = 0.003
+    _QUALITY_BAD = 0.01
+    _ACCEPTABLE_KNUCKLE_DISTANCE = (0.015, 0.025)  # in meters
+
     def __init__(self):
         self._listener = tf.TransformListener()
-        self._index = rospy.get_param("~base_index", 0)
+        self._hand_side = rospy.get_param("~hand_side", 'rh')
+        self._index = 0 if self._hand_side == 'rh' else 1
         self._base = f"polhemus_base_{self._index}"
         self._fingers = ('ff', 'mf', 'rf', 'lf')
         self._finger_data = dict()
@@ -64,24 +70,26 @@ class SrGloveCalibration():
         self._as.start()
         rospy.logwarn("started")
 
-
     def _initialize_finger_data(self):
-        self._im_server = InteractiveMarkerServer("im_server")
+        if not self._im_server:
+            self._im_server = InteractiveMarkerServer("im_server")
+
         for i, finger in enumerate(self._fingers):
             self._finger_data[finger] = dict()
-            self._finger_data[finger]['polhemus_tf_name'] = f"polhemus_station_{i + 9*self._index + 1}"
+            self._finger_data[finger]['polhemus_tf_name'] = f"polhemus_station_{i + 8*self._index + 1}"
             self._finger_data[finger]['center'] = self._create_marker(finger, self._colors[i])
-            self._finger_data[finger]['length'] = 0
+            self._finger_data[finger]['length'] = []
             self._finger_data[finger]['residual'] = 0
             self._finger_data[finger]['data'] = []
-
             self._im_server.insert(self._finger_data[finger]['center'], feedback_cb=self._process_feedback)
 
+    def _process_feedback(self, feedback):
+        pass
+        
     def _create_marker(self, finger, color):
-
         int_marker = InteractiveMarker()
         int_marker.header.frame_id = self._base
-        int_marker.name = int_marker.description = f"{finger}_solution"
+        int_marker.name = int_marker.description = f"{self._hand_side}_{finger}_knuckle_glove"
         int_marker.scale = 0.01
 
         size_ratio = 0.2
@@ -110,72 +118,35 @@ class SrGloveCalibration():
         control.always_visible = True
         control.markers.append(marker)
         int_marker.controls.append(control)
+        
+        def _create_control(quaternion, name):
+            control = InteractiveMarkerControl()
+            control.orientation.w = quaternion.w
+            control.orientation.x = quaternion.x
+            control.orientation.y = quaternion.y
+            control.orientation.z = quaternion.z
+            control.name = name
+            if "rotate" in name:
+                control.interaction_mode = InteractiveMarkerControl.ROTATE_AXIS
+            elif "move" in name:
+                control.interaction_mode = InteractiveMarkerControl.MOVE_AXIS
+            return control
 
-        control = InteractiveMarkerControl()
-        control.orientation.w = 1
-        control.orientation.x = 1
-        control.orientation.y = 0
-        control.orientation.z = 0
-        control.name = "rotate_x"
-        control.interaction_mode = InteractiveMarkerControl.ROTATE_AXIS
-        int_marker.controls.append(control)
-
-        control = InteractiveMarkerControl()
-        control.orientation.w = 1
-        control.orientation.x = 1
-        control.orientation.y = 0
-        control.orientation.z = 0
-        control.name = "move_x"
-        control.interaction_mode = InteractiveMarkerControl.MOVE_AXIS
-        int_marker.controls.append(control)
-
-        control = InteractiveMarkerControl()
-        control.orientation.w = 1
-        control.orientation.x = 0
-        control.orientation.y = 1
-        control.orientation.z = 0
-        control.name = "rotate_z"
-        control.interaction_mode = InteractiveMarkerControl.ROTATE_AXIS
-        int_marker.controls.append(control)
-
-        control = InteractiveMarkerControl()
-        control.orientation.w = 1
-        control.orientation.x = 0
-        control.orientation.y = 1
-        control.orientation.z = 0
-        control.name = "move_z"
-        control.interaction_mode = InteractiveMarkerControl.MOVE_AXIS
-        int_marker.controls.append(control)
-
-        control = InteractiveMarkerControl()
-        control.orientation.w = 1
-        control.orientation.x = 0
-        control.orientation.y = 0
-        control.orientation.z = 1
-        control.name = "rotate_y"
-        control.interaction_mode = InteractiveMarkerControl.ROTATE_AXIS
-        int_marker.controls.append(control)
-
-        control = InteractiveMarkerControl()
-        control.orientation.w = 1
-        control.orientation.x = 0
-        control.orientation.y = 0
-        control.orientation.z = 1
-        control.name = "move_y"
-        control.interaction_mode = InteractiveMarkerControl.MOVE_AXIS
-        int_marker.controls.append(control)
+        int_marker.controls.append(_create_control(Quaternion(0.707, 0, 0, 0.707), "rotate_x"))
+        int_marker.controls.append(_create_control(Quaternion(0.707, 0, 0, 0.707), "move_x"))
+        int_marker.controls.append(_create_control(Quaternion(0, 0, 0.707, 0.707), "rotate_z"))
+        int_marker.controls.append(_create_control(Quaternion(0, 0, 0.707, 0.707), "move_z"))
+        int_marker.controls.append(_create_control(Quaternion(0, 0.707, 0, 0.707), "rotate_y"))
+        int_marker.controls.append(_create_control(Quaternion(0, 0.707, 0, 0.707), "move_y"))
 
         return int_marker
-
-    def _process_feedback(self, feedback):
-        pass
 
     def _calibration(self, goal):
         self._reset_data()
         self._remove_all_markers()
         rospy.loginfo("Starting calibration..")
 
-        rate = rospy.Rate(50)
+        rate = rospy.Rate(100)
         start = rospy.Time.now().to_sec()
         _feedback = CalibrateFeedback()
         _result = CalibrateResult()
@@ -215,7 +186,7 @@ class SrGloveCalibration():
     def _reset_data(self):
         for finger in self._fingers:
             self._finger_data[finger]['data'] = []
-            self._finger_data[finger]['length'] = 0
+            self._finger_data[finger]['length'] = []
 
     def _remove_all_markers(self):
         marker = Marker()
@@ -229,8 +200,11 @@ class SrGloveCalibration():
                                          self._colors[color_index])
             self._pub.publish(solution_marker)
 
-            r, center, residules = self._sphere_fit(np.array(self._finger_data[finger]['data'])) # [-20:]
-            self._finger_data[finger]['residual'] = residules
+            r, center, residual = self._sphere_fit(np.array(self._finger_data[finger]['data'])) # [-20:]
+
+            self._finger_data[finger]['residual'] = residual
+            self._finger_data[finger]['length'].append(np.around(r, 4))
+
             center = np.around(center, 3)
             pose = Pose()
             pose.position = Point(center[0], center[1], center[2])
@@ -256,27 +230,45 @@ class SrGloveCalibration():
         radius = math.sqrt((C[0]*C[0])+(C[1]*C[1])+(C[2]*C[2])+C[3])
         return radius, C[0:3], residules
 
+    def _map_range(self, value, in_min, in_max, out_min, out_max):
+        return (value - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
+
     def get_calibration_quality(self):
-        '''
         quality = []
         for finger in self._fingers:
-            quality.append(self._finger_data[finger]['residual'] / len(self._finger_data[finger]['data']))
-        '''
-        return [1,2,3,4]
+            q = min(self._QUALITY_BAD, max(self._QUALITY_GOOD,
+                    np.round(np.std(self._finger_data[finger]['length']), 4)))
+            q = self._map_range(q, self._QUALITY_GOOD, self._QUALITY_BAD, 100, 0)
+            quality.append(q)
+        print(quality)
+        for distance in self.get_distances_between_knuckles():
+            print(self._ACCEPTABLE_KNUCKLE_DISTANCE[0], distance, self._ACCEPTABLE_KNUCKLE_DISTANCE[1])
+            if not (self._ACCEPTABLE_KNUCKLE_DISTANCE[0] < distance < self._ACCEPTABLE_KNUCKLE_DISTANCE[1]):
+                quality = [self._QUALITY_BAD, self._QUALITY_BAD, self._QUALITY_BAD, self._QUALITY_BAD]
+                break
+        print(quality)
+        print("---")
+        return quality
 
     def get_distances_between_knuckles(self):
         distances = []
         for i in range(0, len(self._fingers)-1):
-            point_1 = self._finger_data[self._fingers[i]]['center'].get_position()
-            point_2 = self._finger_data[self._fingers[i+1]]['center'].get_position()
+            point_1 = self._finger_data[self._fingers[i]]['center'].pose.position
+            point_2 = self._finger_data[self._fingers[i+1]]['center'].pose.position
             distances.append(self.calculate_distance(point_1, point_2))
         return distances
 
     def calculate_distance(self, point1, point2):
+        point1 = [point1.x, point1.y, point1.z]
+        point2 = [point2.x, point2.y, point2.z]
         return np.linalg.norm(np.array(point1)-np.array(point2))
+
+    def __del__(self):
+        print("stopped")
+        self._as.stop()
 
 
 if __name__ == "__main__":
     rospy.init_node('sr_knuckle_calibration')
     calib = SrGloveCalibration()
-    rospy.spin()
+    del calib
