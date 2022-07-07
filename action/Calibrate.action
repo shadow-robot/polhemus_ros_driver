@@ -1,0 +1,10 @@
+#goal definition
+bool start
+int8 time
+---
+#result definition
+bool success
+---
+#feedback
+float32 progress
+float32[] quality

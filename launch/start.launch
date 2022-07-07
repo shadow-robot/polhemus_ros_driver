@@ -1,4 +1,8 @@
 <launch>
+<<<<<<< HEAD
+=======
+  <remap from="/tf_polhemus" to="/tf" />
+>>>>>>> testing
   <arg name="x_hs" default="1" />
   <arg name="y_hs" default="0" />
   <arg name="z_hs" default="0" />
