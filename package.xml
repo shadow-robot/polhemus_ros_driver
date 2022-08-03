@@ -27,16 +27,10 @@
   <depend>roscpp</depend>
   <depend>std_msgs</depend>
   <depend>geometry_msgs</depend>
-<<<<<<< HEAD
-  <depend>libusb-1.0-dev</depend>
-  <depend>fxload</depend>
-  <depend>yaml</depend>
-=======
   <depend>actionlib_msgs</depend>
 
   <depend>libusb-1.0-dev</depend>
   <depend>fxload</depend>
   <depend>yaml</depend>
 
->>>>>>> testing
 </package>
