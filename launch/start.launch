@@ -3,7 +3,7 @@
   <arg name="x_hs" default="1" />
   <arg name="y_hs" default="0" />
   <arg name="z_hs" default="0" />
-  <arg name="hands" default="right"/>
+  <arg name="hands" default="both"/>
   <arg name="product_type" default="viper"/>
   <arg name="node_name" default="polhemus_tf_broadcaster"/>
   <arg name="boresight_calibration_file_path" default="$(find polhemus_ros_driver)/config"/>
@@ -20,4 +20,11 @@
   </node>
 
   <rosparam command="load" file="$(arg boresight_calibration_file)" ns="$(arg node_name)"/>
+
+  <node name="sr_update_static_tf" pkg="polhemus_ros_driver" type="publish_static_knuckle_tf.py" output="screen"/>
+
+  <node name="sr_knuckle_calibration" pkg="polhemus_ros_driver" type="knuckle_position_calibration_as.py" output="screen">
+      <param name="hand_side" value="$(arg hands)" />
+  </node>
+
 </launch>

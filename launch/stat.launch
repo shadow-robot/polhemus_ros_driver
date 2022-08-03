@@ -1,4 +1,0 @@
-<launch>
-  <node pkg="tf2_ros" type="static_transform_publisher" name="polhemus_world_tf_broadcaster"
-  args="0 0 0 1.5708 -1.5708 0 lh_mfknuckle lh_mf_knuckle_glove" />
-</launch>

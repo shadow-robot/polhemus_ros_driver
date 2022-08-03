@@ -13,9 +13,10 @@ import math
 from visualization_msgs.msg import *
 from geometry_msgs.msg import Pose, Point, Quaternion, Vector3
 from std_msgs.msg import ColorRGBA
-from polhemus_ros_driver.msg import *
+from sr_hand_glove.msg import *
 from interactive_markers.interactive_marker_server import *
 import numpy as np
+
 
 class DataMarker(Marker):
 
@@ -64,15 +65,14 @@ class SrGloveCalibration():
         self._colors = ('yellow', 'red', 'blue', 'green')
 
         self._initialize_finger_data()
-        self._pub = rospy.Publisher('/visualization_marker', Marker, queue_size=1000)
+        self._pub = rospy.Publisher('/data_point_marker', Marker, queue_size=1000)
         self._as = actionlib.SimpleActionServer("/calibration_action_server", CalibrateAction,
                                                 execute_cb=self._calibration, auto_start=False)
         self._as.start()
-        rospy.logwarn("started")
 
     def _initialize_finger_data(self):
         if not self._im_server:
-            self._im_server = InteractiveMarkerServer("im_server")
+            self._im_server = InteractiveMarkerServer("knuckle_position_markers")
 
         for i, finger in enumerate(self._fingers):
             self._finger_data[finger] = dict()
@@ -85,7 +85,7 @@ class SrGloveCalibration():
 
     def _process_feedback(self, feedback):
         pass
-        
+
     def _create_marker(self, finger, color):
         int_marker = InteractiveMarker()
         int_marker.header.frame_id = self._base
@@ -118,7 +118,7 @@ class SrGloveCalibration():
         control.always_visible = True
         control.markers.append(marker)
         int_marker.controls.append(control)
-        
+
         def _create_control(quaternion, name):
             control = InteractiveMarkerControl()
             control.orientation.w = quaternion.w
@@ -142,6 +142,10 @@ class SrGloveCalibration():
         return int_marker
 
     def _calibration(self, goal):
+        self._hand_side = goal.hand_side
+        self._index = 0 if self._hand_side == 'rh' else 1
+        self._base = f"polhemus_base_{self._index}"
+        self._initialize_finger_data()
         self._reset_data()
         self._remove_all_markers()
         rospy.loginfo("Starting calibration..")
@@ -157,16 +161,16 @@ class SrGloveCalibration():
                     self._listener.waitForTransform(self._base, self._finger_data[finger]['polhemus_tf_name'],
                                                     rospy.Time(), rospy.Duration(0.1))
                     (pos, _) = self._listener.lookupTransform(self._base, self._finger_data[finger]['polhemus_tf_name'],
-                                                            rospy.Time(0))
+                                                              rospy.Time(0))
                     self._finger_data[finger]['data'].append(pos)
                     data_point_marker = DataMarker(self._base, Point(pos[0], pos[1], pos[2]), self._colors[color_index])
                     self._pub.publish(data_point_marker)
                     rate.sleep()
-                except Exception:
-                    rospy.logerr("PROBLEM")
+                except Exception as error:
+                    rospy.logerr(error)
 
             if self._as.is_preempt_requested():
-                rospy.loginfo("Calbration stopped ..")
+                rospy.loginfo("Calbration stopped.")
                 self._as.set_preempted()
                 _result.success = False
                 break
@@ -200,7 +204,7 @@ class SrGloveCalibration():
                                          self._colors[color_index])
             self._pub.publish(solution_marker)
 
-            r, center, residual = self._sphere_fit(np.array(self._finger_data[finger]['data'])) # [-20:]
+            r, center, residual = self._sphere_fit(np.array(self._finger_data[finger]['data']))  # [-20:]
 
             self._finger_data[finger]['residual'] = residual
             self._finger_data[finger]['length'].append(np.around(r, 4))
@@ -208,7 +212,8 @@ class SrGloveCalibration():
             center = np.around(center, 3)
             pose = Pose()
             pose.position = Point(center[0], center[1], center[2])
-            pose.orientation = Quaternion(0,0,0,1)
+            pose.orientation = Quaternion(0, 0, 0, 1)
+            rospy.logwarn(self._finger_data[finger]['center'])
             self._im_server.setPose(self._finger_data[finger]['center'].name, pose)
             self._im_server.applyChanges()
 
@@ -234,21 +239,18 @@ class SrGloveCalibration():
         return (value - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
 
     def get_calibration_quality(self):
-        quality = []
+        quality_list = []
         for finger in self._fingers:
-            q = min(self._QUALITY_BAD, max(self._QUALITY_GOOD,
-                    np.round(np.std(self._finger_data[finger]['length']), 4)))
-            q = self._map_range(q, self._QUALITY_GOOD, self._QUALITY_BAD, 100, 0)
-            quality.append(q)
-        print(quality)
+            quality = min(self._QUALITY_BAD, max(self._QUALITY_GOOD,
+                          np.round(np.std(self._finger_data[finger]['length']), 4)))
+            quality = self._map_range(quality, self._QUALITY_GOOD, self._QUALITY_BAD, 100, 0)
+            quality_list.append(quality)
         for distance in self.get_distances_between_knuckles():
             print(self._ACCEPTABLE_KNUCKLE_DISTANCE[0], distance, self._ACCEPTABLE_KNUCKLE_DISTANCE[1])
             if not (self._ACCEPTABLE_KNUCKLE_DISTANCE[0] < distance < self._ACCEPTABLE_KNUCKLE_DISTANCE[1]):
-                quality = [self._QUALITY_BAD, self._QUALITY_BAD, self._QUALITY_BAD, self._QUALITY_BAD]
+                quality_list = [self._QUALITY_BAD, self._QUALITY_BAD, self._QUALITY_BAD, self._QUALITY_BAD]
                 break
-        print(quality)
-        print("---")
-        return quality
+        return quality_list
 
     def get_distances_between_knuckles(self):
         distances = []
@@ -263,12 +265,7 @@ class SrGloveCalibration():
         point2 = [point2.x, point2.y, point2.z]
         return np.linalg.norm(np.array(point1)-np.array(point2))
 
-    def __del__(self):
-        print("stopped")
-        self._as.stop()
-
 
 if __name__ == "__main__":
     rospy.init_node('sr_knuckle_calibration')
     calib = SrGloveCalibration()
-    del calib
