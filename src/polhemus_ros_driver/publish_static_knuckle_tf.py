@@ -21,7 +21,7 @@ class StaticKnuckleBroadcaster:
         self._services = dict()
         for hand_prefix in self._get_connected_gloves():
             print(hand_prefix)
-            self._services[hand_prefix] = rospy.Service(f"/{hand_prefix}/update_static_tf", SetStaticCalibrationTF, 
+            self._services[hand_prefix] = rospy.Service(f"/{hand_prefix}/update_static_tf", SetStaticCalibrationTF,
                                                         self.publish_tf)
 
     def _get_connected_gloves(self):
