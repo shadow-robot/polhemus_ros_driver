@@ -1,5 +1,6 @@
 #goal definition
 bool start
+string hand_side
 int8 time
 ---
 #result definition
