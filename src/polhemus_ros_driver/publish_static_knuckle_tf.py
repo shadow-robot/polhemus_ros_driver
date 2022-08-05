@@ -11,7 +11,7 @@ import yaml
 import tf
 import os
 from geometry_msgs.msg import TransformStamped
-from sr_gui_polhemus_calibration.srv import SetStaticCalibrationTF
+from polhemus_ros_driver.srv import SetStaticCalibrationTF
 import rospkg
 
 

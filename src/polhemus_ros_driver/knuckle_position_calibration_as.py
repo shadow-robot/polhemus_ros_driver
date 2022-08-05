@@ -13,7 +13,7 @@ import math
 from visualization_msgs.msg import *
 from geometry_msgs.msg import Pose, Point, Quaternion, Vector3
 from std_msgs.msg import ColorRGBA
-from sr_hand_glove.msg import *
+from polhemus_ros_driver.msg import *
 from interactive_markers.interactive_marker_server import *
 import numpy as np
 
@@ -76,7 +76,7 @@ class SrGloveCalibration():
 
         for i, finger in enumerate(self._fingers):
             self._finger_data[finger] = dict()
-            self._finger_data[finger]['polhemus_tf_name'] = f"polhemus_station_{i + 8*self._index + 1}"
+            self._finger_data[finger]['polhemus_tf_name'] = f"polhemus_station_{i + 8*self._index}"
             self._finger_data[finger]['center'] = self._create_marker(finger, self._colors[i])
             self._finger_data[finger]['length'] = []
             self._finger_data[finger]['residual'] = 0
