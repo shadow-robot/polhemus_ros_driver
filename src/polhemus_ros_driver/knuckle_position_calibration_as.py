@@ -21,11 +21,13 @@ from enum import Enum
 
 def map_range(value, in_min, in_max, out_min, out_max):
     return (value - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
-    
+
+
 def calculate_distance(point1, point2):
     point1 = [point1.x, point1.y, point1.z]
     point2 = [point2.x, point2.y, point2.z]
     return np.linalg.norm(np.array(point1)-np.array(point2))
+
 
 def sphere_fit(data):
     x = data[:, 0]
@@ -56,9 +58,11 @@ class Color(Enum):
     BLUE = ColorRGBA(0, 0, 1, 1)
     GREEN = ColorRGBA(0, 1, 0, 1)
 
+
 colors = [Color.RED, Color.YELLOW, Color.BLUE, Color.GREEN]
 fingers = ('ff', 'mf', 'rf', 'lf')
 polhemus_to_side_prefix = {"polhemus_base_0": "rh", "polhemus_base_1": "lh"}
+
 
 class DataMarker(Marker):
 
@@ -69,13 +73,14 @@ class DataMarker(Marker):
         self.header.frame_id = frame_id
         self.header.stamp = rospy.Time.now()
         self.type = self.POINTS
-        #  Markers need to have unique ids. With the line below it's ensured that 
-        #  every new instance has a unique id 
+        #  Markers need to have unique ids. With the line below it's ensured that
+        #  every new instance has a unique id
         self.id = DataMarker._id = DataMarker._id + 1
         self.frame_locked = False
         self.points = [point]
         self.scale = Vector3(size, size, size)
         self.color = color
+
 
 class SrGloveCalibration():
 
@@ -97,7 +102,7 @@ class SrGloveCalibration():
         if connected_prefixes:
             self._pub = dict()
             for prefix in connected_prefixes:
-                self._finger_data[prefix] = dict()                
+                self._finger_data[prefix] = dict()
                 self._pub[prefix] = rospy.Publisher(f"/data_point_marker_{prefix}", Marker, queue_size=1000)
 
             self._marker_server = InteractiveMarkerServer(f"knuckle_position_markers")
@@ -271,7 +276,6 @@ class SrGloveCalibration():
             point_2 = self._finger_data[self._hand_side][fingers[i+1]]['center'].pose.position
             distances.append(calculate_distance(point_1, point_2))
         return distances
-
 
 
 if __name__ == "__main__":
