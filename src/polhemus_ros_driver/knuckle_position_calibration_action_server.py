@@ -62,6 +62,9 @@ class Color(Enum):
 colors = [Color.RED, Color.YELLOW, Color.BLUE, Color.GREEN]
 fingers = ('ff', 'mf', 'rf', 'lf')
 polhemus_to_side_prefix = {"polhemus_base_0": "rh", "polhemus_base_1": "lh"}
+CENTER_MARKER_SIZE_RATIO = 0.2
+CENTER_MARKER_SCALE = 0.01
+CALIBRATION_FREQUENCY = 100
 
 
 class DataMarker(Marker):
@@ -74,7 +77,7 @@ class DataMarker(Marker):
         self.header.stamp = rospy.Time.now()
         self.type = self.POINTS
         #  Markers need to have unique ids. With the line below it's ensured that
-        #  every new instance has a unique id
+        #  every new instance has a unique, incremental id
         self.id = DataMarker._id = DataMarker._id + 1
         self.frame_locked = False
         self.points = [point]
@@ -142,9 +145,9 @@ class SrGloveCalibration():
         int_marker = InteractiveMarker()
         int_marker.header.frame_id = self._base
         int_marker.name = int_marker.description = f"{self._hand_side}_{finger}_knuckle_glove"
-        int_marker.scale = 0.01
+        int_marker.scale = CENTER_MARKER_SCALE
 
-        size_ratio = 0.2
+        size_ratio = CENTER_MARKER_SIZE_RATIO
         marker = Marker()
         marker.type = Marker.CUBE
         marker.scale.x = int_marker.scale * size_ratio
@@ -189,7 +192,7 @@ class SrGloveCalibration():
         self._remove_all_markers()
         rospy.loginfo("Starting calibration..")
 
-        rate = rospy.Rate(100)
+        rate = rospy.Rate(CALIBRATION_FREQUENCY)
         start = rospy.Time.now().to_sec()
         _feedback = CalibrateFeedback()
         _result = CalibrateResult()
