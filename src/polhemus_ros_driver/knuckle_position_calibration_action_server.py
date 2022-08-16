@@ -59,7 +59,7 @@ class Color(Enum):
     GREEN = ColorRGBA(0, 1, 0, 1)
 
 
-colors = [Color.RED, Color.YELLOW, Color.BLUE, Color.GREEN]
+COLORS = [Color.RED, Color.YELLOW, Color.BLUE, Color.GREEN]
 fingers = ('ff', 'mf', 'rf', 'lf')
 polhemus_to_side_prefix = {"polhemus_base_0": "rh", "polhemus_base_1": "lh"}
 CENTER_MARKER_SIZE_RATIO = 0.2
@@ -108,8 +108,8 @@ class SrGloveCalibration():
                 self._finger_data[prefix] = dict()
                 self._pub[prefix] = rospy.Publisher(f"/data_point_marker_{prefix}", Marker, queue_size=1000)
 
-            self._marker_server = InteractiveMarkerServer(f"knuckle_position_markers")
-            self._action_server = actionlib.SimpleActionServer(f"/calibration_action_server", CalibrateAction,
+            self._marker_server = InteractiveMarkerServer("knuckle_position_markers")
+            self._action_server = actionlib.SimpleActionServer("/calibration_action_server", CalibrateAction,
                                                                execute_cb=self._calibration, auto_start=False)
             self._action_server.start()
         else:
@@ -137,7 +137,7 @@ class SrGloveCalibration():
                 self._finger_data[self._hand_side][finger]['length'] = []
                 self._finger_data[self._hand_side][finger]['residual'] = 0
                 self._finger_data[self._hand_side][finger]['data'] = []
-                self._finger_data[self._hand_side][finger]['center'] = self._create_marker(finger, colors[i].value)
+                self._finger_data[self._hand_side][finger]['center'] = self._create_marker(finger, COLORS[i].value)
                 rospy.logwarn(f"Created marker { self._finger_data[self._hand_side][finger]['center'].name }")
                 self._marker_server.insert(self._finger_data[self._hand_side][finger]['center'])
 
@@ -206,7 +206,7 @@ class SrGloveCalibration():
                                                             rospy.Time(0))
                     self._finger_data[self._hand_side][finger]['data'].append(pos)
                     data_point_marker = DataMarker(self._base, Point(pos[0], pos[1], pos[2]),
-                                                   colors[color_index].value)
+                                                   COLORS[color_index].value)
                     self._pub[self._hand_side].publish(data_point_marker)
                     rate.sleep()
                 except Exception as error:
@@ -244,7 +244,7 @@ class SrGloveCalibration():
     def _get_knuckle_positions(self, hand_side):
         for color_index, finger in enumerate(fingers):
             solution_marker = DataMarker(self._base, self._finger_data[hand_side][finger]['center'].pose.position,
-                                         colors[color_index].value)
+                                         COLORS[color_index].value)
             self._pub[self._hand_side].publish(solution_marker)
 
             r, center, residual = sphere_fit(np.array(self._finger_data[hand_side][finger]['data']))
