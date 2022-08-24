@@ -33,7 +33,6 @@ class StaticKnuckleBroadcaster:
                 if key in line and "parent" in line:
                     connected_glove_sides.append(value)
                     break
-        rospy.logwarn(connected_glove_sides)
         return connected_glove_sides
 
     def publish_tf(self, req):
