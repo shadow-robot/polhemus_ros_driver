@@ -19,17 +19,34 @@ from interactive_markers.interactive_marker_server import InteractiveMarkerServe
 from enum import Enum
 
 
-def map_range(value, in_min, in_max, out_min, out_max):
+def map_range(input, in_min, in_max, out_min, out_max):
+    """
+        Returns the convereted value of 'input' from range [out_min, out_max] into range [in_min, in_max]
+        @param value: Value to be mapped
+        @param in_min: Minimal value of 'input'
+        @param in_max: Maximal value of 'input'
+        @param out_min: Minimal value of mapped output
+        @param in_max: Maximal value of mapped output
+    """
     return (value - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
 
 
 def calculate_distance(point1, point2):
+    """
+        Returns the distance between two points.
+        @param point1: Second point
+        @param point2: Second point
+    """
     point1 = [point1.x, point1.y, point1.z]
     point2 = [point2.x, point2.y, point2.z]
     return np.linalg.norm(np.array(point1)-np.array(point2))
 
 
 def sphere_fit(data):
+    """
+        Returns radius, center points and residuals of fitted sphere on input data.
+        @param data: Input data
+    """
     x = data[:, 0]
     y = data[:, 1]
     z = data[:, 2]
@@ -42,14 +59,14 @@ def sphere_fit(data):
 
     f = np.zeros((len(x), 1))
     f[:, 0] = (x*x) + (y*y) + (z*z)
-    C, residules, _, _ = np.linalg.lstsq(A, f, rcond=None)
+    C, residuals, _, _ = np.linalg.lstsq(A, f, rcond=None)
     try:
         inside = (C[0]*C[0])+(C[1]*C[1])+(C[2]*C[2])+C[3]
         radius = math.sqrt(inside)
     except Exception as e:
         rospy.logwarn(f"{e} {inside}")
         radius = 10
-    return radius, C[0:3], residules
+    return radius, C[0:3], residuals
 
 
 class Color(Enum):
@@ -72,6 +89,11 @@ class DataMarker(Marker):
     _id = 0
 
     def __init__(self, frame_id, point, color, size=0.002):
+        """
+            Returns the distance between two points.
+            @param point1: Second point
+            @param point2: Second point
+        """
         super().__init__()
         self.header.frame_id = frame_id
         self.header.stamp = rospy.Time.now()
@@ -116,6 +138,9 @@ class SrGloveCalibration():
             rospy.logerr("Not polhemus bases detected")
 
     def _get_connected_glove_prefixes(self):
+        """
+            Detect connected gloves and returns the corresponding sides ['left', 'right']
+        """
         tf_buffer = tf2_ros.Buffer()
         listener = tf2_ros.TransformListener(tf_buffer)
         rospy.sleep(1)
@@ -128,6 +153,10 @@ class SrGloveCalibration():
         return connected_glove_sides
 
     def _initialize_finger_data(self):
+        """
+            Initializes the data per side and finger and inputs corresponding interactive markers
+            into the Interactive Marker Server.
+        """
         for i, finger in enumerate(fingers):
             if not self._marker_server.get(f"{self._hand_side}_{finger}_knuckle_glove"):
                 self._finger_data[self._hand_side][finger] = dict()
@@ -142,6 +171,11 @@ class SrGloveCalibration():
                 self._marker_server.insert(self._finger_data[self._hand_side][finger]['center'])
 
     def _create_marker(self, finger, color):
+        """
+            Creates an InteractiveMarker to the present the solution in Rviz. 
+            @param finger: Finger for which the marker gets created
+            @param color: Color of the marker
+        """
         int_marker = InteractiveMarker()
         int_marker.header.frame_id = self._base
         int_marker.name = int_marker.description = f"{self._hand_side}_{finger}_knuckle_glove"
@@ -170,6 +204,11 @@ class SrGloveCalibration():
         return int_marker
 
     def _create_control(self, quaternion, name):
+        """
+            Creates as InteractiveMarkerControl to allow the user to drag&move the solution marker
+            @param quaternion: Quaternion defining the rotations
+            @param name: Name of the marker definiding allowed motion inf format 'rotate/move_axis'
+        """
         control = InteractiveMarkerControl()
         control.orientation.w = quaternion.w
         control.orientation.x = quaternion.x
@@ -183,6 +222,11 @@ class SrGloveCalibration():
         return control
 
     def _calibration(self, goal):
+        """
+            Action server callback. This method executes the calibration procedure consisting of collecting
+            TF data, fitting the data into a sphere and extracting the coordinates of the knuckles.
+            @param goal: Calibration parameters of type CalibrateGoal defining the hand_side and calibration time.
+        """
         self._hand_side = goal.hand_side
         self._index = 0 if self._hand_side == 'rh' else 1
         self._base = f"polhemus_base_{self._index}"
@@ -231,17 +275,27 @@ class SrGloveCalibration():
         rospy.loginfo("Finished calibration.")
 
     def _reset_data(self):
+        """
+            Zeroes the data.
+        """
         for finger in fingers:
             self._finger_data[self._hand_side][finger]['data'] = []
             self._finger_data[self._hand_side][finger]['length'] = []
 
     def _remove_all_markers(self):
+        """
+            Removes markers previously displayed in Rviz
+        """
         marker = Marker()
         marker.header.frame_id = self._base
         marker.action = marker.DELETEALL
         self._pub[self._hand_side].publish(marker)
 
     def _get_knuckle_positions(self, hand_side):
+        """
+            Updates the current solution for all fingers on the selected side.
+            @param hand_side: Selected side
+        """
         for color_index, finger in enumerate(fingers):
             solution_marker = DataMarker(self._base, self._finger_data[hand_side][finger]['center'].pose.position,
                                          COLORS[color_index].value)
@@ -260,6 +314,11 @@ class SrGloveCalibration():
         self._marker_server.applyChanges()
 
     def get_calibration_quality(self):
+        """
+            Returns the calibration quality in the form of a list. The calibration quality is measured as 
+            standard deviation of the the distances between knuckles. This value must be within the range 
+            [_QUALITY_BAD, _QUALITY_GOOD]. 
+        """
         quality_list = []
         for finger in fingers:
             quality = min(self._QUALITY_BAD, max(self._QUALITY_GOOD,
@@ -273,6 +332,9 @@ class SrGloveCalibration():
         return quality_list
 
     def get_distances_between_knuckles(self):
+        """
+            Returns an array containing the distances between knuckles.
+        """
         distances = []
         for i in range(0, len(fingers)-1):
             point_1 = self._finger_data[self._hand_side][fingers[i]]['center'].pose.position
