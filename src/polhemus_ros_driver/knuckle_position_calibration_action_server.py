@@ -172,7 +172,7 @@ class SrGloveCalibration():
 
     def _create_marker(self, finger, color):
         """
-            Creates an InteractiveMarker to the present the solution in Rviz. 
+            Creates an InteractiveMarker to the present the solution in Rviz.
             @param finger: Finger for which the marker gets created
             @param color: Color of the marker
         """
@@ -315,9 +315,9 @@ class SrGloveCalibration():
 
     def get_calibration_quality(self):
         """
-            Returns the calibration quality in the form of a list. The calibration quality is measured as 
-            standard deviation of the the distances between knuckles. This value must be within the range 
-            [_QUALITY_BAD, _QUALITY_GOOD]. 
+            Returns the calibration quality in the form of a list. The calibration quality is measured as
+            standard deviation of the the distances between knuckles. This value must be within the range
+            [_QUALITY_BAD, _QUALITY_GOOD].
         """
         quality_list = []
         for finger in fingers:
