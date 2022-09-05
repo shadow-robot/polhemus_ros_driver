@@ -33,8 +33,8 @@ def map_range(input, in_min, in_max, out_min, out_max):
 
 def calculate_distance(point1, point2):
     """
-        Returns the distance between two points.
-        @param point1: Second point
+        Returns the distance between two points of type geometry_msgs.msg.Point
+        @param point1: First point
         @param point2: Second point
     """
     point1 = [point1.x, point1.y, point1.z]
@@ -45,7 +45,7 @@ def calculate_distance(point1, point2):
 def sphere_fit(data):
     """
         Returns radius, center points and residuals of fitted sphere on input data.
-        @param data: Input data
+        @param data: Input data of 2D array shaped (N,3)
     """
     x = data[:, 0]
     y = data[:, 1]
@@ -202,7 +202,7 @@ class SrGloveCalibration():
         """
             Creates as InteractiveMarkerControl to allow the user to drag&move the solution marker
             @param quaternion: Quaternion defining the rotations
-            @param name: Name of the marker definiding allowed motion inf format 'rotate/move_axis'
+            @param name: Name of the marker definiding allowed motion in format 'rotate/move_axis'
         """
         control = InteractiveMarkerControl()
         control.orientation.w = quaternion.w
