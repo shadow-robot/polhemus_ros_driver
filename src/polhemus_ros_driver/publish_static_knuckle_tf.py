@@ -11,7 +11,7 @@ import yaml
 import tf
 import os
 from geometry_msgs.msg import TransformStamped
-from polhemus_ros_driver.srv import SetStaticCalibrationTF
+from polhemus_ros_driver.srv import SetStaticCalibrationTFNew
 import rospkg
 
 
@@ -20,7 +20,8 @@ class StaticKnuckleBroadcaster:
         self._broadcaster = tf2_ros.StaticTransformBroadcaster()
         self._services = dict()
         for hand_prefix in self._get_connected_gloves():
-            self._services[hand_prefix] = rospy.Service(f"/{hand_prefix}/update_static_tf", SetStaticCalibrationTF,
+            self._services[hand_prefix] = rospy.Service(f"/{hand_prefix}/update_static_tf_new",
+                                                        SetStaticCalibrationTFNew,
                                                         self.publish_tf)
 
     def _get_connected_gloves(self):
