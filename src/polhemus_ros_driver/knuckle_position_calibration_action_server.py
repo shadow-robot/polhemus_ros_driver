@@ -89,11 +89,6 @@ class DataMarker(Marker):
     _id = 0
 
     def __init__(self, frame_id, point, color, size=0.002):
-        """
-            Returns the distance between two points.
-            @param point1: Second point
-            @param point2: Second point
-        """
         super().__init__()
         self.header.frame_id = frame_id
         self.header.stamp = rospy.Time.now()
