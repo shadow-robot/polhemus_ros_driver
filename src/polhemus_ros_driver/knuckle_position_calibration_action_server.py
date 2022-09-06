@@ -162,8 +162,10 @@ class SrGloveCalibration():
                 self._finger_data[self._hand_side][finger]['residual'] = 0
                 self._finger_data[self._hand_side][finger]['data'] = []
                 self._finger_data[self._hand_side][finger]['center'] = self._create_marker(finger, COLORS[i].value)
-                rospy.logwarn(f"Created marker { self._finger_data[self._hand_side][finger]['center'].name }")
-                self._marker_server.insert(self._finger_data[self._hand_side][finger]['center'])
+                self._marker_server.insert(self._finger_data[self._hand_side][finger]['center'], self._processFeedback)
+
+    def _processFeedback(self, feedback):
+        pass
 
     def _create_marker(self, finger, color):
         """
@@ -306,7 +308,7 @@ class SrGloveCalibration():
             pose.position = Point(center[0], center[1], center[2])
             pose.orientation = Quaternion(0, 0, 0, 1)
             self._marker_server.setPose(self._finger_data[hand_side][finger]['center'].name, pose)
-        self._marker_server.applyChanges()
+            self._marker_server.applyChanges()
 
     def get_calibration_quality(self):
         """
