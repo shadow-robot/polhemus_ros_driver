@@ -3,7 +3,6 @@
 # Copyright (C) 2022 Shadow Robot Company Ltd - All Rights Reserved. Proprietary and Confidential.
 # Unauthorized copying of the content in this file, via any medium is strictly prohibited.
 
-from __future__ import absolute_import, division
 import rospy
 import rostopic
 import tf2_ros
