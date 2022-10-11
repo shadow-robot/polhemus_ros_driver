@@ -1,8 +1,3 @@
-/*
-* Copyright (C) 2018 Shadow Robot Company Ltd - All Rights Reserved. Proprietary and Confidential.
-* Unauthorized copying of the content in this file, via any medium is strictly prohibited.
-*/
-
 #include <string>
 #include <libusb-1.0/libusb.h>
 #include "polhemus_ros_driver/polhemus.hpp"

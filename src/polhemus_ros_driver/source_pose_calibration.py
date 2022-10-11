@@ -1,7 +1,4 @@
 #!/usr/bin/env python3
-#
-# Copyright (C) 2020 Shadow Robot Company Ltd - All Rights Reserved. Proprietary and Confidential.
-# Unauthorized copying of the content in this file, via any medium is strictly prohibited.
 
 from math import pi
 
