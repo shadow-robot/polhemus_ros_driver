@@ -28,7 +28,7 @@ def map_range(input, in_min, in_max, out_min, out_max):
         @param out_min: Minimal value of mapped output
         @param in_max: Maximal value of mapped output
     """
-    return (value - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
+    return (input - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
 
 
 def calculate_distance(point1, point2):
@@ -60,6 +60,7 @@ def sphere_fit(data):
     f = np.zeros((len(x), 1))
     f[:, 0] = (x*x) + (y*y) + (z*z)
     C, residuals, _, _ = np.linalg.lstsq(A, f, rcond=None)
+
     try:
         inside = (C[0]*C[0])+(C[1]*C[1])+(C[2]*C[2])+C[3]
         radius = math.sqrt(inside)
@@ -117,20 +118,27 @@ class SrGloveCalibration():
         self._base = f"polhemus_base_{self._index}"
 
         self._finger_data = dict()
-        connected_prefixes = self._get_connected_glove_prefixes()
+        
+        self._pub = dict()
+        self._marker_server = None
+        self._action_server = None
 
-        if connected_prefixes:
+        connected_prefixes = self._get_connected_glove_prefixes()
+        self._initialize(connected_prefixes)
+        if not connected_prefixes:
+            rospy.logerr("Polhemus bases not detected")
+
+    def _initialize(self, prefixes):
+        if prefixes:
             self._pub = dict()
-            for prefix in connected_prefixes:
+            for prefix in prefixes:
                 self._finger_data[prefix] = dict()
                 self._pub[prefix] = rospy.Publisher(f"/data_point_marker_{prefix}", Marker, queue_size=1000)
 
             self._marker_server = InteractiveMarkerServer("knuckle_position_markers")
             self._action_server = actionlib.SimpleActionServer("/calibration_action_server", CalibrateAction,
-                                                               execute_cb=self._calibration, auto_start=False)
+                                                                execute_cb=self._calibration, auto_start=False)
             self._action_server.start()
-        else:
-            rospy.logerr("Not polhemus bases detected")
 
     def _get_connected_glove_prefixes(self):
         """
@@ -300,6 +308,7 @@ class SrGloveCalibration():
 
             r, center, residual = sphere_fit(np.array(self._finger_data[hand_side][finger]['data']))
 
+            # NOT USED FOR NOW
             self._finger_data[hand_side][finger]['residual'] = residual
             self._finger_data[hand_side][finger]['length'].append(np.around(r, 4))
 
@@ -309,6 +318,8 @@ class SrGloveCalibration():
             pose.orientation = Quaternion(0, 0, 0, 1)
             self._marker_server.setPose(self._finger_data[hand_side][finger]['center'].name, pose)
             self._marker_server.applyChanges()
+
+        return self._finger_data[hand_side]
 
     def get_calibration_quality(self):
         """
