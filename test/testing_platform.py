@@ -12,11 +12,11 @@ rospy.init_node('test')
 files = ['calibration_1.bag', 'calibration_2.bag']
 fingers = ('ff', 'mf', 'rf', 'lf')
 
-side_prefix = 'rh'
+side_prefix = 'lh'
 calibration = SrGloveCalibration()
 calibration._hand_side = side_prefix
-calibration._index = 0
-calibration._base = 'polhemus_base_0'
+calibration._index = 1
+calibration._base = 'polhemus_base_1'
 
 calibration._initialize([side_prefix])
 calibration._initialize_finger_data()
@@ -44,7 +44,7 @@ for file in files:
 
     result = calibration._get_knuckle_positions(side_prefix)
     for finger in fingers:
-        print(finger, result[finger]['polhemus_tf_name'])
+        #print(finger, result[finger]['polhemus_tf_name'])
         x = result[finger]['center'].pose.position.x
         y = result[finger]['center'].pose.position.y
         z = result[finger]['center'].pose.position.z

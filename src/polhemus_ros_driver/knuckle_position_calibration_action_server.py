@@ -17,6 +17,7 @@ from std_msgs.msg import ColorRGBA
 from polhemus_ros_driver.msg import CalibrateFeedback, CalibrateAction, CalibrateFeedback, CalibrateResult
 from interactive_markers.interactive_marker_server import InteractiveMarkerServer
 from enum import Enum
+from scipy.optimize import least_squares
 
 
 def map_range(input, in_min, in_max, out_min, out_max):
@@ -41,12 +42,24 @@ def calculate_distance(point1, point2):
     point2 = [point2.x, point2.y, point2.z]
     return np.linalg.norm(np.array(point1)-np.array(point2))
 
+def new_sphere_fit(parameters, data):
+    x_center, y_center, z_center, r = parameters
+
+    error = 0
+    for data_entry in data:
+        x = data_entry[0]
+        y = data_entry[1]
+        z = data_entry[2]
+        error += np.sqrt((x-x_center)*(x-x_center) + (y-y_center)*(y-y_center) + (z-z_center)*(z-z_center)) - np.sqrt(r*r)
+        # basically error += r^2 - r^2
+    return error
 
 def sphere_fit(data):
     """
         Returns radius, center points and residuals of fitted sphere on input data.
         @param data: Input data of 2D array shaped (N,3)
     """
+    #print(data)
     x = data[:, 0]
     y = data[:, 1]
     z = data[:, 2]
@@ -306,7 +319,15 @@ class SrGloveCalibration():
                                          COLORS[color_index].value)
             self._pub[self._hand_side].publish(solution_marker)
 
+            #Approach 1
             r, center, residual = sphere_fit(np.array(self._finger_data[hand_side][finger]['data']))
+
+            #Approach 2
+            initial_solution = [0.08, -0.025, 0.039, 0.08]
+            initial_solution = [0, 0, 0, 0]
+            solution = least_squares(new_sphere_fit, initial_solution, loss='soft_l1', args=[self._finger_data[hand_side][finger]['data']])
+            print(solution.x)
+
 
             # NOT USED FOR NOW
             self._finger_data[hand_side][finger]['residual'] = residual
