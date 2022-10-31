@@ -15,23 +15,21 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program; if not, write to the Free Software
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
-
-import rospy
-import rostopic
+from enum import Enum
+import math
+import numpy as np
 import tf2_ros
 import actionlib
 import tf
-import numpy as np
-import math
+import rospy
+from std_msgs.msg import ColorRGBA
 from visualization_msgs.msg import Marker, InteractiveMarker, InteractiveMarkerControl
 from geometry_msgs.msg import Pose, Point, Quaternion, Vector3
-from std_msgs.msg import ColorRGBA
-from polhemus_ros_driver.msg import CalibrateFeedback, CalibrateAction, CalibrateFeedback, CalibrateResult
 from interactive_markers.interactive_marker_server import InteractiveMarkerServer
-from enum import Enum
+from polhemus_ros_driver.msg import CalibrateFeedback, CalibrateAction, CalibrateResult
 
 
-def map_range(input, in_min, in_max, out_min, out_max):
+def map_range(value, in_min, in_max, out_min, out_max):
     """
         Returns the convereted value of 'input' from range [out_min, out_max] into range [in_min, in_max]
         @param value: Value to be mapped
@@ -59,26 +57,27 @@ def sphere_fit(data):
         Returns radius, center points and residuals of fitted sphere on input data.
         @param data: Input data of 2D array shaped (N,3)
     """
-    x = data[:, 0]
-    y = data[:, 1]
-    z = data[:, 2]
+    x_coord = data[:, 0]
+    y_coord = data[:, 1]
+    z_coord = data[:, 2]
 
-    A = np.zeros((len(x), 4))
-    A[:, 0] = x*2
-    A[:, 1] = y*2
-    A[:, 2] = z*2
-    A[:, 3] = 1
+    coefficient = np.zeros((len(x_coord), 4))
+    coefficient[:, 0] = x_coord*2
+    coefficient[:, 1] = y_coord*2
+    coefficient[:, 2] = z_coord*2
+    coefficient[:, 3] = 1
 
-    f = np.zeros((len(x), 1))
-    f[:, 0] = (x*x) + (y*y) + (z*z)
-    C, residuals, _, _ = np.linalg.lstsq(A, f, rcond=None)
+    dependent = np.zeros((len(x_coord), 1))
+    dependent[:, 0] = (x_coord*x_coord) + (y_coord*y_coord) + (z_coord*z_coord)
+    least_square, residuals, _, _ = np.linalg.lstsq(coefficient, dependent, rcond=None)
     try:
-        inside = (C[0]*C[0])+(C[1]*C[1])+(C[2]*C[2])+C[3]
+        inside = (least_square[0]*least_square[0]) + (least_square[1]*least_square[1])+\
+                 (least_square[2]*least_square[2])+least_square[3]
         radius = math.sqrt(inside)
-    except Exception as e:
-        rospy.logwarn(f"{e} {inside}")
+    except Exception as exception:
+        rospy.logwarn(f"{exception} {inside}")
         radius = 10
-    return radius, C[0:3], residuals
+    return radius, least_square[0:3], residuals
 
 
 class Color(Enum):
@@ -107,7 +106,7 @@ class DataMarker(Marker):
         self.type = self.POINTS
         #  Markers need to have unique ids. With the line below it's ensured that
         #  every new instance has a unique, incremental id
-        self.id = DataMarker._id = DataMarker._id + 1
+        self.id = DataMarker._id = DataMarker._id + 1  # pylint: disable=C0103
         self.frame_locked = False
         self.points = [point]
         self.scale = Vector3(size, size, size)
@@ -144,12 +143,13 @@ class SrGloveCalibration():
         else:
             rospy.logerr("Not polhemus bases detected")
 
-    def _get_connected_glove_prefixes(self):
+    @staticmethod
+    def _get_connected_glove_prefixes():
         """
             Detect connected gloves and returns the corresponding sides ['left', 'right']
         """
         tf_buffer = tf2_ros.Buffer()
-        listener = tf2_ros.TransformListener(tf_buffer)
+        tf2_ros.TransformListener(tf_buffer)
         rospy.sleep(1)
         connected_glove_sides = []
         for key, value in polhemus_to_side_prefix.items():
@@ -176,7 +176,7 @@ class SrGloveCalibration():
                 self._finger_data[self._hand_side][finger]['center'] = self._create_marker(finger, COLORS[i].value)
                 self._marker_server.insert(self._finger_data[self._hand_side][finger]['center'], self._processFeedback)
 
-    def _processFeedback(self, feedback):
+    def _processFeedback(self, feedback):  # pylint: disable=C0103
         pass
 
     def _create_marker(self, finger, color):
@@ -212,7 +212,8 @@ class SrGloveCalibration():
 
         return int_marker
 
-    def _create_control(self, quaternion, name):
+    @staticmethod
+    def _create_control(quaternion, name):
         """
             Creates as InteractiveMarkerControl to allow the user to drag&move the solution marker
             @param quaternion: Quaternion defining the rotations
@@ -249,7 +250,7 @@ class SrGloveCalibration():
         start = rospy.Time.now().to_sec()
         _feedback = CalibrateFeedback()
         _result = CalibrateResult()
-
+        final_finger = None
         while rospy.Time.now().to_sec() - start < goal.time:
             for color_index, finger in enumerate(fingers):
                 try:
@@ -262,6 +263,7 @@ class SrGloveCalibration():
                                                    COLORS[color_index].value)
                     self._pub[self._hand_side].publish(data_point_marker)
                     rate.sleep()
+                    final_finger = finger
                 except Exception as error:
                     rospy.logerr(error)
 
@@ -272,7 +274,7 @@ class SrGloveCalibration():
                 break
 
             _feedback.progress = ((rospy.Time.now().to_sec() - start)) / goal.time
-            if len(self._finger_data[self._hand_side][finger]['data']) % 25 == 0:
+            if len(self._finger_data[self._hand_side][final_finger]['data']) % 25 == 0:
                 self._get_knuckle_positions(self._hand_side)
                 _feedback.quality = self.get_calibration_quality()
             self._action_server.publish_feedback(_feedback)
@@ -310,10 +312,10 @@ class SrGloveCalibration():
                                          COLORS[color_index].value)
             self._pub[self._hand_side].publish(solution_marker)
 
-            r, center, residual = sphere_fit(np.array(self._finger_data[hand_side][finger]['data']))
+            radius, center, residual = sphere_fit(np.array(self._finger_data[hand_side][finger]['data']))
 
             self._finger_data[hand_side][finger]['residual'] = residual
-            self._finger_data[hand_side][finger]['length'].append(np.around(r, 4))
+            self._finger_data[hand_side][finger]['length'].append(np.around(radius, 4))
 
             center = np.around(center, 3)
             pose = Pose()
@@ -335,7 +337,7 @@ class SrGloveCalibration():
             quality = map_range(quality, self._QUALITY_GOOD, self._QUALITY_BAD, 100, 0)
             quality_list.append(quality)
         for distance in self.get_distances_between_knuckles():
-            if not (self._ACCEPTABLE_KNUCKLE_DISTANCE[0] < distance < self._ACCEPTABLE_KNUCKLE_DISTANCE[1]):
+            if not self._ACCEPTABLE_KNUCKLE_DISTANCE[0] < distance < self._ACCEPTABLE_KNUCKLE_DISTANCE[1]:
                 quality_list = [self._QUALITY_BAD, self._QUALITY_BAD, self._QUALITY_BAD, self._QUALITY_BAD]
                 break
         return quality_list

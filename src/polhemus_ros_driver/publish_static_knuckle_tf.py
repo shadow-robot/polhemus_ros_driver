@@ -18,12 +18,7 @@
 
 import rospy
 import tf2_ros
-import yaml
-import tf
-import os
-from geometry_msgs.msg import TransformStamped
 from polhemus_ros_driver.srv import SetStaticCalibrationTFNew
-import rospkg
 
 
 class StaticKnuckleBroadcaster:
@@ -35,9 +30,10 @@ class StaticKnuckleBroadcaster:
                                                         SetStaticCalibrationTFNew,
                                                         self.publish_tf)
 
-    def _get_connected_gloves(self):
+    @staticmethod
+    def _get_connected_gloves():
         tf_buffer = tf2_ros.Buffer()
-        listener = tf2_ros.TransformListener(tf_buffer)
+        tf2_ros.TransformListener(tf_buffer)
         rospy.sleep(1)
         connected_glove_sides = []
         for key, value in {"polhemus_base_0": "rh", "polhemus_base_1": "lh"}.items():
@@ -52,8 +48,8 @@ class StaticKnuckleBroadcaster:
         try:
             self._broadcaster.sendTransform(req.transform_stamped)
             success = True
-        except Exception as e:
-            rospy.logerr(e)
+        except Exception as exception:
+            rospy.logerr(exception)
         return success
 
 
