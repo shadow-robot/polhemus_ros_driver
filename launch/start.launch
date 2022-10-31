@@ -3,6 +3,7 @@
   <arg name="x_hs" default="1" />
   <arg name="y_hs" default="0" />
   <arg name="z_hs" default="0" />
+  <arg name="sensors_per_glove" default="6" />
   <arg name="hands" default="right"/>
   <arg name="product_type" default="viper"/>
   <arg name="node_name" default="polhemus_tf_broadcaster"/>
@@ -15,6 +16,7 @@
     <param name="x_hs" value="$(arg x_hs)" type="int"/>
     <param name="y_hs" value="$(arg y_hs)" type="int"/>
     <param name="z_hs" value="$(arg z_hs)" type="int"/>
+    <param name="sensors_per_glove" value="$(arg sensors_per_glove)" type="int"/>
     <param name="hands" value="$(arg hands)" type="string"/>
     <param name="product_type" value="$(arg product_type)" type="string"/>
   </node>

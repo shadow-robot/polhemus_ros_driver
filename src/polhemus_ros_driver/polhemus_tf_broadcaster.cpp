@@ -276,7 +276,7 @@ int main(int argc, char** argv)
 {
   libusb_device_handle *g_usbhnd = 0;
   vp_usbdevinfo g_usbinfo;
-  int i, nstations;
+  int i, nstations, sensors_per_glove;
   double x_hs, y_hs, z_hs;
   struct timeval tv;
   uint16_t product_id;
@@ -293,6 +293,7 @@ int main(int argc, char** argv)
 
   nh.getParam("product_type", product_type);
   nh.getParam("hands", hands);
+  nh.getParam("sensors_per_glove", sensors_per_glove);
 
   if (hands == "both")
     number_of_hands = 2;
@@ -312,7 +313,7 @@ int main(int argc, char** argv)
       return -1;
     }
 
-    device = new Liberty(product_type, LIBERTY_RX_BUF_SIZE, LIBERTY_TX_BUF_SIZE);
+    device = new Liberty(product_type, LIBERTY_RX_BUF_SIZE, LIBERTY_TX_BUF_SIZE, sensors_per_glove);
     ROS_INFO("[POLHEMUS] Initialising liberty device.");
     device->endpoint_in = LIBERTY_ENDPOINT_IN;
     device->endpoint_out = LIBERTY_ENDPOINT_OUT;
@@ -327,7 +328,7 @@ int main(int argc, char** argv)
       return -1;
     }
 
-    device = new Viper(product_type, VIPER_RX_BUF_SIZE, VIPER_RX_BUF_SIZE);
+    device = new Viper(product_type, VIPER_RX_BUF_SIZE, VIPER_RX_BUF_SIZE, sensors_per_glove);
 
     ROS_INFO("[POLHEMUS] Initialising Viper device.");
     device->endpoint_in = g_usbinfo.ep_in;

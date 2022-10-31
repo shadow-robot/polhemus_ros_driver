@@ -29,7 +29,6 @@
 #define VPUSB_WRITE_TIMEOUT_MS 100
 #define VPUSB_READ_TIMEOUT_MS 100
 #define PI 3.14159265359
-#define SENSORS_PER_GLOVE 6
 #define CALIBRATE_TIMEOUT_IN_SECS 3
 #define RETURN_ERROR -1
 
@@ -54,7 +53,7 @@ data_type_e;
 class Polhemus
 {
 public:
-  Polhemus(std::string name, uint16_t rx_buffer_size, uint16_t tx_buffer_size);
+  Polhemus(std::string name, uint16_t rx_buffer_size, uint16_t tx_buffer_size, int sensors_per_glove);
   virtual ~Polhemus(void);
   int count_bits(uint16_t v);
   ros::NodeHandle *nh;
@@ -92,6 +91,7 @@ public:
   uint16_t endpoint_out_max_packet_size;
   uint16_t rx_buffer_size;
   uint16_t tx_buffer_size;
+  int sensors_per_glove;
   int g_ntxcount;
   int g_nrxcount;
   std::vector<std::string> station_names_;

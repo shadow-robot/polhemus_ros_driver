@@ -39,7 +39,7 @@
 class Liberty : public Polhemus
 {
 public:
-    Liberty(std::string name, uint16_t rx_buffer_size, uint16_t tx_buffer_size);
+    Liberty(std::string name, uint16_t rx_buffer_size, uint16_t tx_buffer_size, int sensors_per_glove);
     ~Liberty(void);
     void device_init();
     int request_num_of_stations(void);
