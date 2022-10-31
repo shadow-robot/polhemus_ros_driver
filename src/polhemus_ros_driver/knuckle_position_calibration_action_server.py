@@ -71,8 +71,8 @@ def sphere_fit(data):
     dependent[:, 0] = (x_coord*x_coord) + (y_coord*y_coord) + (z_coord*z_coord)
     least_square, residuals, _, _ = np.linalg.lstsq(coefficient, dependent, rcond=None)
     try:
-        inside = (least_square[0]*least_square[0]) + (least_square[1]*least_square[1])+\
-                 (least_square[2]*least_square[2])+least_square[3]
+        inside = (least_square[0]*least_square[0]) + (least_square[1]*least_square[1]) + \
+                 (least_square[2]*least_square[2]) + least_square[3]
         radius = math.sqrt(inside)
     except Exception as exception:
         rospy.logwarn(f"{exception} {inside}")
@@ -127,13 +127,13 @@ class SrGloveCalibration():
         self._index = 0 if self._hand_side == 'rh' else 1
         self._base = f"polhemus_base_{self._index}"
 
-        self._finger_data = dict()
+        self._finger_data = {}
         connected_prefixes = self._get_connected_glove_prefixes()
 
         if connected_prefixes:
-            self._pub = dict()
+            self._pub = {}
             for prefix in connected_prefixes:
-                self._finger_data[prefix] = dict()
+                self._finger_data[prefix] = {}
                 self._pub[prefix] = rospy.Publisher(f"/data_point_marker_{prefix}", Marker, queue_size=1000)
 
             self._marker_server = InteractiveMarkerServer("knuckle_position_markers")
@@ -166,7 +166,7 @@ class SrGloveCalibration():
         """
         for i, finger in enumerate(fingers):
             if not self._marker_server.get(f"{self._hand_side}_{finger}_knuckle_glove"):
-                self._finger_data[self._hand_side][finger] = dict()
+                self._finger_data[self._hand_side][finger] = {}
                 #  We are tracking stations 1,2,3,4 on right hand and stations 9,10,11,12 on left hand.
                 station_name = f"polhemus_station_{i + 8*self._index + 1}"
                 self._finger_data[self._hand_side][finger]['polhemus_tf_name'] = station_name
