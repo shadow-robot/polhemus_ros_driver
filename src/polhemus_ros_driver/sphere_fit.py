@@ -96,9 +96,9 @@ class SphereFit:
         self._raw_data = []
         for i in range(N):
             self._raw_data.append(SphereFit.point_from_polar(center, radii[i], polar[i], azimuth[i]))
-        n_noise = floor(N/10)
-        for i in range(n_noise):
-            self._raw_data.append(SphereFit.random_cartesian(center, [-0.1, -0.1, -0.1], [0.1, 0.1, 0.1]))
+        # n_noise = floor(N/10)
+        # for i in range(n_noise):
+        #     self._raw_data.append(SphereFit.random_cartesian(center, [-0.1, -0.1, -0.1], [0.1, 0.1, 0.1]))
         return self._raw_data
 
     @staticmethod
