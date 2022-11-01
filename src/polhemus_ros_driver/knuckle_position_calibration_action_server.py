@@ -106,7 +106,8 @@ class DataMarker(Marker):
         self.type = self.POINTS
         #  Markers need to have unique ids. With the line below it's ensured that
         #  every new instance has a unique, incremental id
-        self.id = DataMarker._id = DataMarker._id + 1  # pylint: disable=C0103
+        self.id = DataMarker._id
+        DataMarker._id = DataMarker._id + 1
         self.frame_locked = False
         self.points = [point]
         self.scale = Vector3(size, size, size)
