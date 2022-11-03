@@ -7,28 +7,101 @@ from math import cos, floor, pi, sin, sqrt
 import matplotlib.pyplot as plt
 import mpl_toolkits.mplot3d
 from scipy.optimize import least_squares
+import rosbag
+import tf2_ros
+# import tf2_py as tf2
 
 import numpy
 from geometry_msgs.msg import Point
 
+import rospkg
+import rospy
+
+# get an instance of RosPack with the default search paths
+rospack = rospkg.RosPack()
+
 class SphereFit:
-    def __init__(self) -> None:
+    def __init__(self, use_recorded_polhemus_data = None, data = None, plot = False) -> None:
         self._raw_data = []
         self._center = None
         self._radius = None
         self._best_candidate = None
-        self.setup_plot()
+        self.finger_polhemusstation_map = {'ff': 'polhemus_station_1', 'mf': 'polhemus_station_2', 'rf': 'polhemus_station_3', 'lf': 'polhemus_station_4'}
+        if plot:
+            self.setup_plot()
+
+        if data:
+            for point in data:
+                self._raw_data.append(Point(point[0], point[1], point[2]))
+
+        elif use_recorded_polhemus_data:
+            # Open input and output rosbags
+            POLHEMUS_DRIVER_PATH = rospack.get_path('polhemus_ros_driver')
+            bag_file_path = f'glove_data{use_recorded_polhemus_data}'
+            # bag_file_path = 'glove_data/Ethan/2022-11-01-12-27-32.bag'
+            # bag_file_path = 'glove_data/Ethan/2022-11-01-12-27-45.bag'
+            # bag_file_path = 'glove_data/Ethan/2022-11-01-12-27-56.bag'
+            # bag_file_path = 'glove_data/Ethan/2022-11-01-12-28-08.bag'
+            # bag_file_path = 'glove_data/Ethan/2022-11-01-12-28-28.bag'
+
+            # bag_file_path = 'glove_data/Hugo/2022-11-01-13-49-17.bag'
+            # bag_file_path = 'glove_data/Hugo/2022-11-01-13-49-30.bag'
+            # bag_file_path = 'glove_data/Hugo/2022-11-01-13-49-45.bag'
+            # bag_file_path = 'glove_data/Hugo/2022-11-01-13-49-55.bag'
+            # bag_file_path = 'glove_data/Hugo/2022-11-01-13-50-09.bag'
+
+            local_tf_buffer = tf2_ros.Buffer()
+            # object_methods = [method_name for method_name in dir(local_tf_buffer)
+            #       if callable(getattr(local_tf_buffer, method_name))]
+            # print(object_methods)
+            local_tf_buffer.clear()
+            local_buffer_has_been_udpdated = False
+
+            with rosbag.Bag(f'{POLHEMUS_DRIVER_PATH}/{bag_file_path}', 'r') as bag_file:
+                for _, msg, _ in bag_file.read_messages(topics=['/tf']):
+                    for individual_transform in msg.transforms:
+                        # if individual_transform.header.frame_id == "polhemus_base_0":
+                        if individual_transform.child_frame_id in ['polhemus_station_1', 'polhemus_station_2', 'polhemus_station_3', 'polhemus_station_4']:
+                            # print(f'>>{individual_transform.header.frame_id}')
+                            # print(individual_transform)
+                            # m = geometry_msgs.msg.TransformStamped()
+                            # m.header.frame_id = 'THISFRAME'
+                            # m.child_frame_id = 'CHILD'
+                            # m.transform.translation.x = 2.71828183
+                            # m.transform.rotation.w = 1.0
+                            local_tf_buffer.set_transform(individual_transform, "default_authority")
+                            # rospy.sleep(2)
+                            # print(local_tf_buffer._getFrameStrings())
+                            ff_transform = local_tf_buffer.lookup_transform('polhemus_base_0', 'polhemus_station_1', rospy.Time(0))
+                            # print(ff_transform)
+                            local_buffer_has_been_udpdated = True
+
+                    # For each TF message, add points related to 1 finger - choose between ff, mf, rf, or lf
+                    if local_buffer_has_been_udpdated:
+                        finger_transform = local_tf_buffer.lookup_transform('polhemus_base_0', self.finger_polhemusstation_map['ff'], rospy.Time(0))
+                        point = Point()
+                        point.x = finger_transform.transform.translation.x
+                        point.y = finger_transform.transform.translation.y
+                        point.z = finger_transform.transform.translation.z
+                        self._raw_data.append(point)
+                        local_buffer_has_been_udpdated = False
 
     def fit_sphere(self, min_coords, max_coords, min_radius, max_radius):
         # self._best_candidate = SphereFit.grid_vote(self._raw_data, min_coords, max_coords, min_radius, max_radius, 10)
-        result = least_squares(self.sphere_errors_optimizable, [0, 0, 0, 0.08], method='trf', bounds=(min_coords + [min_radius], max_coords + [max_radius]))
-        print(result.x)
-        result = least_squares(self.sphere_errors_optimizable, [0, 0, 0, 0.08], loss="cauchy")
-        print(result.x)
-        result = least_squares(self.sphere_errors_optimizable, [0, 0, 0, 0.08], method="lm")
+        # result = least_squares(self.sphere_errors_optimizable, [0, 0, 0, 0.08], method='trf', bounds=(min_coords + [min_radius], max_coords + [max_radius]))
+        # print("Results #1:")
+        # print(f'{result.x[0]:.4f}\n{result.x[1]:.4f}\n{result.x[2]:.4f}\n{result.x[3]:.4f}')
+        result = least_squares(self.sphere_errors_optimizable, [0, 0, 0, 0.08], loss="cauchy", bounds=(min_coords + [min_radius], max_coords + [max_radius]), f_scale=0.001)
+        print("Results:")
+        print(f'{result.x[0]:.4f}\n{result.x[1]:.4f}\n{result.x[2]:.4f}\n{result.x[3]:.4f}')
         self._best_candidate = result.x
-        print(self._best_candidate)
         self._residuals = result.fun
+        # result = least_squares(self.sphere_errors_optimizable, [0, 0, 0, 0.08], method="lm", f_scale=0.0001)
+        # print("Results #3:")
+        # print(f'{result.x[0]:.4f}\n{result.x[1]:.4f}\n{result.x[2]:.4f}\n{result.x[3]:.4f}')
+        # result = least_squares(self.sphere_errors_optimizable, [0, 0, 0, 0.08], method='soft_l1', bounds=(min_coords + [min_radius], max_coords + [max_radius]), f_scale=0.1)
+        # print(self._best_candidate)
+        return self._best_candidate[3], self._best_candidate[0:3], self._residuals # radius, center, residuals
 
     @staticmethod
     def grid_vote(data, min_coords, max_coords, min_radius, max_radius, grid_points):
@@ -96,6 +169,7 @@ class SphereFit:
         self._raw_data = []
         for i in range(N):
             self._raw_data.append(SphereFit.point_from_polar(center, radii[i], polar[i], azimuth[i]))
+        # Uncomment to add sparse noise
         # n_noise = floor(N/10)
         # for i in range(n_noise):
         #     self._raw_data.append(SphereFit.random_cartesian(center, [-0.1, -0.1, -0.1], [0.1, 0.1, 0.1]))
@@ -123,8 +197,8 @@ class SphereFit:
             self._ax.scatter([point.x for point in points], [point.y for point in points], [point.z for point in points], marker='.')
         else:
             c = (self._residuals - self._residuals.min()) / (self._residuals.max() - self._residuals.min())
-            print(c.min())
-            print(c.max())
+            # print(c.min())
+            # print(c.max())
             self._ax.scatter([point.x for point in points], [point.y for point in points], [point.z for point in points], marker='.', c=c, cmap="jet")
         if (self._center is not None):
             self._ax.scatter(self._center.x, self._center.y, self._center.z, c='r', marker='.')
@@ -134,7 +208,10 @@ class SphereFit:
 
 if __name__ == "__main__":
     center = Point(0.05, 0.05, 0.05)
-    sphere_fit = SphereFit()
-    sphere_fit.generate_data(1000, center, 0.08, 0.003, pi*1/4, pi*3/4, pi*3/8, pi*5/8)
+    sphere_fit = SphereFit(use_recorded_polhemus_data = '/Ethan/2022-11-01-12-27-45.bag', plot = True)
+    # sphere_fit = SphereFit()
+    # sphere_fit.generate_data(1000, center, 0.08, 0.003, 0, pi, 0, pi)
+
+    # sphere_fit.generate_data(1000, center, 0.08, 0.003, pi*1/4, pi*3/4, pi*3/8, pi*5/8)
     sphere_fit.fit_sphere([-0.1, -0.1, -0.1], [0.1, 0.1, 0.1], 0.03, 0.15)
     sphere_fit.plot_data()

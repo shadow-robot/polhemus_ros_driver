@@ -4,22 +4,25 @@
 # Unauthorized copying of the content in this file, via any medium is strictly prohibited.
 
 from __future__ import absolute_import, division
+import math
+from enum import Enum
+
 import rospy
-import rostopic
+# import rostopic
 import tf2_ros
 import actionlib
-import tf
+# import tf
+from tf2_msgs.msg import TFMessage
 import numpy as np
-import math
 from visualization_msgs.msg import Marker, InteractiveMarker, InteractiveMarkerControl
 from geometry_msgs.msg import Pose, Point, Quaternion, Vector3
 from std_msgs.msg import ColorRGBA
-from polhemus_ros_driver.msg import CalibrateFeedback, CalibrateAction, CalibrateFeedback, CalibrateResult
 from interactive_markers.interactive_marker_server import InteractiveMarkerServer
-from enum import Enum
+from sphere_fit import SphereFit
 
+from polhemus_ros_driver.msg import CalibrateFeedback, CalibrateAction, CalibrateResult
 
-def map_range(input, in_min, in_max, out_min, out_max):
+def map_range(value, in_min, in_max, out_min, out_max):
     """
         Returns the convereted value of 'input' from range [out_min, out_max] into range [in_min, in_max]
         @param value: Value to be mapped
@@ -66,6 +69,8 @@ def sphere_fit(data):
     except Exception as e:
         rospy.logwarn(f"{e} {inside}")
         radius = 10
+    print("Results:")
+    print(f'{C[0][0]:.4f}\n{C[1][0]:.4f}\n{C[2][0]:.4f}\n{radius:.4f}')
     return radius, C[0:3], residuals
 
 
@@ -109,7 +114,7 @@ class SrGloveCalibration():
     _ACCEPTABLE_KNUCKLE_DISTANCE = (0.015, 0.025)  # in meters
 
     def __init__(self):
-        self._listener = tf.TransformListener()
+        # self._listener = tf.TransformListener()
         self._hand_side = rospy.get_param("~hand_side", 'rh')
         if self._hand_side != "lh":
             self._hand_side = "rh"
@@ -218,6 +223,20 @@ class SrGloveCalibration():
             control.interaction_mode = InteractiveMarkerControl.MOVE_AXIS
         return control
 
+    def _load_tf_callback(self, data):
+        for individual_transform in data.transforms:
+            for color_index, finger in enumerate(fingers):
+                if individual_transform.child_frame_id == self._finger_data[self._hand_side][finger]['polhemus_tf_name']:
+                    pos = [individual_transform.transform.translation.x,
+                           individual_transform.transform.translation.y,
+                           individual_transform.transform.translation.z]
+
+                    self._finger_data[self._hand_side][finger]['data'].append(pos)
+                    data_point_marker = DataMarker(self._base, Point(pos[0], pos[1], pos[2]),
+                                                    COLORS[color_index].value)
+                    self._pub[self._hand_side].publish(data_point_marker)
+        return
+
     def _calibration(self, goal):
         """
             Action server callback. This method executes the calibration procedure consisting of collecting
@@ -238,33 +257,40 @@ class SrGloveCalibration():
         _feedback = CalibrateFeedback()
         _result = CalibrateResult()
 
+        sub = rospy.Subscriber("/tf", TFMessage, self._load_tf_callback, queue_size=10)
         while rospy.Time.now().to_sec() - start < goal.time:
-            for color_index, finger in enumerate(fingers):
-                try:
-                    polhemus_tf_name = self._finger_data[self._hand_side][finger]['polhemus_tf_name']
-                    self._listener.waitForTransform(self._base, polhemus_tf_name, rospy.Time(), rospy.Duration(0.1))
-                    pos, _ = self._listener.lookupTransform(self._base, polhemus_tf_name,
-                                                            rospy.Time(0))
-                    self._finger_data[self._hand_side][finger]['data'].append(pos)
-                    data_point_marker = DataMarker(self._base, Point(pos[0], pos[1], pos[2]),
-                                                   COLORS[color_index].value)
-                    self._pub[self._hand_side].publish(data_point_marker)
-                    rate.sleep()
-                except Exception as error:
-                    rospy.logerr(error)
+            # for color_index, finger in enumerate(fingers):
+            #     try:
+            #         polhemus_tf_name = self._finger_data[self._hand_side][finger]['polhemus_tf_name']
+            #         self._listener.waitForTransform(self._base, polhemus_tf_name, rospy.Time(), rospy.Duration(0.1))
+            #         pos, _ = self._listener.lookupTransform(self._base, polhemus_tf_name,
+            #                                                 rospy.Time(0))
+            #         self._finger_data[self._hand_side][finger]['data'].append(pos)
+            #         data_point_marker = DataMarker(self._base, Point(pos[0], pos[1], pos[2]),
+            #                                        COLORS[color_index].value)
+            #         self._pub[self._hand_side].publish(data_point_marker)
+            #         rate.sleep()
+            #     except Exception as error:
+            #         rospy.logerr(error)
 
             if self._action_server.is_preempt_requested():
-                rospy.loginfo("Calbration stopped.")
+                rospy.loginfo("Calibration stopped.")
                 self._action_server.set_preempted()
                 _result.success = False
                 break
 
             _feedback.progress = ((rospy.Time.now().to_sec() - start)) / goal.time
-            if len(self._finger_data[self._hand_side][finger]['data']) % 25 == 0:
+            if math.floor(_feedback.progress * 100) % 25 == 0 and math.floor(_feedback.progress * 100) != 0: #4 times
+                print(math.floor(_feedback.progress * 100))
+            # if (len(self._finger_data[self._hand_side]['ff']['data']) + 1) % 25 == 0:
                 self._get_knuckle_positions(self._hand_side)
                 _feedback.quality = self.get_calibration_quality()
             self._action_server.publish_feedback(_feedback)
 
+        sub.unregister()
+        self._get_knuckle_positions(self._hand_side, plot = True)
+        _feedback.quality = self.get_calibration_quality()
+        print(f'Quality is {_feedback.quality}')
         if not self._action_server.is_preempt_requested():
             _result.success = True
             self._action_server.set_succeeded(_result)
@@ -288,7 +314,7 @@ class SrGloveCalibration():
         marker.action = marker.DELETEALL
         self._pub[self._hand_side].publish(marker)
 
-    def _get_knuckle_positions(self, hand_side):
+    def _get_knuckle_positions(self, hand_side, plot=False):
         """
             Updates the current solution for all fingers on the selected side.
             @param hand_side: Selected side
@@ -297,11 +323,19 @@ class SrGloveCalibration():
             solution_marker = DataMarker(self._base, self._finger_data[hand_side][finger]['center'].pose.position,
                                          COLORS[color_index].value)
             self._pub[self._hand_side].publish(solution_marker)
+            sphere_fit = SphereFit(data = self._finger_data[hand_side][finger]['data'], plot = plot)
+            
+            print(f"Searching for centroid of finger {finger}")
+            
+            # radius, center, residual = sphere_fit(np.array(self._finger_data[hand_side][finger]['data']))
 
-            r, center, residual = sphere_fit(np.array(self._finger_data[hand_side][finger]['data']))
+            radius, center, residual = sphere_fit.fit_sphere([-0.1, -0.1, -0.1], [0.1, 0.1, 0.1], 0.03, 0.15)
+
+            if plot:
+                sphere_fit.plot_data()
 
             self._finger_data[hand_side][finger]['residual'] = residual
-            self._finger_data[hand_side][finger]['length'].append(np.around(r, 4))
+            self._finger_data[hand_side][finger]['length'].append(np.around(radius, 4))
 
             center = np.around(center, 3)
             pose = Pose()
@@ -333,7 +367,7 @@ class SrGloveCalibration():
             Returns an array containing the distances between knuckles.
         """
         distances = []
-        for i in range(0, len(fingers)-1):
+        for i in range(len(fingers)-1):
             point_1 = self._finger_data[self._hand_side][fingers[i]]['center'].pose.position
             point_2 = self._finger_data[self._hand_side][fingers[i+1]]['center'].pose.position
             distances.append(calculate_distance(point_1, point_2))
