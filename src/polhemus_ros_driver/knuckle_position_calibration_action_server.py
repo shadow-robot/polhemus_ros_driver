@@ -21,6 +21,8 @@ from interactive_markers.interactive_marker_server import InteractiveMarkerServe
 from sphere_fit import SphereFit
 
 from polhemus_ros_driver.msg import CalibrateFeedback, CalibrateAction, CalibrateResult
+import dynamic_reconfigure.client
+
 
 def map_range(value, in_min, in_max, out_min, out_max):
     """
@@ -135,7 +137,7 @@ class SrGloveCalibration():
                                                                execute_cb=self._calibration, auto_start=False)
             self._action_server.start()
         else:
-            rospy.logerr("Not polhemus bases detected")
+            rospy.logerr("No polhemus bases detected")
 
     def _get_connected_glove_prefixes(self):
         """
@@ -143,7 +145,7 @@ class SrGloveCalibration():
         """
         tf_buffer = tf2_ros.Buffer()
         listener = tf2_ros.TransformListener(tf_buffer)
-        rospy.sleep(1)
+        rospy.sleep(5)
         connected_glove_sides = []
         for key, value in polhemus_to_side_prefix.items():
             for line in tf_buffer.all_frames_as_yaml().split('\n'):
@@ -237,6 +239,17 @@ class SrGloveCalibration():
                     self._pub[self._hand_side].publish(data_point_marker)
         return
 
+    def dynamic_config_callback(self, config):
+        # rospy.loginfo("Config set to {int_param}, {double_param}, {str_param}, {bool_param}, {size}".format(**config))
+
+        # ff_scaling_factor
+        # mf_scaling_factor
+        # rf_scaling_factor
+        # lf_scaling_factor
+        # scaling
+        rospy.loginfo(config)
+        pass
+
     def _calibration(self, goal):
         """
             Action server callback. This method executes the calibration procedure consisting of collecting
@@ -288,12 +301,38 @@ class SrGloveCalibration():
             self._action_server.publish_feedback(_feedback)
 
         sub.unregister()
-        self._get_knuckle_positions(self._hand_side, plot = True)
+        self._get_knuckle_positions(self._hand_side)
+        # self._get_knuckle_positions(self._hand_side, plot = True)
         _feedback.quality = self.get_calibration_quality()
         print(f'Quality is {_feedback.quality}')
         if not self._action_server.is_preempt_requested():
             _result.success = True
             self._action_server.set_succeeded(_result)
+        
+
+        # Updating left or right hand dynamic server
+        ff_scaling_factor = 0.096 / (self._finger_data[self._hand_side]['ff']['length'][-1] + 0.01)
+        mf_scaling_factor= 0.096 / (self._finger_data[self._hand_side]['mf']['length'][-1] + 0.01)
+        rf_scaling_factor = 0.096 / (self._finger_data[self._hand_side]['rf']['length'][-1] + 0.01)
+        lf_scaling_factor = 0.096 / (self._finger_data[self._hand_side]['lf']['length'][-1] + 0.01)
+        th_scaling_factor = (ff_scaling_factor + mf_scaling_factor + rf_scaling_factor + lf_scaling_factor)/4
+
+        if self._hand_side == 'rh':
+            dynamic_reconfigure_client = dynamic_reconfigure.client.Client("/rh_sr_fingertip_hand_teleop/",
+                                                                           timeout=30,
+                                                                           config_callback=self.dynamic_config_callback)
+           
+        elif self._hand_side == 'lf':
+            dynamic_reconfigure_client = dynamic_reconfigure.client.Client("/lh_sr_fingertip_hand_teleop/",
+                                                                           timeout=30,
+                                                                           config_callback=self.dynamic_config_callback)
+
+        dynamic_reconfigure_client.update_configuration({"th_scaling_factor": th_scaling_factor,
+                                                             "ff_scaling_factor": ff_scaling_factor,
+                                                             "mf_scaling_factor": mf_scaling_factor,
+                                                             "rf_scaling_factor": rf_scaling_factor,
+                                                             "lf_scaling_factor": lf_scaling_factor,
+                                                             "scaling":True})
 
         rospy.loginfo("Finished calibration.")
 
