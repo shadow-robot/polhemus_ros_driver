@@ -2,7 +2,7 @@
   <remap from='/tf_polhemus' to='/tf' />
   <arg name="x_hs" default="1" />
   <arg name="y_hs" default="0" />
-  <arg name="z_hs" default="0" />
+  <arg name="z_hs" default="1" />
   <arg name="sensors_per_glove" default="6" />
   <arg name="hands" default="right"/>
   <arg name="product_type" default="viper"/>
