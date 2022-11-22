@@ -1,7 +1,7 @@
 <launch>
   <arg name="x_hs" default="1" />
   <arg name="y_hs" default="0" />
-  <arg name="z_hs" default="0" />
+  <arg name="z_hs" default="1" />
   <arg name="hands" default="right"/>
   <arg name="product_type" default="viper"/>
   <arg name="node_name" default="polhemus_tf_broadcaster"/>

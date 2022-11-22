@@ -247,7 +247,7 @@ class SrGloveCalibration():
         # rf_scaling_factor
         # lf_scaling_factor
         # scaling
-        rospy.loginfo(config)
+        rospy.loginfo(config) # Prints dynamic server configuration values
         pass
 
     def _calibration(self, goal):
@@ -311,6 +311,10 @@ class SrGloveCalibration():
         
 
         # Updating left or right hand dynamic server
+        # ff_scaling_factor = 0.096 / (self._finger_data[self._hand_side]['ff']['length'][-1])
+        # mf_scaling_factor= 0.096 / (self._finger_data[self._hand_side]['mf']['length'][-1])
+        # rf_scaling_factor = 0.096 / (self._finger_data[self._hand_side]['rf']['length'][-1])
+        # lf_scaling_factor = 0.096 / (self._finger_data[self._hand_side]['lf']['length'][-1])
         ff_scaling_factor = 0.096 / (self._finger_data[self._hand_side]['ff']['length'][-1] + 0.01)
         mf_scaling_factor= 0.096 / (self._finger_data[self._hand_side]['mf']['length'][-1] + 0.01)
         rf_scaling_factor = 0.096 / (self._finger_data[self._hand_side]['rf']['length'][-1] + 0.01)
