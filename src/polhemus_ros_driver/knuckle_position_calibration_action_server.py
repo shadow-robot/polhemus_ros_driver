@@ -47,35 +47,6 @@ def calculate_distance(point1, point2):
     return np.linalg.norm(np.array(point1)-np.array(point2))
 
 
-def sphere_fit(data):
-    """
-        Returns radius, center points and residuals of fitted sphere on input data.
-        @param data: Input data of 2D array shaped (N,3)
-    """
-    x = data[:, 0]
-    y = data[:, 1]
-    z = data[:, 2]
-
-    A = np.zeros((len(x), 4))
-    A[:, 0] = x*2
-    A[:, 1] = y*2
-    A[:, 2] = z*2
-    A[:, 3] = 1
-
-    f = np.zeros((len(x), 1))
-    f[:, 0] = (x*x) + (y*y) + (z*z)
-    C, residuals, _, _ = np.linalg.lstsq(A, f, rcond=None)
-    try:
-        inside = (C[0]*C[0])+(C[1]*C[1])+(C[2]*C[2])+C[3]
-        radius = math.sqrt(inside)
-    except Exception as e:
-        rospy.logwarn(f"{e} {inside}")
-        radius = 10
-    print("Results:")
-    print(f'{C[0][0]:.4f}\n{C[1][0]:.4f}\n{C[2][0]:.4f}\n{radius:.4f}')
-    return radius, C[0:3], residuals
-
-
 class Color(Enum):
     RED = ColorRGBA(1, 0, 0, 1)
     YELLOW = ColorRGBA(1, 1, 0, 1)
@@ -369,8 +340,6 @@ class SrGloveCalibration():
             sphere_fit = SphereFit(data = self._finger_data[hand_side][finger]['data'], plot = plot)
             
             print(f"Searching for centroid of finger {finger}")
-            
-            # radius, center, residual = sphere_fit(np.array(self._finger_data[hand_side][finger]['data']))
 
             radius, center, residual = sphere_fit.fit_sphere([-0.1, -0.1, -0.1], [0.1, 0.1, 0.1], 0.03, 0.15)
 
