@@ -358,20 +358,12 @@ class SrGloveCalibration():
 
     def get_calibration_quality(self):
         """
-            Returns the calibration quality in the form of a list. The calibration quality is measured as
-            standard deviation of the the distances between knuckles. This value must be within the range
-            [_QUALITY_BAD, _QUALITY_GOOD].
+            Returns the calibration quality in the form of a list. The calibration quality is the residuals 
+            of the sphere fitting.
         """
         quality_list = []
         for finger in fingers:
-            quality = min(self._QUALITY_BAD, max(self._QUALITY_GOOD,
-                          np.round(np.std(self._finger_data[self._hand_side][finger]['length']), 4)))
-            quality = map_range(quality, self._QUALITY_GOOD, self._QUALITY_BAD, 100, 0)
-            quality_list.append(quality)
-        for distance in self.get_distances_between_knuckles():
-            if not (self._ACCEPTABLE_KNUCKLE_DISTANCE[0] < distance < self._ACCEPTABLE_KNUCKLE_DISTANCE[1]):
-                quality_list = [self._QUALITY_BAD, self._QUALITY_BAD, self._QUALITY_BAD, self._QUALITY_BAD]
-                break
+            quality_list.append(np.std(self._finger_data[self._hand_side][finger]['residual']))
         return quality_list
 
     def get_distances_between_knuckles(self):
