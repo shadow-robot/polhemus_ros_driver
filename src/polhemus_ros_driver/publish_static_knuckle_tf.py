@@ -18,23 +18,23 @@ import rospkg
 class StaticKnuckleBroadcaster:
     def __init__(self):
         self._broadcaster = tf2_ros.StaticTransformBroadcaster()
-        # self._services = dict()
-        # for hand_prefix in self._get_connected_gloves():
-        self._service = rospy.Service(f"/sr_update_static_tf_new",
-                                        SetStaticCalibrationTFNew,
-                                        self.publish_tf)
+        self._services = dict()
+        for hand_prefix in self._get_connected_gloves():
+            self._service = rospy.Service(f"{hand_prefix}/update_static_tf_new",
+                                            SetStaticCalibrationTFNew,
+                                            self.publish_tf)
 
-    # def _get_connected_gloves(self):
-    #     tf_buffer = tf2_ros.Buffer()
-    #     listener = tf2_ros.TransformListener(tf_buffer)
-    #     rospy.sleep(1)
-    #     connected_glove_sides = []
-    #     for key, value in {"polhemus_base_0": "rh", "polhemus_base_1": "lh"}.items():
-    #         for line in tf_buffer.all_frames_as_yaml().split('\n'):
-    #             if key in line and "parent" in line:
-    #                 connected_glove_sides.append(value)
-    #                 break
-    #     return connected_glove_sides
+    def _get_connected_gloves(self):
+        tf_buffer = tf2_ros.Buffer()
+        listener = tf2_ros.TransformListener(tf_buffer)
+        rospy.sleep(1)
+        connected_glove_sides = []
+        for key, value in {"polhemus_base_0": "rh", "polhemus_base_1": "lh"}.items():
+            for line in tf_buffer.all_frames_as_yaml().split('\n'):
+                if key in line and "parent" in line:
+                    connected_glove_sides.append(value)
+                    break
+        return connected_glove_sides
 
     def publish_tf(self, req):
         success = False

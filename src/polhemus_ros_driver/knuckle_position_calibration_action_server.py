@@ -24,18 +24,6 @@ from polhemus_ros_driver.msg import CalibrateFeedback, CalibrateAction, Calibrat
 import dynamic_reconfigure.client
 
 
-def map_range(value, in_min, in_max, out_min, out_max):
-    """
-        Returns the convereted value of 'input' from range [out_min, out_max] into range [in_min, in_max]
-        @param value: Value to be mapped
-        @param in_min: Minimal value of 'input'
-        @param in_max: Maximal value of 'input'
-        @param out_min: Minimal value of mapped output
-        @param in_max: Maximal value of mapped output
-    """
-    return (value - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
-
-
 def calculate_distance(point1, point2):
     """
         Returns the distance between two points of type geometry_msgs.msg.Point
@@ -81,11 +69,6 @@ class DataMarker(Marker):
 
 
 class SrGloveCalibration():
-
-    _QUALITY_GOOD = 0.003
-    _QUALITY_BAD = 0.01
-    _ACCEPTABLE_KNUCKLE_DISTANCE = (0.015, 0.025)  # in meters
-
     def __init__(self):
         # self._listener = tf.TransformListener()
         self._hand_side = rospy.get_param("~hand_side", 'rh')
@@ -115,7 +98,7 @@ class SrGloveCalibration():
             Detect connected gloves and returns the corresponding sides ['left', 'right']
         """
         tf_buffer = tf2_ros.Buffer()
-        listener = tf2_ros.TransformListener(tf_buffer)
+        tf2_ros.TransformListener(tf_buffer)
         rospy.sleep(5)
         connected_glove_sides = []
         for key, value in polhemus_to_side_prefix.items():
@@ -358,24 +341,13 @@ class SrGloveCalibration():
 
     def get_calibration_quality(self):
         """
-            Returns the calibration quality in the form of a list. The calibration quality is the residuals 
-            of the sphere fitting.
+            Returns the calibration quality in the form of a list. The calibration quality is measured as
+            standard deviation of the residuals for each finger.
         """
         quality_list = []
         for finger in fingers:
             quality_list.append(np.std(self._finger_data[self._hand_side][finger]['residual']))
         return quality_list
-
-    def get_distances_between_knuckles(self):
-        """
-            Returns an array containing the distances between knuckles.
-        """
-        distances = []
-        for i in range(len(fingers)-1):
-            point_1 = self._finger_data[self._hand_side][fingers[i]]['center'].pose.position
-            point_2 = self._finger_data[self._hand_side][fingers[i+1]]['center'].pose.position
-            distances.append(calculate_distance(point_1, point_2))
-        return distances
 
 
 if __name__ == "__main__":
