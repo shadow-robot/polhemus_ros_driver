@@ -32,5 +32,6 @@
   <depend>libusb-1.0-dev</depend>
   <depend>fxload</depend>
   <depend>yaml</depend>
+  <depend>python3-scipy</depend>
 
 </package>

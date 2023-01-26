@@ -5,7 +5,6 @@
 
 import rospy
 import actionlib
-from polhemus_ros_driver.srv import SetStaticCalibrationTFNew, calibrate
 from polhemus_ros_driver.msg import CalibrateAction, CalibrateGoal
 import numpy as np
 
