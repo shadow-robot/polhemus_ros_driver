@@ -1,50 +1,50 @@
 viper_calibration:
   rotations:
     station_0:
-      calibrated_pitch: 11.520121563643308
-      calibrated_roll: 2.110588809868998
-      calibrated_yaw: 8.650683812324758
+      calibrated_pitch: 5.099586311637351
+      calibrated_roll: -42.43129202499213
+      calibrated_yaw: -2.00067191785047
     station_1:
-      calibrated_pitch: 32.061454752396436
-      calibrated_roll: -10.193332853736003
-      calibrated_yaw: 6.606206919806205
+      calibrated_pitch: 4.016769562964801
+      calibrated_roll: 8.448841321151544
+      calibrated_yaw: -0.9238191176954208
     station_10:
-      calibrated_pitch: -0.015406711863526754
-      calibrated_roll: 0.05728702947840384
-      calibrated_yaw: 0.16464604356136606
+      calibrated_pitch: 0.8222121613350373
+      calibrated_roll: -77.61431516294094
+      calibrated_yaw: -5.4680308200034435
     station_11:
-      calibrated_pitch: -0.6057165228153202
-      calibrated_roll: -0.2620754743520285
-      calibrated_yaw: 0.058211256583370515
+      calibrated_pitch: 2.1982261423717686
+      calibrated_roll: 6.485363757711366
+      calibrated_yaw: -7.53674993721707
     station_12:
-      calibrated_pitch: 0.055220343715552185
-      calibrated_roll: -0.029665838663055846
-      calibrated_yaw: 0.1294945939441138
+      calibrated_pitch: 2.849247506509031
+      calibrated_roll: 176.60336642339942
+      calibrated_yaw: -6.677382838350439
     station_13:
-      calibrated_pitch: 0.05155613085267194
-      calibrated_roll: 0.01944531368592717
-      calibrated_yaw: 0.05828991491469367
+      calibrated_pitch: 6.127799985420089
+      calibrated_roll: 123.825589160647
+      calibrated_yaw: 172.35217472941704
     station_2:
-      calibrated_pitch: 19.186022893159365
-      calibrated_roll: 106.06614154302419
-      calibrated_yaw: 7.7702919210876145
+      calibrated_pitch: 3.118087047126911
+      calibrated_roll: 107.70764907165139
+      calibrated_yaw: -3.441553259079584
     station_3:
-      calibrated_pitch: 14.318544488088444
-      calibrated_roll: -56.79737848646512
-      calibrated_yaw: -0.7738762334323188
+      calibrated_pitch: 5.33210499402941
+      calibrated_roll: -76.97105061862986
+      calibrated_yaw: -0.07276146232864313
     station_4:
-      calibrated_pitch: 24.948568970261434
-      calibrated_roll: 4.504018150135258
-      calibrated_yaw: -3.452268138164736
+      calibrated_pitch: 5.0352842156466595
+      calibrated_roll: -49.17606262438408
+      calibrated_yaw: -0.17922109380675147
     station_5:
-      calibrated_pitch: -7.347810295464108
-      calibrated_roll: -46.66856819168879
-      calibrated_yaw: 42.31705840867827
+      calibrated_pitch: -4.81295713236493
+      calibrated_roll: -98.91690852342515
+      calibrated_yaw: 1.5626633401803962
     station_8:
-      calibrated_pitch: 0.04664339873794368
-      calibrated_roll: -0.11480858677128415
-      calibrated_yaw: 0.08704849173497232
+      calibrated_pitch: 2.076868933306166
+      calibrated_roll: -80.74426239501425
+      calibrated_yaw: -0.2787929863427037
     station_9:
-      calibrated_pitch: 0.0023718921105130865
-      calibrated_roll: -0.0013891808025595779
-      calibrated_yaw: 0.14968637251962502
+      calibrated_pitch: 2.881187392573826
+      calibrated_roll: 143.28153095021256
+      calibrated_yaw: -2.064892954774957

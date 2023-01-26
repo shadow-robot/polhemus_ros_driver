@@ -20,11 +20,6 @@
 
   <rosparam command="load" file="$(arg boresight_calibration_file)" ns="$(arg node_name)"/>
 
-  <node name="sr_update_static_tf" pkg="polhemus_ros_driver" type="publish_static_knuckle_tf.py" output="screen"/>
-  <node name="sr_knuckle_calibration" pkg="polhemus_ros_driver" type="knuckle_position_calibration_action_server.py" output="screen">
-      <param name="hand_side" value="rh" if="$(eval arg('hands') == 'right')" />
-      <param name="hand_side" value="rh" if="$(eval arg('hands') == 'both')" />
-      <param name="hand_side" value="lh" if="$(eval arg('hands') == 'left')" />
-  </node>
+  <node name="sr_knuckle_calibration" pkg="polhemus_ros_driver" type="knuckle_position_calibration_action_server.py" output="screen"/>
 
 </launch>

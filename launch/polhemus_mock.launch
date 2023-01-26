@@ -1,6 +1,6 @@
 <launch>
   <arg name="rosbag_path" default="$(find polhemus_ros_driver)/config/polhemus_movements.bag"/>
-  <arg name="tf_topic_name" default="/tf_polhemus"/>
+  <arg name="tf_topic_name" default="/tf"/>
   <arg name="bimanual" default="false"/>
   <arg name="polhemus_base_right_tf_name" default="polhemus_base_0"/>
   <arg name="polhemus_base_left_tf_name" default="polhemus_base_1"/>
