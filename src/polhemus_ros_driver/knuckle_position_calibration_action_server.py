@@ -105,7 +105,7 @@ class SrGloveCalibration():
 
         for connected_prefix in connected_prefixes:
             self._hands[connected_prefix] = Hand(connected_prefix)
-            self._initialize_finger_data(connected_prefix)
+            self._initialize_finger_data(self._hands[connected_prefix])
 
         # Static transform broadcaster for updating the user knuckle -> polhemus base transforms
         self._static_transform_broadcaster = StaticTransformBroadcaster()
