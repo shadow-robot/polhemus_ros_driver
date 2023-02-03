@@ -337,11 +337,12 @@ class SrGloveCalibration():
             solution_marker = DataMarker(self._base, self._finger_data[hand_side][finger]['center'].pose.position,
                                          COLORS[color_index].value)
             self._pub[self._hand_side].publish(solution_marker)
-            sphere_fit = SphereFit(data = self._finger_data[hand_side][finger]['data'], plot = plot)
+            sphere_fit = SphereFit([-0.1, -0.1, -0.1], [0.1, 0.1, 0.1], 0.03, 0.15,
+                                   data = self._finger_data[hand_side][finger]['data'], plot = plot)
             
             print(f"Searching for centroid of finger {finger}")
 
-            radius, center, residual = sphere_fit.fit_sphere([-0.1, -0.1, -0.1], [0.1, 0.1, 0.1], 0.03, 0.15)
+            radius, center, residual = sphere_fit.fit_sphere(initial_guess=[0, 0, 0, 0.08])
 
             if plot:
                 sphere_fit.plot_data()

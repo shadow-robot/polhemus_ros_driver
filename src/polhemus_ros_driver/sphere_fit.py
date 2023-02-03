@@ -19,7 +19,22 @@ rospack = rospkg.RosPack()
 
 
 class SphereFit:
-    def __init__(self, use_recorded_polhemus_data=None, data=None, plot=False) -> None:
+    def __init__(self, min_coords: "list[float]", max_coords: "list[float]", min_radius: float, max_radius: float, f_scale=0.001, use_recorded_polhemus_data=None, data=None, plot=False) -> None:
+        '''
+        Args:
+            min_coords: The minimum coordinates of the center of the sphere.
+            max_coords: The maximum coordinates of the center of the sphere.
+            min_radius: The minimum radius of the sphere.
+            max_radius: The maximum radius of the sphere
+            use_recorded_polhemus_data: Load data containing real polhemus data
+            data: Load other data
+            plot: (boolean) plot results
+        '''
+        self._min_coords = min_coords
+        self._max_coords = max_coords
+        self._min_radius = min_radius
+        self._max_radius = max_radius
+        self._f_scale = f_scale
         self._raw_data = []
         self._center = None
         self._radius = None
@@ -62,20 +77,17 @@ class SphereFit:
                         self._raw_data.append(point)
                         local_buffer_has_been_udpdated = False
 
-    def fit_sphere(self, min_coords: "list[float]", max_coords: "list[float]", min_radius: float, max_radius: float):
+    def fit_sphere(self, initial_guess=[0, 0, 0, 0.08]):
         ''' Fits a sphere to the data provided in the constructor.
 
         Args:
-            min_coords: The minimum coordinates of the center of the sphere.
-            max_coords: The maximum coordinates of the center of the sphere.
-            min_radius: The minimum radius of the sphere.
-            max_radius: The maximum radius of the sphere.
+            min_coords: 
 
         Returns:
             A tuple containing the radius (float), center (list[float]), and residuals (list[float]) of the best
             fitting sphere.'''
-        result = least_squares(self.sphere_errors_optimizable, [0, 0, 0, 0.08], loss="cauchy",
-                               bounds=(min_coords + [min_radius], max_coords + [max_radius]), f_scale=0.001)
+        result = least_squares(self.sphere_errors_optimizable, initial_guess, loss="cauchy",
+                               bounds=(self._min_coords + [self._min_radius], self._max_coords + [self._max_radius]), f_scale=self._f_scale)
         self._best_candidate = result.x
         self._residuals = result.fun
         # Return radius, center, and residuals
@@ -206,6 +218,8 @@ class SphereFit:
 
 if __name__ == "__main__":
     center = Point(0.05, 0.05, 0.05)
-    sphere_fit = SphereFit(use_recorded_polhemus_data='/Ethan/2022-11-01-12-27-45.bag', plot=True)
-    sphere_fit.fit_sphere([-0.1, -0.1, -0.1], [0.1, 0.1, 0.1], 0.03, 0.15)
+    sphere_fit = SphereFit([-0.1, -0.1, -0.1], [0.1, 0.1, 0.1], 0.03, 0.15,  # Upper and lower bounds
+                           use_recorded_polhemus_data='/Ethan/2022-11-01-12-27-45.bag',
+                           plot=True)
+    sphere_fit.fit_sphere(initial_guess=[0, 0, 0, 0.08])
     sphere_fit.plot_data()
