@@ -32,6 +32,9 @@
   <depend>libusb-1.0-dev</depend>
   <depend>fxload</depend>
   <depend>yaml</depend>
+<<<<<<< HEAD
   <depend>python3-scipy</depend>
+=======
+>>>>>>> noetic-devel
 
 </package>
