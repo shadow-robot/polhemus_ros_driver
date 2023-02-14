@@ -1,8 +1,4 @@
 # ! DO NOT MANUALLY INVOKE THIS setup.py, USE CATKIN INSTEAD
-<<<<<<< HEAD
-from __future__ import absolute_import
-=======
->>>>>>> noetic-devel
 from distutils.core import setup
 from catkin_pkg.python_setup import generate_distutils_setup
 
