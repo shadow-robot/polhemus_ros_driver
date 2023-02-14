@@ -264,7 +264,8 @@ class SrGloveCalibration():
             dynamic_reconfigure_client.update_configuration(new_fingertip_teleop_config)
             rospy.loginfo(f"Updated hand mapping scaling for {hand.side_name} hand.")
         except rospy.ROSException as err:
-            rospy.logwarn(f"Scaling not able to set. Failed to connect to dynamic reconfigure server for {hand.hand_prefix} hand: {err}")
+            rospy.logwarn("Scaling not able to set. Failed to connect to dynamic reconfigure server for" +
+                          f"{hand.hand_prefix} hand: {err}")
 
         if save:
             self._save_calibration(hand)
