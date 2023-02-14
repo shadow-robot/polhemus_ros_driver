@@ -1,6 +1,6 @@
 /*
 
- Copyright (C) 2022-23 Shadow Robot Company Ltd <software@shadowrobot.com>
+ Copyright (C) 2022 Shadow Robot Company Ltd <software@shadowrobot.com>
 
  This program is free software; you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
