@@ -1,14 +1,17 @@
 <launch>
   <remap from="/tf_polhemus" to="/tf"/>
-  <param name="/use_sim_time" value="true" />
+  <!-- <param name="/use_sim_time" value="true" /> -->
   <arg name="hands" default="right"/>
+  <arg name="play_bag" default="false"/>
 
-  <node pkg="rosbag" type="play" name="player" output="screen" args="--clock $(find polhemus_ros_driver)/config/polhemus_movements.bag"/>
+  <node if="$(arg play_bag)" pkg="rosbag" type="play" name="player" output="screen" args="--clock $(find polhemus_ros_driver)/config/polhemus_movements.bag"/>
+ 
+  <include file="$(find polhemus_ros_driver)/launch/start.launch">
+    <arg name="hands" value="$(arg hands)"/>
+  </include>
 
-  <node name="sr_knuckle_calibration" pkg="polhemus_ros_driver" type="knuckle_position_calibration_action_server.py" output="screen">
-      <param name="hand_side" value="rh" if="$(eval arg('hands') == 'right')" />
-      <param name="hand_side" value="rh" if="$(eval arg('hands') == 'both')" />
-      <param name="hand_side" value="lh" if="$(eval arg('hands') == 'left')" />
-  </node>
+  <include file="$(find sr_fingertip_hand_teleop)/launch/sr_wrist_joint_teleop.launch">
+    <arg name="side" value="$(arg hands)"/>
+  </include>
 
 </launch>

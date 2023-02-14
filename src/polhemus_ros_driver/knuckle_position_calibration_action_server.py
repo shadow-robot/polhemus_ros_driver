@@ -28,6 +28,7 @@ from tf2_ros import StaticTransformBroadcaster
 from visualization_msgs.msg import (InteractiveMarker,
                                     InteractiveMarkerControl, Marker)
 
+from sensor_msgs.msg import PointCloud2, PointField
 from polhemus_ros_driver.msg import (CalibrateAction, CalibrateFeedback,
                                      CalibrateResult)
 from polhemus_ros_driver.srv import Publish, PublishRequest
@@ -87,8 +88,6 @@ class Hand():
         self.polhemus_base_name = f"polhemus_base_{self.polhemus_base_index}"
         self.finger_data = {}
         self.pub = rospy.Publisher(f"/data_point_marker_{self.hand_prefix}", Marker, queue_size=1000)
-        self.dynamic_reconfigure_client = dynamic_reconfigure.client.Client(
-            f"/{self.hand_prefix}_sr_fingertip_hand_teleop/", timeout=30)
 
 
 class SrGloveCalibration():
@@ -258,8 +257,14 @@ class SrGloveCalibration():
             new_fingertip_teleop_config['th_scaling_factor'] = (sum(
                 [new_fingertip_teleop_config[finger + '_scaling_factor'] for finger in fingers_used_for_thumbscaling]) /
                  len(fingers_used_for_thumbscaling))
-        hand.dynamic_reconfigure_client.update_configuration(new_fingertip_teleop_config)
-        rospy.loginfo(f"Updated hand mapping scaling for {hand.side_name} hand.")
+
+        try:
+            dynamic_reconfigure_client = dynamic_reconfigure.client.Client(
+                                         f"/{hand.hand_prefix}/", timeout=5)
+            dynamic_reconfigure_client.update_configuration(new_fingertip_teleop_config)
+            rospy.loginfo(f"Updated hand mapping scaling for {hand.side_name} hand.")
+        except rospy.ROSException as err:
+            rospy.logwarn(f"Scaling not able to set. Failed to connect to dynamic reconfigure server for {hand.hand_prefix} hand: {err}")
 
         if save:
             self._save_calibration(hand)
