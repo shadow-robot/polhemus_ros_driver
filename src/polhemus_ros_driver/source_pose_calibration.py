@@ -1,32 +1,32 @@
 #!/usr/bin/env python3
 #
-# Copyright (C) 2020 Shadow Robot Company Ltd - All Rights Reserved. Proprietary and Confidential.
+# Copyright (C) 2020-23 Shadow Robot Company Ltd - All Rights Reserved. Proprietary and Confidential.
 # Unauthorized copying of the content in this file, via any medium is strictly prohibited.
 
 from __future__ import absolute_import, division
 from math import pi
 
 
-class SourcePoseCalibration(object):
+class SourcePoseCalibration():
     def __init__(self):
-        self.CONST_SOURCE_ORIENTATION = [0, 0.1, -pi]
-        self.CONST_SOURCE_X_OFFSET = 0.008
-        self.CONST_SOURCE_Z_OFFSET = 0.016
+        self._CONST_SOURCE_ORIENTATION = [0, 0.1, -pi]
+        self._CONST_SOURCE_X_OFFSET = 0.008
+        self._CONST_SOURCE_Z_OFFSET = 0.016
         self.knuckle_thickness_accepted_range = [0.015, 0.045]
         self.knuckle_to_source_accepted_range = [0.01, 0.06]
 
     def calibrate(self, knuckle_thickness, knuckle_to_source):
         self.check_if_values_within_range(knuckle_thickness, knuckle_to_source)
         return [
-            -(knuckle_to_source + self.CONST_SOURCE_X_OFFSET),
+            -(knuckle_to_source + self._CONST_SOURCE_X_OFFSET),
             0,
-            knuckle_thickness / 2 + self.CONST_SOURCE_Z_OFFSET
-        ] + self.CONST_SOURCE_ORIENTATION
+            knuckle_thickness / 2 + self._CONST_SOURCE_Z_OFFSET
+        ] + self._CONST_SOURCE_ORIENTATION
 
     # Currently orientation does not affect decalibration
-    def decalibrate(self, x, y, z):
-        knuckle_thickness = (z - self.CONST_SOURCE_Z_OFFSET) * 2
-        knuckle_to_source = -(x + self.CONST_SOURCE_X_OFFSET)
+    def decalibrate(self, x, _, z):
+        knuckle_thickness = (z - self._CONST_SOURCE_Z_OFFSET) * 2
+        knuckle_to_source = -(x + self._CONST_SOURCE_X_OFFSET)
         self.check_if_values_within_range(knuckle_thickness, knuckle_to_source)
         return [knuckle_thickness, knuckle_to_source]
 

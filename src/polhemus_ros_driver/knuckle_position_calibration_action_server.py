@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 #
-# Copyright (C) 2022 Shadow Robot Company Ltd - All Rights Reserved. Proprietary and Confidential.
+# Copyright (C) 2022-23 Shadow Robot Company Ltd - All Rights Reserved. Proprietary and Confidential.
 # Unauthorized copying of the content in this file, via any medium is strictly prohibited.
 
 from __future__ import absolute_import, division
@@ -14,7 +14,6 @@ import dynamic_reconfigure.client
 import numpy as np
 import rospkg
 import rospy
-# import rostopic
 import tf2_ros
 import yaml
 from geometry_msgs.msg import (Point, Pose, Quaternion, TransformStamped,
@@ -22,13 +21,11 @@ from geometry_msgs.msg import (Point, Pose, Quaternion, TransformStamped,
 from interactive_markers.interactive_marker_server import \
     InteractiveMarkerServer
 from std_msgs.msg import ColorRGBA
-# import tf
 from tf2_msgs.msg import TFMessage
 from tf2_ros import StaticTransformBroadcaster
 from visualization_msgs.msg import (InteractiveMarker,
                                     InteractiveMarkerControl, Marker)
 
-from sensor_msgs.msg import PointCloud2, PointField
 from polhemus_ros_driver.msg import (CalibrateAction, CalibrateFeedback,
                                      CalibrateResult)
 from polhemus_ros_driver.srv import Publish, PublishRequest
