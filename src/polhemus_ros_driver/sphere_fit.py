@@ -152,7 +152,7 @@ class SphereFit:
         Args:
             point_1: The first point.
             point_2: The second point.'''
-        return sqrt((point_1.x - point_2.x) ** 2 + (point_1.y - point_2.y) ** 2 + (point_1.z - point_2.z) ** 2)
+        return np.linalg.norm([point_1.x - point_2.x, point_1.y - point_2.y, point_1.z - point_2.z])
 
     @staticmethod
     def sphere_errors(data: "list[Point]", center_coords: Point, radius: float) -> "list[float]":
