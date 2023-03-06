@@ -16,10 +16,6 @@
 #  along with this program; if not, write to the Free Software
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 
-# PKG = 'test_roslaunch'
-# import roslib; roslib.load_manifest(PKG)  # This line is not needed with Catkin.
-
-# import sys
 import unittest
 import rostest
 from geometry_msgs.msg import Point
