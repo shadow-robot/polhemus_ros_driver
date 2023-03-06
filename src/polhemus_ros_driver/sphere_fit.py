@@ -16,7 +16,7 @@
 #  along with this program; if not, write to the Free Software
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 
-from math import cos, floor, sin, sqrt
+from math import cos, floor, sin
 
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D  # pylint: disable=unused-import
