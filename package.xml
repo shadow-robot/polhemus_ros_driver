@@ -21,6 +21,7 @@
   <buildtool_depend>catkin</buildtool_depend>
   <build_depend>message_generation</build_depend>
   <exec_depend>message_runtime</exec_depend>
+  <build_depend>rostest</build_depend>
 
   <depend>tf2</depend>
   <depend>tf2_ros</depend>

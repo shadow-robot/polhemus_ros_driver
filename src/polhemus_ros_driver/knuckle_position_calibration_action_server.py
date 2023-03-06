@@ -16,8 +16,6 @@
 #  along with this program; if not, write to the Free Software
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 
-from __future__ import absolute_import, division
-
 import math
 import os
 from enum import Enum
@@ -89,7 +87,7 @@ class DataMarker(Marker):
         self.color = color
 
 
-class Hand():
+class Hand:
     """ Class to store data about a user hand/glove; essentially a convenience struct. """
     def __init__(self, _hand_prefix: str):
         self.hand_prefix = _hand_prefix
@@ -100,7 +98,10 @@ class Hand():
         self.pub = rospy.Publisher(f"/data_point_marker_{self.hand_prefix}", Marker, queue_size=1000)
 
 
-class SrGloveCalibration():
+class SrGloveCalibration:
+    SOURCE_TO_KNUCKLE_LIMITS = [[-0.1, -0.1, -0.1], [0.1, 0.1, 0.1]]
+    FINGER_LENGTH_LIMITS = [0.03, 0.15]
+
     def __init__(self):
         # Detect gloves and populate data structures
         self._hands: "dict[str, Hand]" = {}
@@ -377,7 +378,7 @@ class SrGloveCalibration():
                                individual_transform.transform.translation.z]
 
                         hand.finger_data[finger]['data'].append(pos)
-                        data_point_marker = DataMarker(hand.polhemus_base_name, Point(pos[0], pos[1], pos[2]),
+                        data_point_marker = DataMarker(hand.polhemus_base_name, Point(*pos),
                                                        COLORS[color_index].value)
                         hand.pub.publish(data_point_marker)
 
@@ -459,7 +460,9 @@ class SrGloveCalibration():
             hand.pub.publish(solution_marker)
             sphere_fit = SphereFit(data=hand.finger_data[finger]['data'], plot=plot)
 
-            radius, center, residual = sphere_fit.fit_sphere([-0.1, -0.1, -0.1], [0.1, 0.1, 0.1], 0.03, 0.15)
+            radius, center, residual = sphere_fit.fit_sphere(
+                SrGloveCalibration.SOURCE_TO_KNUCKLE_LIMITS[0], SrGloveCalibration.SOURCE_TO_KNUCKLE_LIMITS[1],
+                SrGloveCalibration.FINGER_LENGTH_LIMITS[0], SrGloveCalibration.FINGER_LENGTH_LIMITS[1])
 
             if plot:
                 sphere_fit.plot_data()
