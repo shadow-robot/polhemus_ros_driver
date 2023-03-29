@@ -128,8 +128,7 @@ class SrGloveCalibration:
 
         # Load and publish the default (last) user calibration
         self._load_default_calibrations()
-        for hand in self._hands.values():
-            self._publish_calibration(hand, save=False)
+        self._publish_calibration(self._hands.values(), save=False)
 
         # Service allowing GUI to trigger publishing of the current calibration
         self._update_static_tf_service = rospy.Service("/sr_publish_glove_calibration",
@@ -148,7 +147,7 @@ class SrGloveCalibration:
         if publish.side not in self._hands.keys():
             rospy.logerr("Requested glove calibration side not found")
             return False
-        self._publish_calibration(self._hands[publish.side])
+        self._publish_calibration([self._hands[publish.side]])
         return True
 
     def _load_default_calibrations(self):
@@ -238,50 +237,55 @@ class SrGloveCalibration:
             calibration_file.truncate()
         rospy.loginfo(f"Calibration for {hand.side_name} hand saved to {path}")
 
-    def _publish_calibration(self, hand: Hand, save: bool = True):
+    def _publish_calibration(self, hands: List[Hand], save: bool = True):
         """ Publishes the calibration as a static TF between user knuckle and glove polhemus source
-            @param hand: The hand to publish the calibration for
+            @param hands: The list of hands to publish the calibration for
             @param save: Whether to also save the calibration to file
         """
-        mf_knuckle_marker = self._marker_server.get(f"{hand.hand_prefix}_mf_knuckle_glove")
-        transform_stamped = TransformStamped()
-        transform_stamped.header.stamp = rospy.Time.now()
-        transform_stamped.header.frame_id = mf_knuckle_marker.name
-        transform_stamped.child_frame_id = hand.polhemus_base_name
-        transform_stamped.transform.translation = Vector3(-mf_knuckle_marker.pose.position.x,
-                                                          -mf_knuckle_marker.pose.position.y,
-                                                          -mf_knuckle_marker.pose.position.z)
-        transform_stamped.transform.rotation = Quaternion(0, 0, 0, 1)
-        self._static_transform_broadcaster.sendTransform(transform_stamped)
-        rospy.loginfo(f"Published glove calibration TF for {hand.side_name} hand.")
+        transform_list: List[TransformStamped] = []
+        for hand in hands:
+            mf_knuckle_marker = self._marker_server.get(f"{hand.hand_prefix}_mf_knuckle_glove")
+            transform_stamped = TransformStamped()
+            transform_stamped.header.stamp = rospy.Time.now()
+            transform_stamped.header.frame_id = mf_knuckle_marker.name
+            transform_stamped.child_frame_id = hand.polhemus_base_name
+            transform_stamped.transform.translation = Vector3(-mf_knuckle_marker.pose.position.x,
+                                                              -mf_knuckle_marker.pose.position.y,
+                                                              -mf_knuckle_marker.pose.position.z)
+            transform_stamped.transform.rotation = Quaternion(0, 0, 0, 1)
+            transform_list.append(transform_stamped)
 
-        # Update hand mapping dynamic reconfigure server, if it is available
-        dyn_reconf_topic = f"/{hand.hand_prefix}_sr_fingertip_hand_teleop"
-        try:
-            dynamic_reconfigure_client = dynamic_reconfigure.client.Client(f"/{dyn_reconf_topic}", timeout=1)
-        except rospy.ROSException as err:
-            rospy.loginfo("Fingertip mapping scaling not applied. Could not communicate with dynamic reconfigure "
-                          f"server at '{dyn_reconf_topic}'. This is only a problem if fingertip mapping is supposed to "
-                          f"be running. Error given: '{err}'")
-        else:
-            new_fingertip_teleop_config = {"scaling": False}
-            fingers_with_length = [finger for finger in fingers if hand.finger_data[finger]['length']]
-            fingers_used_for_thumbscaling = [finger for finger in fingers_with_length if finger != "lf"]
-            if fingers_with_length:
-                new_fingertip_teleop_config = {"scaling": True}
-                for finger in fingers_with_length:
-                    if hand.finger_data[finger]['length']:
-                        finger_scaling = 0.096 / (hand.finger_data[finger]['length'][-1] + 0.01)
-                        new_fingertip_teleop_config[finger + '_scaling_factor'] = finger_scaling
-            if fingers_used_for_thumbscaling:
-                new_fingertip_teleop_config['th_scaling_factor'] = (sum([
-                    new_fingertip_teleop_config[finger + '_scaling_factor'] for finger in
-                    fingers_used_for_thumbscaling]) / len(fingers_used_for_thumbscaling))
-            dynamic_reconfigure_client.update_configuration(new_fingertip_teleop_config)
-            rospy.loginfo(f"Updated fingertip mapping scaling for {hand.side_name} hand.")
+            # Update hand mapping dynamic reconfigure server, if it is available
+            dyn_reconf_topic = f"/{hand.hand_prefix}_sr_fingertip_hand_teleop"
+            try:
+                dynamic_reconfigure_client = dynamic_reconfigure.client.Client(f"/{dyn_reconf_topic}", timeout=1)
+            except rospy.ROSException as err:
+                rospy.loginfo("Fingertip mapping scaling not applied. Could not communicate with dynamic reconfigure "
+                              f"server at '{dyn_reconf_topic}'. This is only a problem if fingertip mapping "
+                              f"is supposed to be running. Error given: '{err}'")
+            else:
+                new_fingertip_teleop_config = {"scaling": False}
+                fingers_with_length = [finger for finger in fingers if hand.finger_data[finger]['length']]
+                fingers_used_for_thumbscaling = [finger for finger in fingers_with_length if finger != "lf"]
+                if fingers_with_length:
+                    new_fingertip_teleop_config = {"scaling": True}
+                    for finger in fingers_with_length:
+                        if hand.finger_data[finger]['length']:
+                            finger_scaling = 0.096 / (hand.finger_data[finger]['length'][-1] + 0.01)
+                            new_fingertip_teleop_config[finger + '_scaling_factor'] = finger_scaling
+                if fingers_used_for_thumbscaling:
+                    new_fingertip_teleop_config['th_scaling_factor'] = (sum([
+                        new_fingertip_teleop_config[finger + '_scaling_factor'] for finger in
+                        fingers_used_for_thumbscaling]) / len(fingers_used_for_thumbscaling))
+                dynamic_reconfigure_client.update_configuration(new_fingertip_teleop_config)
+                rospy.loginfo(f"Updated fingertip mapping scaling for {hand.side_name} hand.")
 
-        if save:
-            self._save_calibration(hand)
+            if save:
+                self._save_calibration(hand)
+
+        self._static_transform_broadcaster.sendTransform(transform_list)
+        for hand in hands:
+            rospy.loginfo(f"Published glove calibration TF for {hand.side_name} hand.")
 
     @staticmethod
     def _get_connected_glove_prefixes():
