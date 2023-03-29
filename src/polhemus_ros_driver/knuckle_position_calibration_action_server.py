@@ -28,7 +28,6 @@ import rospkg
 import rospy
 import tf2_ros
 import yaml
-from sensor_msgs.msg import JointState
 from geometry_msgs.msg import (Point, Pose, Quaternion, TransformStamped,
                                Vector3)
 from interactive_markers.interactive_marker_server import \
