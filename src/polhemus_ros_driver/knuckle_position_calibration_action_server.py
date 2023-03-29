@@ -243,7 +243,7 @@ class SrGloveCalibration:
             @param hands: The list of hands to publish the calibration for
             @param save: Whether to also save the calibration to file
         """
-        transform_list = []
+        transform_list: List[TransformStamped] = []
         for hand in hands:
             mf_knuckle_marker = self._marker_server.get(f"{hand.hand_prefix}_mf_knuckle_glove")
             transform_stamped = TransformStamped()

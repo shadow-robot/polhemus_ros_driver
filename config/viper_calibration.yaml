@@ -1,1 +1,26 @@
-viper_calibration: {}
+viper_calibration:
+  rotations:
+    station_0:
+      calibrated_pitch: 1.9318819263270222
+      calibrated_roll: 155.69127314311788
+      calibrated_yaw: 0.0962362303770021
+    station_1:
+      calibrated_pitch: 0.9195979168995143
+      calibrated_roll: 77.46498909367484
+      calibrated_yaw: 0.4176013058753911
+    station_2:
+      calibrated_pitch: 0.19876930587437616
+      calibrated_roll: -116.0948614906204
+      calibrated_yaw: -1.1788164731546753
+    station_3:
+      calibrated_pitch: 1.744137498087212
+      calibrated_roll: 126.29088914321464
+      calibrated_yaw: -3.169934995564591
+    station_4:
+      calibrated_pitch: 2.201232044682272
+      calibrated_roll: -167.93141096483535
+      calibrated_yaw: -2.0897691558271765
+    station_5:
+      calibrated_pitch: 0.6744993659024663
+      calibrated_roll: -126.93756708266474
+      calibrated_yaw: -4.9318781957582285
