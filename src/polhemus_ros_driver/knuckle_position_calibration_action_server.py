@@ -38,12 +38,12 @@ from visualization_msgs.msg import (InteractiveMarker,
                                     InteractiveMarkerControl, Marker)
 
 from polhemus_ros_driver.msg import (CalibrateAction, CalibrateFeedback,
-                                     CalibrateResult)
+                                     CalibrateResult, CalibrateGoal)
 from polhemus_ros_driver.srv import Publish, PublishRequest
 from polhemus_ros_driver.sphere_fit import SphereFit
 
 
-def calculate_distance(point1, point2):
+def calculate_distance(point1: Point, point2: Point):
     """
         Returns the distance between two points of type geometry_msgs.msg.Point
         @param point1: First point
@@ -73,7 +73,7 @@ class DataMarker(Marker):
     """ Class to store data about a marker to be published to rviz. """
     _id = 0
 
-    def __init__(self, frame_id, point, color, size=0.002):
+    def __init__(self, frame_id: str, point: Point, color: ColorRGBA, size=0.002):
         super().__init__()
         self.header.frame_id = frame_id
         self.header.stamp = rospy.Time.now()
@@ -290,7 +290,7 @@ class SrGloveCalibration:
         tf_buffer = tf2_ros.Buffer()
         tf2_ros.TransformListener(tf_buffer)
         rospy.sleep(5)
-        connected_glove_sides = []
+        connected_glove_sides: "list[str]" = []
         for key, value in polhemus_to_side_prefix.items():
             for line in tf_buffer.all_frames_as_yaml().split('\n'):
                 if key in line and "parent" in line:
@@ -350,7 +350,7 @@ class SrGloveCalibration:
         return int_marker
 
     @staticmethod
-    def _create_control(quaternion, name):
+    def _create_control(quaternion: Quaternion, name: str):
         """
             Creates as InteractiveMarkerControl to allow the user to drag&move the solution marker
             @param quaternion: Quaternion defining the rotations
@@ -383,7 +383,7 @@ class SrGloveCalibration:
                                                        COLORS[color_index].value)
                         hand.pub.publish(data_point_marker)
 
-    def _calibration(self, goal):
+    def _calibration(self, goal: CalibrateGoal):
         """
             Action server callback. This method executes the calibration procedure consisting of collecting
             TF data, fitting the data into a sphere and extracting the coordinates of the knuckles.
@@ -485,7 +485,7 @@ class SrGloveCalibration:
             standard deviation of the residuals for each finger.
             @param hand: Selected hand
         """
-        quality_list = []
+        quality_list: float = []
         for finger in fingers:
             quality_list.append(np.std(hand.finger_data[finger]['residual']))
         return quality_list
