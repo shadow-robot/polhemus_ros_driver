@@ -20,6 +20,7 @@ import math
 import os
 from enum import Enum
 
+from typing import List, Dict
 import actionlib
 import dynamic_reconfigure.client
 import numpy as np
@@ -104,7 +105,7 @@ class SrGloveCalibration:
 
     def __init__(self):
         # Detect gloves and populate data structures
-        self._hands: "dict[str, Hand]" = {}
+        self._hands: Dict[str, Hand] = {}
         connected_prefixes = self._get_connected_glove_prefixes()
         if not connected_prefixes:
             rospy.logerr("No polhemus bases (gloves) detected!")
@@ -290,7 +291,7 @@ class SrGloveCalibration:
         tf_buffer = tf2_ros.Buffer()
         tf2_ros.TransformListener(tf_buffer)
         rospy.sleep(5)
-        connected_glove_sides: "list[str]" = []
+        connected_glove_sides: List[str] = []
         for key, value in polhemus_to_side_prefix.items():
             for line in tf_buffer.all_frames_as_yaml().split('\n'):
                 if key in line and "parent" in line:
@@ -485,7 +486,7 @@ class SrGloveCalibration:
             standard deviation of the residuals for each finger.
             @param hand: Selected hand
         """
-        quality_list: float = []
+        quality_list: List[float] = []
         for finger in fingers:
             quality_list.append(np.std(hand.finger_data[finger]['residual']))
         return quality_list
