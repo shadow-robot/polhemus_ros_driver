@@ -237,7 +237,7 @@ class SrGloveCalibration:
             calibration_file.truncate()
         rospy.loginfo(f"Calibration for {hand.side_name} hand saved to {path}")
 
-    def _publish_calibration(self, hands: "list[Hand]", save: bool = True):
+    def _publish_calibration(self, hands: List[Hand], save: bool = True):
         """ Publishes the calibration as a static TF between user knuckle and glove polhemus source
             @param hands: The list of hands to publish the calibration for
             @param save: Whether to also save the calibration to file
