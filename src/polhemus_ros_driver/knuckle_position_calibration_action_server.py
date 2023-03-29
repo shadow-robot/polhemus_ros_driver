@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 #
-#  Copyright (C) 2022-23 Shadow Robot Company Ltd <software@shadowrobot.com>
+#  Copyright (C) 2022, 2023 Shadow Robot Company Ltd <software@shadowrobot.com>
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -20,6 +20,7 @@ import math
 import os
 from enum import Enum
 
+from typing import List, Dict
 import actionlib
 import dynamic_reconfigure.client
 import numpy as np
@@ -38,12 +39,12 @@ from visualization_msgs.msg import (InteractiveMarker,
                                     InteractiveMarkerControl, Marker)
 
 from polhemus_ros_driver.msg import (CalibrateAction, CalibrateFeedback,
-                                     CalibrateResult)
+                                     CalibrateResult, CalibrateGoal)
 from polhemus_ros_driver.srv import Publish, PublishRequest
 from polhemus_ros_driver.sphere_fit import SphereFit
 
 
-def calculate_distance(point1, point2):
+def calculate_distance(point1: Point, point2: Point):
     """
         Returns the distance between two points of type geometry_msgs.msg.Point
         @param point1: First point
@@ -73,7 +74,7 @@ class DataMarker(Marker):
     """ Class to store data about a marker to be published to rviz. """
     _id = 0
 
-    def __init__(self, frame_id, point, color, size=0.002):
+    def __init__(self, frame_id: str, point: Point, color: ColorRGBA, size=0.002):
         super().__init__()
         self.header.frame_id = frame_id
         self.header.stamp = rospy.Time.now()
@@ -104,7 +105,7 @@ class SrGloveCalibration:
 
     def __init__(self):
         # Detect gloves and populate data structures
-        self._hands: "dict[str, Hand]" = {}
+        self._hands: Dict[str, Hand] = {}
         connected_prefixes = self._get_connected_glove_prefixes()
         if not connected_prefixes:
             rospy.logerr("No polhemus bases (gloves) detected!")
@@ -184,7 +185,7 @@ class SrGloveCalibration:
             rospy.logerr(f"Calibration file for {hand.side_name} hand {path} not found!")
         else:
             with open(path, 'r', encoding='utf-8') as calibration_file:
-                calibration = yaml.load(calibration_file)
+                calibration = yaml.load(calibration_file, yaml.FullLoader)
                 if "mf_knuckle_to_glove_source_pose" not in calibration:
                     rospy.logerr(f"Default calibration file for {hand.side_name} hand {path} is missing the " +
                                  "mf_knuckle_to_glove_source_pose key")
@@ -254,29 +255,30 @@ class SrGloveCalibration:
         self._static_transform_broadcaster.sendTransform(transform_stamped)
         rospy.loginfo(f"Published glove calibration TF for {hand.side_name} hand.")
 
-        # Updating hand maping dynamic reconfigure server
-        new_fingertip_teleop_config = {"scaling": False}
-        fingers_with_length = [finger for finger in fingers if hand.finger_data[finger]['length']]
-        fingers_used_for_thumbscaling = [finger for finger in fingers_with_length if finger != "lf"]
-        if fingers_with_length:
-            new_fingertip_teleop_config = {"scaling": True}
-            for finger in fingers_with_length:
-                if hand.finger_data[finger]['length']:
-                    finger_scaling = 0.096 / (hand.finger_data[finger]['length'][-1] + 0.01)
-                    new_fingertip_teleop_config[finger + '_scaling_factor'] = finger_scaling
-        if fingers_used_for_thumbscaling:
-            new_fingertip_teleop_config['th_scaling_factor'] = (sum(
-                [new_fingertip_teleop_config[finger + '_scaling_factor'] for finger in fingers_used_for_thumbscaling]) /
-                 len(fingers_used_for_thumbscaling))
-
+        # Update hand mapping dynamic reconfigure server, if it is available
+        dyn_reconf_topic = f"/{hand.hand_prefix}_sr_fingertip_hand_teleop"
         try:
-            dynamic_reconfigure_client = dynamic_reconfigure.client.Client(
-                                         f"/{hand.hand_prefix}/", timeout=5)
-            dynamic_reconfigure_client.update_configuration(new_fingertip_teleop_config)
-            rospy.loginfo(f"Updated hand mapping scaling for {hand.side_name} hand.")
+            dynamic_reconfigure_client = dynamic_reconfigure.client.Client(f"/{dyn_reconf_topic}", timeout=1)
         except rospy.ROSException as err:
-            rospy.logwarn("Scaling not able to set. Failed to connect to dynamic reconfigure server for" +
-                          f"{hand.hand_prefix} hand: {err}")
+            rospy.loginfo("Fingertip mapping scaling not applied. Could not communicate with dynamic reconfigure "
+                          f"server at '{dyn_reconf_topic}'. This is only a problem if fingertip mapping is supposed to "
+                          f"be running. Error given: '{err}'")
+        else:
+            new_fingertip_teleop_config = {"scaling": False}
+            fingers_with_length = [finger for finger in fingers if hand.finger_data[finger]['length']]
+            fingers_used_for_thumbscaling = [finger for finger in fingers_with_length if finger != "lf"]
+            if fingers_with_length:
+                new_fingertip_teleop_config = {"scaling": True}
+                for finger in fingers_with_length:
+                    if hand.finger_data[finger]['length']:
+                        finger_scaling = 0.096 / (hand.finger_data[finger]['length'][-1] + 0.01)
+                        new_fingertip_teleop_config[finger + '_scaling_factor'] = finger_scaling
+            if fingers_used_for_thumbscaling:
+                new_fingertip_teleop_config['th_scaling_factor'] = (sum([
+                    new_fingertip_teleop_config[finger + '_scaling_factor'] for finger in
+                    fingers_used_for_thumbscaling]) / len(fingers_used_for_thumbscaling))
+            dynamic_reconfigure_client.update_configuration(new_fingertip_teleop_config)
+            rospy.loginfo(f"Updated fingertip mapping scaling for {hand.side_name} hand.")
 
         if save:
             self._save_calibration(hand)
@@ -289,7 +291,7 @@ class SrGloveCalibration:
         tf_buffer = tf2_ros.Buffer()
         tf2_ros.TransformListener(tf_buffer)
         rospy.sleep(5)
-        connected_glove_sides = []
+        connected_glove_sides: List[str] = []
         for key, value in polhemus_to_side_prefix.items():
             for line in tf_buffer.all_frames_as_yaml().split('\n'):
                 if key in line and "parent" in line:
@@ -349,7 +351,7 @@ class SrGloveCalibration:
         return int_marker
 
     @staticmethod
-    def _create_control(quaternion, name):
+    def _create_control(quaternion: Quaternion, name: str):
         """
             Creates as InteractiveMarkerControl to allow the user to drag&move the solution marker
             @param quaternion: Quaternion defining the rotations
@@ -382,7 +384,7 @@ class SrGloveCalibration:
                                                        COLORS[color_index].value)
                         hand.pub.publish(data_point_marker)
 
-    def _calibration(self, goal):
+    def _calibration(self, goal: CalibrateGoal):
         """
             Action server callback. This method executes the calibration procedure consisting of collecting
             TF data, fitting the data into a sphere and extracting the coordinates of the knuckles.
@@ -484,7 +486,7 @@ class SrGloveCalibration:
             standard deviation of the residuals for each finger.
             @param hand: Selected hand
         """
-        quality_list = []
+        quality_list: List[float] = []
         for finger in fingers:
             quality_list.append(np.std(hand.finger_data[finger]['residual']))
         return quality_list
