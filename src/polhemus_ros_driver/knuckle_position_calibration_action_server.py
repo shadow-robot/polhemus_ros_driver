@@ -298,7 +298,7 @@ class SrGloveCalibration:
         except Exception as err:
             rospy.logerr(f"Could not publish glove calibration TF(s): {err}.")
         else:
-            rospy.loginfo(f"Published glove calibration TF(s).")
+            rospy.loginfo("Published glove calibration TF(s).")
 
     def _initialize_finger_data(self, hand: Hand):
         """
