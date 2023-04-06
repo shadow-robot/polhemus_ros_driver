@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 #
-#  Copyright (C) 2022, 2023 Shadow Robot Company Ltd <software@shadowrobot.com>
+#  Copyright (C) 2022-2023 Shadow Robot Company Ltd <software@shadowrobot.com>
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -148,7 +148,7 @@ class SrGloveCalibration:
         """ Updates the current knuckle TF for a hand
             @param hand: The hand to update the TF for
         """
-        rospy.logwarn(f"updating current knuckle tf for {hand.side_name}")
+        rospy.loginfo(f"Updating current knuckle TF for {hand.side_name}")
         mf_knuckle_marker = self._marker_server.get(f"{hand.hand_prefix}_mf_knuckle_glove")
         transform_stamped = TransformStamped()
         transform_stamped.header.stamp = rospy.Time.now()
@@ -265,7 +265,6 @@ class SrGloveCalibration:
         """
         transform_list: List[TransformStamped] = []
         for hand in self._hands.values():
-            rospy.logerr(f"TF: {hand.current_knuckle_tf}")
             transform_list.append(hand.current_knuckle_tf)
 
             # Update hand mapping dynamic reconfigure server, if it is available
