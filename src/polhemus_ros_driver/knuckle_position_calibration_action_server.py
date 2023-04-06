@@ -26,7 +26,6 @@ import dynamic_reconfigure.client
 import numpy as np
 import rospkg
 import rospy
-import tf2_ros
 import yaml
 from geometry_msgs.msg import (Point, Pose, Quaternion, TransformStamped,
                                Vector3)
@@ -296,7 +295,7 @@ class SrGloveCalibration:
 
         try:
             self._static_transform_broadcaster.sendTransform(transform_list)
-        except Execption as err:
+        except Exception as err:
             rospy.logerr(f"Could not publish glove calibration TF(s): {err}.")
         else:
             rospy.loginfo(f"Published glove calibration TF(s).")
