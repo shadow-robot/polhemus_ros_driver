@@ -148,6 +148,7 @@ class SrGloveCalibration:
         """ Updates the current knuckle TF for a hand
             @param hand: The hand to update the TF for
         """
+        rospy.logwarn(f"updating current knuckle tf for {hand.side_name}")
         mf_knuckle_marker = self._marker_server.get(f"{hand.hand_prefix}_mf_knuckle_glove")
         transform_stamped = TransformStamped()
         transform_stamped.header.stamp = rospy.Time.now()
@@ -301,22 +302,6 @@ class SrGloveCalibration:
             rospy.logerr(f"Could not publish glove calibration TF(s): {err}.")
         else:
             rospy.loginfo(f"Published glove calibration TF(s).")
-
-    @staticmethod
-    def _get_connected_glove_prefixes():
-        """
-            Detect connected gloves and returns the corresponding sides ['left', 'right']
-        """
-        tf_buffer = tf2_ros.Buffer()
-        tf2_ros.TransformListener(tf_buffer)
-        rospy.sleep(5)
-        connected_glove_sides: List[str] = []
-        for key, value in polhemus_to_side_prefix.items():
-            for line in tf_buffer.all_frames_as_yaml().split('\n'):
-                if key in line and "parent" in line:
-                    connected_glove_sides.append(value)
-                    break
-        return connected_glove_sides
 
     def _initialize_finger_data(self, hand: Hand):
         """
