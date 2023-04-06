@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 #
-#  Copyright (C) 2022, 2023 Shadow Robot Company Ltd <software@shadowrobot.com>
+#  Copyright (C) 2022-2023 Shadow Robot Company Ltd <software@shadowrobot.com>
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -26,7 +26,6 @@ import dynamic_reconfigure.client
 import numpy as np
 import rospkg
 import rospy
-import tf2_ros
 import yaml
 from geometry_msgs.msg import (Point, Pose, Quaternion, TransformStamped,
                                Vector3)
@@ -96,6 +95,7 @@ class Hand:
         self.polhemus_base_index = 1 if self.hand_prefix == "lh" else 0
         self.polhemus_base_name = f"polhemus_base_{self.polhemus_base_index}"
         self.finger_data = {}
+        self.current_knuckle_tf = TransformStamped()
         self.pub = rospy.Publisher(f"/data_point_marker_{self.hand_prefix}", Marker, queue_size=1000)
 
 
@@ -103,20 +103,20 @@ class SrGloveCalibration:
     SOURCE_TO_KNUCKLE_LIMITS = [[-0.1, -0.1, -0.1], [0.1, 0.1, 0.1]]
     FINGER_LENGTH_LIMITS = [0.03, 0.15]
 
-    def __init__(self):
-        # Detect gloves and populate data structures
-        self._hands: Dict[str, Hand] = {}
-        connected_prefixes = self._get_connected_glove_prefixes()
-        if not connected_prefixes:
-            rospy.logerr("No polhemus bases (gloves) detected!")
-            return
-
+    def __init__(self, side: str = "right"):
+        """
+        Initializes the calibration action server and the interactive marker server.
+        @param side: The hand(s) to calibrate - can be left, right or both
+        """
         # Interactive marker server for visualizing and interacting with the calibration process
         self._marker_server = InteractiveMarkerServer("knuckle_position_markers")
 
-        for connected_prefix in connected_prefixes:
-            self._hands[connected_prefix] = Hand(connected_prefix)
-            self._initialize_finger_data(self._hands[connected_prefix])
+        self._hands: Dict[str, Hand] = {}
+        for hand_prefix in ["rh", "lh"] if side == "both" else [f"{side[0]}h"]:
+            self._hands[hand_prefix] = Hand(hand_prefix)
+            # Ensure the static transform publisher is ready
+            rospy.sleep(1.0)
+            self._initialize_finger_data(self._hands[hand_prefix])
 
         # Static transform broadcaster for updating the user knuckle -> polhemus base transforms
         self._static_transform_broadcaster = StaticTransformBroadcaster()
@@ -128,7 +128,9 @@ class SrGloveCalibration:
 
         # Load and publish the default (last) user calibration
         self._load_default_calibrations()
-        self._publish_calibration(self._hands.values(), save=False)
+        for hand in self._hands.values():
+            self._update_current_knuckle_tf(hand)
+        self._publish_calibration(save=False)
 
         # Service allowing GUI to trigger publishing of the current calibration
         self._update_static_tf_service = rospy.Service("/sr_publish_glove_calibration",
@@ -140,6 +142,22 @@ class SrGloveCalibration:
                                                            execute_cb=self._calibration, auto_start=False)
         self._action_server.start()
 
+    def _update_current_knuckle_tf(self, hand: Hand):
+        """ Updates the current knuckle TF for a hand
+            @param hand: The hand to update the TF for
+        """
+        rospy.loginfo(f"Updating current knuckle TF for {hand.side_name}")
+        mf_knuckle_marker = self._marker_server.get(f"{hand.hand_prefix}_mf_knuckle_glove")
+        transform_stamped = TransformStamped()
+        transform_stamped.header.stamp = rospy.Time.now()
+        transform_stamped.header.frame_id = mf_knuckle_marker.name
+        transform_stamped.child_frame_id = hand.polhemus_base_name
+        transform_stamped.transform.translation = Vector3(-mf_knuckle_marker.pose.position.x,
+                                                          -mf_knuckle_marker.pose.position.y,
+                                                          -mf_knuckle_marker.pose.position.z)
+        transform_stamped.transform.rotation = Quaternion(0, 0, 0, 1)
+        hand.current_knuckle_tf = transform_stamped
+
     def _publish_calibration_cb(self, publish: PublishRequest):
         """ Callback for the Publish calibration service
             @param publish: The request message
@@ -147,7 +165,8 @@ class SrGloveCalibration:
         if publish.side not in self._hands.keys():
             rospy.logerr("Requested glove calibration side not found")
             return False
-        self._publish_calibration([self._hands[publish.side]])
+        self._update_current_knuckle_tf(self._hands[publish.side])
+        self._publish_calibration()
         return True
 
     def _load_default_calibrations(self):
@@ -237,23 +256,13 @@ class SrGloveCalibration:
             calibration_file.truncate()
         rospy.loginfo(f"Calibration for {hand.side_name} hand saved to {path}")
 
-    def _publish_calibration(self, hands: List[Hand], save: bool = True):
+    def _publish_calibration(self, save: bool = True):
         """ Publishes the calibration as a static TF between user knuckle and glove polhemus source
-            @param hands: The list of hands to publish the calibration for
             @param save: Whether to also save the calibration to file
         """
         transform_list: List[TransformStamped] = []
-        for hand in hands:
-            mf_knuckle_marker = self._marker_server.get(f"{hand.hand_prefix}_mf_knuckle_glove")
-            transform_stamped = TransformStamped()
-            transform_stamped.header.stamp = rospy.Time.now()
-            transform_stamped.header.frame_id = mf_knuckle_marker.name
-            transform_stamped.child_frame_id = hand.polhemus_base_name
-            transform_stamped.transform.translation = Vector3(-mf_knuckle_marker.pose.position.x,
-                                                              -mf_knuckle_marker.pose.position.y,
-                                                              -mf_knuckle_marker.pose.position.z)
-            transform_stamped.transform.rotation = Quaternion(0, 0, 0, 1)
-            transform_list.append(transform_stamped)
+        for hand in self._hands.values():
+            transform_list.append(hand.current_knuckle_tf)
 
             # Update hand mapping dynamic reconfigure server, if it is available
             dyn_reconf_topic = f"/{hand.hand_prefix}_sr_fingertip_hand_teleop"
@@ -283,25 +292,12 @@ class SrGloveCalibration:
             if save:
                 self._save_calibration(hand)
 
-        self._static_transform_broadcaster.sendTransform(transform_list)
-        for hand in hands:
-            rospy.loginfo(f"Published glove calibration TF for {hand.side_name} hand.")
-
-    @staticmethod
-    def _get_connected_glove_prefixes():
-        """
-            Detect connected gloves and returns the corresponding sides ['left', 'right']
-        """
-        tf_buffer = tf2_ros.Buffer()
-        tf2_ros.TransformListener(tf_buffer)
-        rospy.sleep(5)
-        connected_glove_sides: List[str] = []
-        for key, value in polhemus_to_side_prefix.items():
-            for line in tf_buffer.all_frames_as_yaml().split('\n'):
-                if key in line and "parent" in line:
-                    connected_glove_sides.append(value)
-                    break
-        return connected_glove_sides
+        try:
+            self._static_transform_broadcaster.sendTransform(transform_list)
+        except Exception as err:
+            rospy.logerr(f"Could not publish glove calibration TF(s): {err}.")
+        else:
+            rospy.loginfo("Published glove calibration TF(s).")
 
     def _initialize_finger_data(self, hand: Hand):
         """
@@ -498,4 +494,5 @@ class SrGloveCalibration:
 
 if __name__ == "__main__":
     rospy.init_node('sr_knuckle_calibration')
-    sr_glove_calibration = SrGloveCalibration()
+    hand_side = rospy.get_param("~side", "both")
+    sr_glove_calibration = SrGloveCalibration(side=hand_side)
