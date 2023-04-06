@@ -107,7 +107,7 @@ class SrGloveCalibration:
     def __init__(self, side: str = "right"):
         """
         Initializes the calibration action server and the interactive marker server.
-        @param side: The side of the hand to calibrate
+        @param side: The hand(s) to calibrate - can be left, right or both
         """
         # Interactive marker server for visualizing and interacting with the calibration process
         self._marker_server = InteractiveMarkerServer("knuckle_position_markers")
