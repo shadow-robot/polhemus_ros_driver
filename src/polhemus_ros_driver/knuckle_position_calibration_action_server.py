@@ -167,7 +167,6 @@ class SrGloveCalibration:
         if publish.side not in self._hands.keys():
             rospy.logerr("Requested glove calibration side not found")
             return False
-
         self._update_current_knuckle_tf(self._hands[publish.side])
         self._publish_calibration()
         return True
