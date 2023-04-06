@@ -43,6 +43,8 @@
 
   <rosparam command="load" file="$(arg boresight_calibration_file)" ns="$(arg node_name)"/>
 
-  <node name="sr_knuckle_calibration" pkg="polhemus_ros_driver" type="knuckle_position_calibration_action_server.py" output="screen"/>
+  <node name="sr_knuckle_calibration" pkg="polhemus_ros_driver" type="knuckle_position_calibration_action_server.py" output="screen">
+    <param name="side" value="$(arg hands)" type="string"/>
+  </node>
 
 </launch>
