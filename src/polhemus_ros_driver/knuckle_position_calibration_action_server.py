@@ -272,12 +272,12 @@ class SrGloveCalibration:
                 for finger in fingers_with_length:
                     if hand.finger_data[finger]['length']:
                         finger_scaling = 0.096 / (hand.finger_data[finger]['length'][-1] + 0.01)
-                        new_fingertip_teleop_config[finger + '_scaling_factor'] = finger_scaling
+                        new_fingertip_teleop_config[f'{finger}_scaling_factor'] = finger_scaling
             # If there are fingers with lengths that are not the little finger
             if fingers_used_for_thumbscaling:
                 # Calculate the average scaling factor, to be used for the thumb
                 new_fingertip_teleop_config['th_scaling_factor'] = (sum([
-                    new_fingertip_teleop_config[finger + '_scaling_factor'] for finger in
+                    new_fingertip_teleop_config[f'{finger}_scaling_factor'] for finger in
                     fingers_used_for_thumbscaling]) / len(fingers_used_for_thumbscaling))
             # Try to update the fingertip teleop node's dynamic reconfigure server
             try:
