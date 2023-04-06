@@ -142,7 +142,6 @@ class SrGloveCalibration:
                                                            execute_cb=self._calibration, auto_start=False)
         self._action_server.start()
 
-
     def _update_current_knuckle_tf(self, hand: Hand):
         """ Updates the current knuckle TF for a hand
             @param hand: The hand to update the TF for
