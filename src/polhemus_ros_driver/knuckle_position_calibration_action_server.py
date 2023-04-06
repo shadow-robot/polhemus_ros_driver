@@ -22,7 +22,7 @@ from enum import Enum
 
 from typing import List, Dict
 import actionlib
-import dynamic_reconfigure.client
+from dynamic_reconfigure import client, DynamicReconfigureCallbackException, DynamicReconfigureParameterException
 import numpy as np
 import rospkg
 import rospy
@@ -264,29 +264,50 @@ class SrGloveCalibration:
         for hand in self._hands.values():
             transform_list.append(hand.current_knuckle_tf)
 
-            # Update hand mapping dynamic reconfigure server, if it is available
-            dyn_reconf_topic = f"/{hand.hand_prefix}_sr_fingertip_hand_teleop"
+            # Update hand mapping node(s) parameters
+            fingertip_teleop_node_name = f"/{hand.hand_prefix}_sr_fingertip_hand_teleop"
+            # Build the new fingertip teleop scaling config
+            # Default to scaling disabled, in the case that no fingers have a length
+            new_fingertip_teleop_config = {"scaling": False}
+            # Find the subset of fingers that have a length
+            fingers_with_length = [finger for finger in fingers if hand.finger_data[finger]['length']]
+            # Find the subset of fingers that should be used for average scaling calculation (exclude the little finger)
+            fingers_used_for_thumbscaling = [finger for finger in fingers_with_length if finger != "lf"]
+            # If there are fingers with lengths
+            if fingers_with_length:
+                # Enable scaling
+                new_fingertip_teleop_config = {"scaling": True}
+                # Calculate the scaling factor for each finger
+                for finger in fingers_with_length:
+                    if hand.finger_data[finger]['length']:
+                        finger_scaling = 0.096 / (hand.finger_data[finger]['length'][-1] + 0.01)
+                        new_fingertip_teleop_config[f'{finger}_scaling_factor'] = finger_scaling
+            # If there are fingers with lengths that are not the little finger
+            if fingers_used_for_thumbscaling:
+                # Calculate the average scaling factor, to be used for the thumb
+                new_fingertip_teleop_config['th_scaling_factor'] = (sum([
+                    new_fingertip_teleop_config[f'{finger}_scaling_factor'] for finger in
+                    fingers_used_for_thumbscaling]) / len(fingers_used_for_thumbscaling))
+            # Try to update the fingertip teleop node's dynamic reconfigure server
             try:
-                dynamic_reconfigure_client = dynamic_reconfigure.client.Client(f"/{dyn_reconf_topic}", timeout=1)
-            except rospy.ROSException as err:
-                rospy.loginfo("Fingertip mapping scaling not applied. Could not communicate with dynamic reconfigure "
-                              f"server at '{dyn_reconf_topic}'. This is only a problem if fingertip mapping "
-                              f"is supposed to be running. Error given: '{err}'")
-            else:
-                new_fingertip_teleop_config = {"scaling": False}
-                fingers_with_length = [finger for finger in fingers if hand.finger_data[finger]['length']]
-                fingers_used_for_thumbscaling = [finger for finger in fingers_with_length if finger != "lf"]
-                if fingers_with_length:
-                    new_fingertip_teleop_config = {"scaling": True}
-                    for finger in fingers_with_length:
-                        if hand.finger_data[finger]['length']:
-                            finger_scaling = 0.096 / (hand.finger_data[finger]['length'][-1] + 0.01)
-                            new_fingertip_teleop_config[finger + '_scaling_factor'] = finger_scaling
-                if fingers_used_for_thumbscaling:
-                    new_fingertip_teleop_config['th_scaling_factor'] = (sum([
-                        new_fingertip_teleop_config[finger + '_scaling_factor'] for finger in
-                        fingers_used_for_thumbscaling]) / len(fingers_used_for_thumbscaling))
+                dynamic_reconfigure_client = client.Client(
+                    f"/{fingertip_teleop_node_name}", timeout=1)
                 dynamic_reconfigure_client.update_configuration(new_fingertip_teleop_config)
+            except rospy.ROSException:
+                rospy.loginfo(f"Could not communicate with dynamic reconfigure server at '{fingertip_teleop_node_name}'"
+                              ". In case the node isn't running yet, scaling parameters have been updated on the "
+                              "parameter server, and will be applied when the node is started.")
+                # Fall back to updating the parameter server directly. This helps during teleop startup, when this node
+                # loads the last user finger lengths from file, but fingertip teleop node dynamic reconfigure servers
+                # are not yet available. The fingertip teleop launch files do load default scaling parameters, but that
+                # should happen before this, so the loaded user saclings will override them and be applied when the
+                # fingertip teleop dynamic reconfigure servers initialize.
+                for param_name, param_value in new_fingertip_teleop_config.items():
+                    rospy.set_param(f"{fingertip_teleop_node_name}/{param_name}", param_value)
+            # The dynamic reconfigure server is available, but the update failed for some other reason
+            except (DynamicReconfigureParameterException, DynamicReconfigureCallbackException) as err:
+                rospy.logwarn(f"Could not update fingertip mapping scaling for {hand.side_name} hand: {err}")
+            else:
                 rospy.loginfo(f"Updated fingertip mapping scaling for {hand.side_name} hand.")
 
             if save:
