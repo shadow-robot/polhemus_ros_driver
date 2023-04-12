@@ -1,6 +1,6 @@
 /*
 
- Copyright (C) 2022 Shadow Robot Company Ltd <software@shadowrobot.com>
+ Copyright (C) 2022-2023 Shadow Robot Company Ltd <software@shadowrobot.com>
 
  This program is free software; you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
@@ -98,19 +98,39 @@ int Viper::receive_data_frame(viper_cmds_e cmd_type)
 {
   int retval = RETURN_ERROR;
   g_nrxcount = VIPER_RX_BUF_SIZE;
-  retval = device_read(g_rxbuf, g_nrxcount, true);
-
-  if (retval == 0)
+  int attempts = 3;
+  for (int attempt = 0; attempt < attempts; attempt++)
   {
-    CFrameInfo fi(g_rxbuf, g_nrxcount);
-    if ((fi.cmd() != cmd_type) || !(fi.IsAck()))
+    retval = device_read(g_rxbuf, g_nrxcount, true);
+    if (retval == 0)
     {
-      ROS_ERROR("[POLHEMUS] Error in message reply...");
-      ROS_ERROR("reply cmd: %d", fi.cmd());
-      ROS_ERROR("reply action: %d", fi.action());
-      ROS_ERROR("cmd sent: %d", cmd_type);
-      retval = RETURN_ERROR;
+      CFrameInfo frame_info(g_rxbuf, g_nrxcount);
+      if ((fi.cmd() == -1) || (fi.action() == -1))
+      {
+        ROS_INFO("[POLHEMUS] Message reply is not valid, retrying...");
+        ROS_DEBUG("[POLHEMUS] Error in message reply...");
+        ROS_DEBUG("reply cmd: %d", frame_info.cmd());
+        ROS_DEBUG("reply action: %d", frame_info.action());
+        ROS_DEBUG("cmd sent: %d", cmd_type);
+        retval = RETURN_ERROR;
+        continue;
+      }
+      else if ((frame_info.cmd() != cmd_type) || !(frame_info.IsAck()))
+      {
+        ROS_ERROR("[POLHEMUS] Error in message reply...");
+        ROS_ERROR("reply cmd: %d", frame_info.cmd());
+        ROS_ERROR("reply action: %d", frame_info.action());
+        ROS_ERROR("cmd sent: %d", cmd_type);
+        retval = RETURN_ERROR;
+        break;
+      }
+      else
+      {
+        ROS_DEBUG("Got expected message reply");
+        break;
+      }
     }
+    ros::Duration(0.5).sleep();
   }
   return retval;
 }
@@ -405,7 +425,7 @@ int Viper::send_saved_calibration(int number_of_hands)
     }
     else
     {
-      ROS_ERROR("No pno frame");
+      ROS_WARN("No pno frame for station, this is normal if there is no previous calibration data avaliable.");
     }
 
     if (!nh->hasParam(name + "_calibration/rotations/station_" + std::to_string(station_id)))
