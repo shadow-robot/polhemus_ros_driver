@@ -29,7 +29,11 @@ add_service_files(
   calibrate.srv
   set_source.srv
   persist.srv
+<<<<<<< HEAD
   SetStaticCalibrationTFNew.srv
+=======
+  Publish.srv
+>>>>>>> noetic-devel
 )
 
 add_action_files(

@@ -1,5 +1,5 @@
 <!--
-  Copyright (C) 2022-2023 Shadow Robot Company Ltd <software@shadowrobot.com>
+  Copyright (C) 2023 Shadow Robot Company Ltd <software@shadowrobot.com>
 
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -17,6 +17,5 @@
 -->
 
 <launch>
-  <node pkg="tf2_ros" type="static_transform_publisher" name="polhemus_world_tf_broadcaster"
-  args="0 0 0.5 0 0 3.141592653589793 polhemus_world polhemus_base" />
+    <test test-name="test_sphere_fit" pkg="polhemus_ros_driver" type="test_sphere_fit.py"/>
 </launch>

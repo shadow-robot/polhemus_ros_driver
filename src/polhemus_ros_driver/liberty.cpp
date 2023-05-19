@@ -36,8 +36,13 @@
 #define warn(as...)
 #endif
 
+<<<<<<< HEAD
 Liberty::Liberty(std::string name, uint16_t rx_buffer_size, uint16_t tx_buffer_size, int sensors_per_glove)
     : Polhemus(name, rx_buffer_size, tx_buffer_size, sensors_per_glove)
+=======
+Liberty::Liberty(std::string name, uint16_t rx_buffer_size, uint16_t tx_buffer_size)
+    : Polhemus(name, rx_buffer_size, tx_buffer_size)
+>>>>>>> noetic-devel
 {
 }
 

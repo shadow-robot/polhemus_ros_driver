@@ -21,6 +21,10 @@
   <buildtool_depend>catkin</buildtool_depend>
   <build_depend>message_generation</build_depend>
   <exec_depend>message_runtime</exec_depend>
+<<<<<<< HEAD
+=======
+  <build_depend>rostest</build_depend>
+>>>>>>> noetic-devel
 
   <depend>tf2</depend>
   <depend>tf2_ros</depend>
@@ -32,5 +36,9 @@
   <depend>libusb-1.0-dev</depend>
   <depend>fxload</depend>
   <depend>yaml</depend>
+<<<<<<< HEAD
+=======
+  <depend>python3-scipy</depend>
+>>>>>>> noetic-devel
 
 </package>
