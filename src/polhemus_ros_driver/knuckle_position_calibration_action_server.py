@@ -100,6 +100,7 @@ class Hand:
         self.last_center_estimate = None
         self.last_radius_estimate = None
 
+
 class SrGloveCalibration:
     SOURCE_TO_KNUCKLE_LIMITS = [[-0.1, -0.1, -0.1], [0.1, 0.1, 0.1]]
     FINGER_LENGTH_LIMITS = [0.03, 0.15]
@@ -447,8 +448,10 @@ class SrGloveCalibration:
                 break
 
             _feedback.progress = ((rospy.Time.now().to_sec() - start)) / goal.time
-            if ((_feedback.progress - current_progress) > self._progress_period and
-                math.floor(_feedback.progress * 100) != 0):
+            if (
+                (_feedback.progress - current_progress) > self._progress_period and
+                math.floor(_feedback.progress * 100) != 0
+               ):
                 self._get_knuckle_positions(hand)
                 _feedback.quality = self.get_calibration_quality(hand)
                 current_progress += self._progress_period
