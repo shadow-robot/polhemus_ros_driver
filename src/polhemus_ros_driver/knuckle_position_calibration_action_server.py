@@ -97,7 +97,8 @@ class Hand:
         self.finger_data = {}
         self.current_knuckle_tf = TransformStamped()
         self.pub = rospy.Publisher(f"/data_point_marker_{self.hand_prefix}", Marker, queue_size=1000)
-
+        self.last_center_estimate = None
+        self.last_radius_estimate = None
 
 class SrGloveCalibration:
     SOURCE_TO_KNUCKLE_LIMITS = [[-0.1, -0.1, -0.1], [0.1, 0.1, 0.1]]
@@ -495,12 +496,22 @@ class SrGloveCalibration:
             hand.pub.publish(solution_marker)
             sphere_fit = SphereFit(data=hand.finger_data[finger]['data'], plot=plot)
 
+            initial_guess = None
+            if 'numpy' in str(type(hand.last_center_estimate)) and 'numpy' in str(type(hand.last_radius_estimate)):
+                initial_guess = []
+                initial_guess.extend(hand.last_center_estimate)
+                initial_guess.append(hand.last_radius_estimate)
+
             radius, center, residual = sphere_fit.fit_sphere(
                 SrGloveCalibration.SOURCE_TO_KNUCKLE_LIMITS[0], SrGloveCalibration.SOURCE_TO_KNUCKLE_LIMITS[1],
-                SrGloveCalibration.FINGER_LENGTH_LIMITS[0], SrGloveCalibration.FINGER_LENGTH_LIMITS[1])
+                SrGloveCalibration.FINGER_LENGTH_LIMITS[0], SrGloveCalibration.FINGER_LENGTH_LIMITS[1],
+                initial_guess=initial_guess)
 
             if plot:
                 sphere_fit.plot_data()
+
+            hand.last_center_estimate = center
+            hand.last_radius_estimate = radius
 
             hand.finger_data[finger]['residual'] = residual
             hand.finger_data[finger]['length'].append(np.around(radius, 4))
