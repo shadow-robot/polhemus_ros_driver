@@ -143,6 +143,9 @@ class SrGloveCalibration:
         # How many times during calibration should we calculate the sphere fit and update quality %
         self._number_of_checkpoints = 4
         self._progress_period = 1.0 / self._number_of_checkpoints
+        # Only save every 'x'th glove data point for calibration - trade-off between accuracy and computation time
+        self._tf_data_divisor = 5
+        self._tf_data_counter = 0
         self._action_server.start()
 
     def _update_current_knuckle_tf(self, hand: Hand):
@@ -395,18 +398,20 @@ class SrGloveCalibration:
 
     def _load_tf_callback(self, data):
         """ Callback for received TF data. """
-        for individual_transform in data.transforms:
-            for hand in self._hands.values():
-                for color_index, finger in enumerate(fingers):
-                    if individual_transform.child_frame_id == hand.finger_data[finger]['polhemus_tf_name']:
-                        pos = [individual_transform.transform.translation.x,
-                               individual_transform.transform.translation.y,
-                               individual_transform.transform.translation.z]
+        if self._tf_data_counter % self._tf_data_divisor == 0:
+            for individual_transform in data.transforms:
+                for hand in self._hands.values():
+                    for color_index, finger in enumerate(fingers):
+                        if individual_transform.child_frame_id == hand.finger_data[finger]['polhemus_tf_name']:
+                            pos = [individual_transform.transform.translation.x,
+                                   individual_transform.transform.translation.y,
+                                   individual_transform.transform.translation.z]
 
-                        hand.finger_data[finger]['data'].append(pos)
-                        data_point_marker = DataMarker(hand.polhemus_base_name, Point(*pos),
-                                                       COLORS[color_index].value)
-                        hand.pub.publish(data_point_marker)
+                            hand.finger_data[finger]['data'].append(pos)
+                            data_point_marker = DataMarker(hand.polhemus_base_name, Point(*pos),
+                                                           COLORS[color_index].value)
+                            hand.pub.publish(data_point_marker)
+        self._tf_data_counter += 1
 
     def _calibration(self, goal: CalibrateGoal):
         """
