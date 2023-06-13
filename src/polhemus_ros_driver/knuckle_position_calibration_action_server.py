@@ -140,6 +140,9 @@ class SrGloveCalibration:
         # Action server allowing the GUI to trigger and monitor a calibration
         self._action_server = actionlib.SimpleActionServer("/calibration_action_server", CalibrateAction,
                                                            execute_cb=self._calibration, auto_start=False)
+        # How many times during calibration should we calculate the sphere fit and update quality %
+        self._number_of_checkpoints = 4
+        self._progress_period = 1.0 / self._number_of_checkpoints
         self._action_server.start()
 
     def _update_current_knuckle_tf(self, hand: Hand):
@@ -428,6 +431,7 @@ class SrGloveCalibration:
         _result = CalibrateResult()
 
         sub = rospy.Subscriber("/tf", TFMessage, self._load_tf_callback, queue_size=10)
+        current_progress = 0.0
         while rospy.Time.now().to_sec() - start < goal.time:
             if self._action_server.is_preempt_requested():
                 rospy.loginfo("Calibration stopped.")
@@ -436,9 +440,11 @@ class SrGloveCalibration:
                 break
 
             _feedback.progress = ((rospy.Time.now().to_sec() - start)) / goal.time
-            if math.floor(_feedback.progress * 100) % 25 == 0 and math.floor(_feedback.progress * 100) != 0:
+            if ((_feedback.progress - current_progress) > self._progress_period and
+                math.floor(_feedback.progress * 100) != 0):
                 self._get_knuckle_positions(hand)
                 _feedback.quality = self.get_calibration_quality(hand)
+                current_progress += self._progress_period
             self._action_server.publish_feedback(_feedback)
 
         sub.unregister()
