@@ -448,10 +448,7 @@ class SrGloveCalibration:
                 break
 
             _feedback.progress = ((rospy.Time.now().to_sec() - start)) / goal.time
-            if (
-                (_feedback.progress - current_progress) > self._progress_period and
-                math.floor(_feedback.progress * 100) != 0
-               ):
+            if (_feedback.progress - current_progress) > self._progress_period and _feedback.progress < 1.0:
                 self._get_knuckle_positions(hand)
                 _feedback.quality = self.get_calibration_quality(hand)
                 current_progress += self._progress_period
