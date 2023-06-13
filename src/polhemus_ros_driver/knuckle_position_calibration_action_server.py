@@ -431,6 +431,7 @@ class SrGloveCalibration:
         _result = CalibrateResult()
 
         sub = rospy.Subscriber("/tf", TFMessage, self._load_tf_callback, queue_size=10)
+        rospy.sleep(0.5)  # Ensure the tf subscriber has had time to start receiving messages
         current_progress = 0.0
         while rospy.Time.now().to_sec() - start < goal.time:
             if self._action_server.is_preempt_requested():
