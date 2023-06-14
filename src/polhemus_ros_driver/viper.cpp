@@ -415,10 +415,10 @@ bool Viper::persist_commands(void)
   }
 }
 
-int Viper::send_saved_calibration(int number_of_hands)
+int Viper::send_saved_calibration()
 {
   int retval = RETURN_ERROR;
-  retval = set_device_to_receive_saved_calibration(number_of_hands);
+  retval = set_device_to_receive_saved_calibration();
   if (RETURN_ERROR == retval)
     return -1;
 

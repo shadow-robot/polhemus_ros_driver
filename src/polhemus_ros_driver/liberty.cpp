@@ -263,10 +263,10 @@ tf2::Quaternion Liberty::get_station_quaternion(int station_id)
   return q;
 }
 
-int Liberty::send_saved_calibration(int number_of_hands)
+int Liberty::send_saved_calibration()
 {
   int retval = RETURN_ERROR;
-  retval = set_device_to_receive_saved_calibration(number_of_hands);
+  retval = set_device_to_receive_saved_calibration();
   if (RETURN_ERROR == retval)
     return -1;
 

@@ -59,7 +59,7 @@ private:
   tf2::Quaternion get_station_quaternion(int station_id);
   int set_source(int source, int station_id);
   bool calibrate(std::string boresight_calibration_file);
-  int send_saved_calibration(int number_of_hands);
+  int send_saved_calibration();
   bool persist_commands(void);
   bool persist_srv(polhemus_ros_driver::persist::Request &req, polhemus_ros_driver::persist::Response &res);
   CVPSeuPno pno;

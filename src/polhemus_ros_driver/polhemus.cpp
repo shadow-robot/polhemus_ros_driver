@@ -128,7 +128,7 @@ void Polhemus::device_clear_input(void)
   }
 }
 
-int Polhemus::set_device_to_receive_saved_calibration(int number_of_hands)
+int Polhemus::set_device_to_receive_saved_calibration()
 {
   int retval = RETURN_ERROR;
   int required_number_of_sensors = sensors_right_glove + sensors_left_glove;

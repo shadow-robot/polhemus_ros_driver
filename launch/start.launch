@@ -45,7 +45,6 @@
     <param name="sensors_right_glove" value="$(arg sensors_right_glove)" type="int"/>
     <param name="sensors_left_glove" value="$(arg sensors_left_glove)" type="int"/>
     <param name="product_type" value="$(arg product_type)" type="string"/>
-    <remap from="/tf_polhemus" to="/tf"/>
   </node>
 
   <rosparam command="load" file="$(arg boresight_calibration_file)" ns="$(arg node_name)"/>

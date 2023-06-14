@@ -282,7 +282,6 @@ int main(int argc, char** argv)
   uint16_t product_id;
   std::string product_type;
   std::string hands;
-  int number_of_hands = 1;
   std::string boresight_calibration_file;
   Polhemus *device;
   int retval = RETURN_ERROR;
@@ -296,8 +295,15 @@ int main(int argc, char** argv)
   nh.getParam("sensors_right_glove", sensors_right_glove);
   nh.getParam("sensors_left_glove", sensors_left_glove);
 
-  if (hands == "both")
-    number_of_hands = 2;
+  // Check to make sure that the number of sensors is correct
+  if (hands == "right")
+  {
+    sensors_left_glove = 0;
+  }
+  else if (hands == "left")
+  {
+    sensors_right_glove = 0;
+  }
 
   if (!nh.getParam("boresight_calibration_file", boresight_calibration_file))
   {
@@ -413,7 +419,7 @@ int main(int argc, char** argv)
     return -1;
   }
 
-  retval = device->send_saved_calibration(number_of_hands);
+  retval = device->send_saved_calibration();
   if (RETURN_ERROR == retval)
   {
     ROS_ERROR("[POLHEMUS] Failed to load saved calibration.");
