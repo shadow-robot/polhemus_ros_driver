@@ -500,7 +500,7 @@ class SrGloveCalibration:
 
             initial_guess = None
             if (hand.finger_data[finger]['last_center_estimate'] is not None and
-                hand.finger_data[finger]['last_radius_estimate'] is not None):
+               hand.finger_data[finger]['last_radius_estimate'] is not None):
                 initial_guess = []
                 initial_guess.extend(hand.finger_data[finger]['last_center_estimate'].tolist())
                 initial_guess.append(hand.finger_data[finger]['last_radius_estimate'])
@@ -513,8 +513,8 @@ class SrGloveCalibration:
             if plot:
                 sphere_fit.plot_data()
 
-            # hand.finger_data[finger]['last_center_estimate'] = center
-            # hand.finger_data[finger]['last_radius_estimate'] = radius
+            hand.finger_data[finger]['last_center_estimate'] = center
+            hand.finger_data[finger]['last_radius_estimate'] = radius
 
             hand.finger_data[finger]['residual'] = residual
             hand.finger_data[finger]['length'].append(np.around(radius, 4))
