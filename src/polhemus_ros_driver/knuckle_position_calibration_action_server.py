@@ -146,6 +146,7 @@ class SrGloveCalibration:
         self._progress_period = 1.0 / self.NUMBER_OF_CHECKPOINTS
         if not isinstance(tf_data_divisor, int):
             raise TypeError("tf_data_divisor must be an integer")
+
         # Only save every 'x'th glove data point for calibration - trade-off between accuracy and computation time
         self._tf_data_divisor = tf_data_divisor
         self._tf_data_counter = 0
