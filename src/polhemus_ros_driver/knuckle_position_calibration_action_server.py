@@ -96,8 +96,6 @@ class Hand:
         self.finger_data = {}
         self.current_knuckle_tf = TransformStamped()
         self.pub = rospy.Publisher(f"/data_point_marker_{self.hand_prefix}", Marker, queue_size=1000)
-        self.last_center_estimate = None
-        self.last_radius_estimate = None
 
 
 class SrGloveCalibration:
@@ -346,6 +344,8 @@ class SrGloveCalibration:
                 hand.finger_data[finger]['residual'] = 0
                 hand.finger_data[finger]['data'] = []
                 hand.finger_data[finger]['center'] = self._create_marker(hand, finger, COLORS[i].value)
+                hand.finger_data[finger]['last_center_estimate'] = None
+                hand.finger_data[finger]['last_radius_estimate'] = None
                 self._marker_server.insert(hand.finger_data[finger]['center'])
 
     def _create_marker(self, hand: Hand, finger: str, color):
@@ -499,10 +499,11 @@ class SrGloveCalibration:
             sphere_fit = SphereFit(data=hand.finger_data[finger]['data'], plot=plot)
 
             initial_guess = None
-            if 'numpy' in str(type(hand.last_center_estimate)) and 'numpy' in str(type(hand.last_radius_estimate)):
+            if (hand.finger_data[finger]['last_center_estimate'] is not None and
+                hand.finger_data[finger]['last_radius_estimate'] is not None):
                 initial_guess = []
-                initial_guess.extend(hand.last_center_estimate)
-                initial_guess.append(hand.last_radius_estimate)
+                initial_guess.extend(hand.finger_data[finger]['last_center_estimate'].tolist())
+                initial_guess.append(hand.finger_data[finger]['last_radius_estimate'])
 
             radius, center, residual = sphere_fit.fit_sphere(
                 SrGloveCalibration.SOURCE_TO_KNUCKLE_LIMITS[0], SrGloveCalibration.SOURCE_TO_KNUCKLE_LIMITS[1],
@@ -512,8 +513,8 @@ class SrGloveCalibration:
             if plot:
                 sphere_fit.plot_data()
 
-            hand.last_center_estimate = center
-            hand.last_radius_estimate = radius
+            # hand.finger_data[finger]['last_center_estimate'] = center
+            # hand.finger_data[finger]['last_radius_estimate'] = radius
 
             hand.finger_data[finger]['residual'] = residual
             hand.finger_data[finger]['length'].append(np.around(radius, 4))
