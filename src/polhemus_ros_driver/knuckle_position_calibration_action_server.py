@@ -40,6 +40,7 @@ from polhemus_ros_driver.msg import (CalibrateAction, CalibrateFeedback,
                                      CalibrateResult, CalibrateGoal)
 from polhemus_ros_driver.srv import Publish, PublishRequest
 from polhemus_ros_driver.sphere_fit import SphereFit
+import rosbag
 
 
 def calculate_distance(point1: Point, point2: Point):
@@ -103,7 +104,7 @@ class SrGloveCalibration:
     FINGER_LENGTH_LIMITS = [0.03, 0.15]
     NUMBER_OF_CHECKPOINTS = 4
 
-    def __init__(self, side: str = "right", tf_data_divisor: int = 5):
+    def __init__(self, side: str = "right", testing_bag_file_path: str = ''):
         """
         Initializes the calibration action server and the interactive marker server.
         @param side: The hand(s) to calibrate - can be left, right or both
@@ -142,12 +143,10 @@ class SrGloveCalibration:
                                                            execute_cb=self._calibration, auto_start=False)
         # How many times during calibration should we calculate the sphere fit and update quality %
         self._progress_period = 1.0 / self.NUMBER_OF_CHECKPOINTS
-        if not isinstance(tf_data_divisor, int):
-            raise TypeError("tf_data_divisor must be an integer")
 
-        # Only save every 'x'th glove data point for calibration - trade-off between accuracy and computation time
-        self._tf_data_divisor = tf_data_divisor
-        self._tf_data_counter = 0
+        self._saved_tf_msgs = []
+        self._testing_bag_file_path = testing_bag_file_path
+        self._bag_msgs_generator = None
         self._action_server.start()
 
     def _update_current_knuckle_tf(self, hand: Hand):
@@ -402,7 +401,12 @@ class SrGloveCalibration:
 
     def _load_tf_callback(self, data):
         """ Callback for received TF data. """
-        if self._tf_data_counter % self._tf_data_divisor == 0:
+        if 'polhemus_station_0' in data.transforms[0].child_frame_id:
+            self._saved_tf_msgs.append(data)
+            return
+
+    def _process_tf_data(self):
+        for data in self._saved_tf_msgs:
             for individual_transform in data.transforms:
                 for hand in self._hands.values():
                     for color_index, finger in enumerate(fingers):
@@ -412,10 +416,24 @@ class SrGloveCalibration:
                                    individual_transform.transform.translation.z]
 
                             hand.finger_data[finger]['data'].append(pos)
-                            data_point_marker = DataMarker(hand.polhemus_base_name, Point(*pos),
-                                                           COLORS[color_index].value)
-                            hand.pub.publish(data_point_marker)
-        self._tf_data_counter += 1
+                            # @TODO: Re-enable this under certain conditions
+                            # Maybe a checkbox in GUI that gets auto-ticked when ...
+                            # 'open rviz calibration display' is clicked)
+                            # If always enabled it takes the execution time of this method from ~25ms to ~750ms
+                            if False:
+                                data_point_marker = DataMarker(hand.polhemus_base_name, Point(*pos),
+                                                               COLORS[color_index].value)
+                                hand.pub.publish(data_point_marker)
+
+    def _unpack_bag_to_tf_callback(self, event):
+        try:
+            topic_msg_t = next(self._bag_msgs_generator)
+            msg = topic_msg_t[1]
+            data = TFMessage()
+            data.transforms.extend(msg.transforms)
+            self._load_tf_callback(data)
+        except StopIteration:
+            pass
 
     def _calibration(self, goal: CalibrateGoal):
         """
@@ -434,13 +452,24 @@ class SrGloveCalibration:
         self._reset_data(hand)
         self._remove_all_markers(hand)
         rospy.loginfo("Starting calibration..")
+        # Clear saved tf messages from previous calibration
+        self._saved_tf_msgs = []
 
         start = rospy.Time.now().to_sec()
         _feedback = CalibrateFeedback()
         _result = CalibrateResult()
 
-        sub = rospy.Subscriber("/tf", TFMessage, self._load_tf_callback, queue_size=10)
-        rospy.sleep(0.5)  # Ensure the tf subscriber has had time to start receiving messages
+        if self._testing_bag_file_path == '':
+            sub = rospy.Subscriber("/tf", TFMessage, self._load_tf_callback, queue_size=100)
+            rospy.sleep(0.5)  # Ensure the tf subscriber has had time to start receiving messages
+        else:
+            self._bag_msgs_generator = (topic_msg_t for topic_msg_t in
+                                        rosbag.Bag(self._testing_bag_file_path).read_messages()
+                                        if topic_msg_t[0] == "/tf"
+                                        and topic_msg_t[1].transforms
+                                        and 'polhemus' in topic_msg_t[1].transforms[0].child_frame_id)
+            timer = rospy.Timer(rospy.Duration(0.001), self._unpack_bag_to_tf_callback)
+
         current_progress = 0.0
         while rospy.Time.now().to_sec() - start < goal.time:
             if self._action_server.is_preempt_requested():
@@ -448,7 +477,9 @@ class SrGloveCalibration:
                 self._action_server.set_preempted()
                 _result.success = False
                 break
-
+            # Without this sleep, when testing with bag file, this loop consumes.. 
+            # all the CPU assigned to this process and _unpack_bag_to_tf_callback never (rarely) gets called
+            rospy.sleep(0.001)
             _feedback.progress = ((rospy.Time.now().to_sec() - start)) / goal.time
             if (_feedback.progress - current_progress) > self._progress_period and _feedback.progress < 1.0:
                 self._get_knuckle_positions(hand)
@@ -456,7 +487,11 @@ class SrGloveCalibration:
                 current_progress += self._progress_period
             self._action_server.publish_feedback(_feedback)
 
-        sub.unregister()
+        if self._testing_bag_file_path == '':
+            sub.unregister()
+        else:
+            timer.shutdown()
+
         self._get_knuckle_positions(hand)
         _feedback.quality = self.get_calibration_quality(hand)
         if not self._action_server.is_preempt_requested():
@@ -492,6 +527,7 @@ class SrGloveCalibration:
             @param hand: Selected hand
             @param plot: If True, plots the data points and the fitted sphere
         """
+        self._process_tf_data()
         for color_index, finger in enumerate(fingers):
             solution_marker = DataMarker(hand.polhemus_base_name, hand.finger_data[finger]['center'].pose.position,
                                          COLORS[color_index].value)
@@ -521,7 +557,7 @@ class SrGloveCalibration:
 
             center = np.around(center, 3)
             pose = Pose()
-            pose.position = Point(center[0], center[1], center[2])
+            pose.position = Point(center[0], center[1], center[2])  
             pose.orientation = Quaternion(0, 0, 0, 1)
             self._marker_server.setPose(hand.finger_data[finger]['center'].name, pose)
             self._marker_server.applyChanges()
@@ -535,6 +571,8 @@ class SrGloveCalibration:
         """
         quality_list: List[float] = []
         for finger in fingers:
+            if len(hand.finger_data[finger]['residual']) == 0:
+                print('no data recieved')
             quality_list.append(np.std(hand.finger_data[finger]['residual']))
         return quality_list
 
@@ -542,5 +580,6 @@ class SrGloveCalibration:
 if __name__ == "__main__":
     rospy.init_node('sr_knuckle_calibration')
     hand_side = rospy.get_param("~side", "both")
-    calibration_data_divisor = int(rospy.get_param("~calibration_data_divisor", 5))
-    sr_glove_calibration = SrGloveCalibration(side=hand_side, tf_data_divisor=calibration_data_divisor)
+    testing_bag_path = '/home/user/bags/hugo/2022-11-01-13-50-09.orig.bag'
+    sr_glove_calibration = SrGloveCalibration(side=hand_side,
+                                              testing_bag_file_path=testing_bag_path)
