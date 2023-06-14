@@ -103,8 +103,9 @@ class Hand:
 class SrGloveCalibration:
     SOURCE_TO_KNUCKLE_LIMITS = [[-0.1, -0.1, -0.1], [0.1, 0.1, 0.1]]
     FINGER_LENGTH_LIMITS = [0.03, 0.15]
+    NUMBER_OF_CHECKPOINTS = 4
 
-    def __init__(self, side: str = "right"):
+    def __init__(self, side: str = "right", tf_data_divisor: int = 5):
         """
         Initializes the calibration action server and the interactive marker server.
         @param side: The hand(s) to calibrate - can be left, right or both
@@ -142,10 +143,11 @@ class SrGloveCalibration:
         self._action_server = actionlib.SimpleActionServer("/calibration_action_server", CalibrateAction,
                                                            execute_cb=self._calibration, auto_start=False)
         # How many times during calibration should we calculate the sphere fit and update quality %
-        self._number_of_checkpoints = 4
-        self._progress_period = 1.0 / self._number_of_checkpoints
+        self._progress_period = 1.0 / self.NUMBER_OF_CHECKPOINTS
+        if not isinstance(tf_data_divisor, int):
+            raise TypeError("tf_data_divisor must be an integer")
         # Only save every 'x'th glove data point for calibration - trade-off between accuracy and computation time
-        self._tf_data_divisor = 5
+        self._tf_data_divisor = tf_data_divisor
         self._tf_data_counter = 0
         self._action_server.start()
 
@@ -538,4 +540,5 @@ class SrGloveCalibration:
 if __name__ == "__main__":
     rospy.init_node('sr_knuckle_calibration')
     hand_side = rospy.get_param("~side", "both")
-    sr_glove_calibration = SrGloveCalibration(side=hand_side)
+    calibration_data_divisor = int(rospy.get_param("~calibration_data_divisor", 5))
+    sr_glove_calibration = SrGloveCalibration(side=hand_side, tf_data_divisor=calibration_data_divisor)
