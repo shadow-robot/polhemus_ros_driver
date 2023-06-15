@@ -33,7 +33,6 @@ from interactive_markers.interactive_marker_server import \
 from std_msgs.msg import ColorRGBA
 from tf2_msgs.msg import TFMessage
 from tf2_ros import StaticTransformBroadcaster
-from std_msgs.msg import Header
 from visualization_msgs.msg import (InteractiveMarker,
                                     InteractiveMarkerControl, Marker, MarkerArray)
 
@@ -448,7 +447,7 @@ class SrGloveCalibration:
         # Subsample the saved_tf_msgs (temporally) to approximately the desired number of datapoints per second
         num_msgs = len(self._saved_tf_msgs)
         desired_num_msgs = time_elapsed * self._desired_datapoints_per_sec
-        subsampled_tf_msgs = self._saved_tf_msgs[::int(round(num_msgs / desired_num_msgs))]
+        subsampled_tf_msgs = self._saved_tf_msgs[::int(round((num_msgs / desired_num_msgs)+0.5))]
         for data in subsampled_tf_msgs:
             for individual_transform in data.transforms:
                 for hand in self._hands.values():
@@ -466,7 +465,7 @@ class SrGloveCalibration:
         for hand in self._hands.values():
             hand.publish_markers()
 
-    def _unpack_bag_msg_to_tf_callback(self, event):
+    def _unpack_bag_msg_to_tf_callback(self, _event=False):
         """
             Grab the next message from the filtered generator and pass it to the tf_callback
         """
@@ -538,7 +537,6 @@ class SrGloveCalibration:
             sub.unregister()
         else:
             timer.shutdown()
-
         self._get_knuckle_positions(hand, time_elapsed)
         _feedback.quality = self.get_calibration_quality(hand)
         if not self._action_server.is_preempt_requested():
