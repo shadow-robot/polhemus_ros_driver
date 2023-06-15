@@ -320,7 +320,8 @@ int main(int argc, char** argv)
       return -1;
     }
 
-    device = new Liberty(product_type, LIBERTY_RX_BUF_SIZE, LIBERTY_TX_BUF_SIZE, sensors_right_glove, sensors_left_glove);
+    device = new Liberty(product_type, LIBERTY_RX_BUF_SIZE, LIBERTY_TX_BUF_SIZE,
+                         sensors_right_glove, sensors_left_glove);
     ROS_INFO("[POLHEMUS] Initialising liberty device.");
     device->endpoint_in = LIBERTY_ENDPOINT_IN;
     device->endpoint_out = LIBERTY_ENDPOINT_OUT;

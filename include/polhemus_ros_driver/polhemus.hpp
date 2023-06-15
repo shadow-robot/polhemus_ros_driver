@@ -69,7 +69,8 @@ data_type_e;
 class Polhemus
 {
 public:
-  Polhemus(std::string name, uint16_t rx_buffer_size, uint16_t tx_buffer_size, int sensors_right_glove, int sensors_left_glove);
+  Polhemus(std::string name, uint16_t rx_buffer_size, uint16_t tx_buffer_size,
+           int sensors_right_glove, int sensors_left_glove);
   virtual ~Polhemus(void);
   int count_bits(uint16_t v);
   ros::NodeHandle *nh;

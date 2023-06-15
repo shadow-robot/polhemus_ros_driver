@@ -37,7 +37,8 @@
 #endif
 
 
-Polhemus::Polhemus(std::string name, uint16_t rx_buffer_size, uint16_t tx_buffer_size, int sensors_right_glove, int sensors_left_glove):
+Polhemus::Polhemus(std::string name, uint16_t rx_buffer_size, uint16_t tx_buffer_size,
+                   int sensors_right_glove, int sensors_left_glove):
   name(name), rx_buffer_size(rx_buffer_size), tx_buffer_size(tx_buffer_size), g_rxbuf(new uint8_t[rx_buffer_size]),
   g_txbuf(new uint8_t[tx_buffer_size]), sensors_right_glove(sensors_right_glove), sensors_left_glove(sensors_left_glove)
 {
