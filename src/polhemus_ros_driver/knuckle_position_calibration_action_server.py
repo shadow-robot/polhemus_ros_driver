@@ -124,6 +124,7 @@ class Hand:
 class SrGloveCalibration:
     SOURCE_TO_KNUCKLE_LIMITS = [[-0.1, -0.1, -0.1], [0.1, 0.1, 0.1]]
     FINGER_LENGTH_LIMITS = [0.03, 0.15]
+    # How many times throughout the calibration process should we calculate the current quality, publish markers etc..
     NUMBER_OF_CHECKPOINTS = 4
 
     def __init__(self, side: str = "right",
