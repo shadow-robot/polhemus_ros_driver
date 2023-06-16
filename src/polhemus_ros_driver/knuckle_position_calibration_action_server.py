@@ -514,7 +514,8 @@ class SrGloveCalibration:
                                         if topic_msg_t[0] == "/tf"
                                         and topic_msg_t[1].transforms
                                         and 'polhemus' in topic_msg_t[1].transforms[0].child_frame_id)
-            timer = rospy.Timer(rospy.Duration(0.001), self._unpack_bag_msg_to_tf_callback)
+            timer = rospy.Timer(rospy.Duration(1/self._desired_datapoints_per_sec),
+                                self._unpack_bag_msg_to_tf_callback)
 
         current_progress = 0.0
         while rospy.Time.now().to_sec() - start < goal.time:
