@@ -38,7 +38,7 @@
 
 
 Polhemus::Polhemus(std::string name, uint16_t rx_buffer_size, uint16_t tx_buffer_size,
-                   int sensors_right_glove, int sensors_left_glove):
+                   uint8_t sensors_right_glove, uint8_t sensors_left_glove):
   name(name), rx_buffer_size(rx_buffer_size), tx_buffer_size(tx_buffer_size), g_rxbuf(new uint8_t[rx_buffer_size]),
   g_txbuf(new uint8_t[tx_buffer_size]), sensors_right_glove(sensors_right_glove), sensors_left_glove(sensors_left_glove)
 {
@@ -132,7 +132,7 @@ void Polhemus::device_clear_input(void)
 int Polhemus::set_device_to_receive_saved_calibration()
 {
   int retval = RETURN_ERROR;
-  int required_number_of_sensors = sensors_right_glove + sensors_left_glove;
+  uint16_t required_number_of_sensors = sensors_right_glove + sensors_left_glove;
 
   if (nh->hasParam(name + "_calibration/rotations"))
   {
@@ -161,7 +161,7 @@ int Polhemus::set_device_to_receive_saved_calibration()
 int Polhemus::set_device_for_calibration(void)
 {
   int retval = RETURN_ERROR;
-  int required_number_of_sensors = sensors_right_glove + sensors_left_glove;
+  uint16_t required_number_of_sensors = sensors_right_glove + sensors_left_glove;
 
   reset_boresight();
 
