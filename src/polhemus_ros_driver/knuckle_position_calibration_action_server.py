@@ -41,7 +41,7 @@ from polhemus_ros_driver.msg import (CalibrateAction, CalibrateFeedback,
 from polhemus_ros_driver.srv import Publish, PublishRequest
 from polhemus_ros_driver.sphere_fit import SphereFit
 import rosbag
-import time
+
 
 def calculate_distance(point1: Point, point2: Point):
     """
@@ -484,7 +484,7 @@ class SrGloveCalibration:
             self._tf_callback(data)
         except StopIteration:
             pass
-    
+
     def _get_average_bag_msg_period(self):
         bag = rosbag.Bag(self._testing_bag_file_path)
         polhemus_msgs = sorted((tm for m in bag if m.topic == '/tf' for tm in m.message.transforms),
@@ -511,7 +511,7 @@ class SrGloveCalibration:
         self._reset_data(hand)
         self._remove_all_markers(hand)
         rospy.loginfo("Starting calibration..")
-            
+
         # Clear saved tf messages from previous calibration
         self._saved_tf_msgs = []
 
