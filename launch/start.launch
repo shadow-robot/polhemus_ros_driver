@@ -31,7 +31,7 @@
   <arg name="boresight_calibration_file_path" default="$(find polhemus_ros_driver)/config"/>
   <arg name="boresight_calibration_file_name" default="$(arg product_type)_calibration.yaml"/>
   <arg name="boresight_calibration_file" default="$(arg boresight_calibration_file_path)/$(arg boresight_calibration_file_name)"/>
-  <arg name="desired_calibration_datapoints_per_sec" default="20"/>
+  <arg name="desired_calibration_datapoints_per_sec" default="60"/>
 
   <node pkg="polhemus_ros_driver" type="polhemus_tf_broadcaster" name="$(arg node_name)" output="screen">
     <rosparam param="boresight_calibration_file" subst_value="True">$(arg boresight_calibration_file)</rosparam>
