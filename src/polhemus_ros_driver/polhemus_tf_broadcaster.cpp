@@ -276,7 +276,7 @@ int main(int argc, char** argv)
 {
   libusb_device_handle *g_usbhnd = 0;
   vp_usbdevinfo g_usbinfo;
-  int i, nstations, sensors_right_glove, sensors_left_glove;
+  int station_index, stations_connected, sensors_right_glove, sensors_left_glove;
   double x_hs, y_hs, z_hs;
   struct timeval tv;
   uint16_t product_id;
@@ -379,7 +379,7 @@ int main(int argc, char** argv)
   else
   {
     ROS_INFO("[POLHEMUS] Found %d stations.", device->station_count);
-    nstations = device->station_count;
+    stations_connected = device->station_count;
   }
 
   // define quaternion data type
@@ -495,9 +495,9 @@ int main(int argc, char** argv)
       // Header info - acquired at same time = same timestamp
       transformStamped.header.stamp = ros::Time::now();
 
-      for (i=0; i < sensor_count; i++)
+      for (station_index=0; station_index < sensor_count; station_index++)
       {
-        station_number = i;
+        station_number = station_index;
         retval = device->fill_pno_data(&transformStamped, station_number);
         if (product_type == "viper")
         {
