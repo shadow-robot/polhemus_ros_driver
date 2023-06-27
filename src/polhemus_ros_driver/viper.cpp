@@ -419,7 +419,7 @@ bool Viper::persist_commands(void)
 int Viper::send_saved_calibration()
 {
   int return_value = RETURN_ERROR;
-  retval = set_device_to_receive_saved_calibration();
+  return_value = set_device_to_receive_saved_calibration();
   if (RETURN_ERROR == retval)
     return -1;
 
