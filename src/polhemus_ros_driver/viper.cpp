@@ -420,7 +420,7 @@ int Viper::send_saved_calibration()
 {
   int return_value = RETURN_ERROR;
   return_value = set_device_to_receive_saved_calibration();
-  if (RETURN_ERROR == retval)
+  if (RETURN_ERROR == return_value)
     return -1;
 
   // send the calibration saved in calibration.yaml
