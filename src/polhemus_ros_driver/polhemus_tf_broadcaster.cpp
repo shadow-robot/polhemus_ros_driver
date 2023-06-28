@@ -140,7 +140,7 @@ void find_endpoints(libusb_config_descriptor *conf_desc, int iface, uint8_t & ep
 int create_vip_list(libusb_context* pctx, libusb_device **&devlist, uint16_t vid, uint16_t pid,
                      vp_usbdevinfo arrDevInfo[], std::size_t &arrcount)
 {
-  int retval = RETURN_ERROR;
+  int return_value = RETURN_ERROR;
   ssize_t devcount = libusb_get_device_list(pctx, &devlist);
   if (devcount < 0)
     return static_cast<int>(devcount);  // returns error code < 0
@@ -153,8 +153,8 @@ int create_vip_list(libusb_context* pctx, libusb_device **&devlist, uint16_t vid
   while ((dev = devlist[i]) != NULL)
   {
     struct libusb_device_descriptor desc;
-    retval = libusb_get_device_descriptor(dev, &desc);
-    if (retval < 0)
+    return_value = libusb_get_device_descriptor(dev, &desc);
+    if (return_value < 0)
       break;
 
     if (desc.idVendor == vid && desc.idProduct == pid)
@@ -177,15 +177,15 @@ int create_vip_list(libusb_context* pctx, libusb_device **&devlist, uint16_t vid
 
   arrcount = iFoundCount;
 
-  return retval;
+  return return_value;
 }
 
 int discover_vip_pid(libusb_device_handle **usbhnd, vp_usbdevinfo &usbinfo, uint16_t vid, uint16_t pid)
 {
-  int retval = RETURN_ERROR;
+  int return_value = RETURN_ERROR;
 
   if (libusb_init (NULL))
-    return retval;
+    return return_value;
 
   if (*usbhnd)
     release_usb(usbhnd, usbinfo);
@@ -194,9 +194,9 @@ int discover_vip_pid(libusb_device_handle **usbhnd, vp_usbdevinfo &usbinfo, uint
   std::size_t arrcount = VPUSB_MAX_DISCOVERABLE;
   libusb_device **devlist;
 
-  if ((retval = create_vip_list(NULL, devlist, vid, pid, arrDevInfo, arrcount)) < 0)
+  if ((return_value = create_vip_list(NULL, devlist, vid, pid, arrDevInfo, arrcount)) < 0)
   {
-    return retval;
+    return return_value;
   }
 
   if (arrcount == 0)
@@ -215,10 +215,10 @@ int discover_vip_pid(libusb_device_handle **usbhnd, vp_usbdevinfo &usbinfo, uint
     uint8_t ep_in = 0, ep_out = 0;
     uint16_t out_pktsize = 0;
 
-    if ((retval = libusb_open(dev, &handle)))
+    if ((return_value = libusb_open(dev, &handle)))
     {
     }
-    else if ((retval = libusb_get_config_descriptor(dev, 0, &conf_desc)))
+    else if ((return_value = libusb_get_config_descriptor(dev, 0, &conf_desc)))
     {
       libusb_close(handle);
     }
@@ -226,9 +226,9 @@ int discover_vip_pid(libusb_device_handle **usbhnd, vp_usbdevinfo &usbinfo, uint
     {
       nb_ifaces = conf_desc->bNumInterfaces;
       claimed_ifaces = 0;
-      for (uint8_t i = 0; (i < nb_ifaces) && (retval == 0); i++)
+      for (uint8_t i = 0; (i < nb_ifaces) && (return_value == 0); i++)
       {
-        if ((retval = libusb_claim_interface(handle, static_cast<int>(i))))
+        if ((return_value = libusb_claim_interface(handle, static_cast<int>(i))))
         {
         }
         else
@@ -267,9 +267,9 @@ int discover_vip_pid(libusb_device_handle **usbhnd, vp_usbdevinfo &usbinfo, uint
   libusb_free_device_list(devlist, 1);
 
   if (!usbhnd)
-    retval = -99;
+    return_value = -99;
 
-  return retval;
+  return return_value;
 }
 
 int main(int argc, char** argv)
@@ -284,7 +284,7 @@ int main(int argc, char** argv)
   std::string hands;
   std::string boresight_calibration_file;
   Polhemus *device;
-  int retval = RETURN_ERROR;
+  int return_value = RETURN_ERROR;
 
   // Setup ros
   ros::init(argc, argv, "polhemus_tf_broadcaster");
@@ -313,8 +313,8 @@ int main(int argc, char** argv)
   if (product_type == "liberty")
   {
     product_id = LIBERTY_PRODUCT;
-    retval = discover_vip_pid(&g_usbhnd, g_usbinfo, VENDOR, product_id);
-    if (RETURN_ERROR == retval)
+    return_value = discover_vip_pid(&g_usbhnd, g_usbinfo, VENDOR, product_id);
+    if (RETURN_ERROR == return_value)
     {
       ROS_ERROR("[POLHEMUS] Error connecting to liberty device.");
       return -1;
@@ -329,8 +329,8 @@ int main(int argc, char** argv)
   else if (product_type == "viper")
   {
     product_id = VIPER_PRODUCT;
-    retval = discover_vip_pid(&g_usbhnd, g_usbinfo, VENDOR, product_id);
-    if (RETURN_ERROR == retval)
+    return_value = discover_vip_pid(&g_usbhnd, g_usbinfo, VENDOR, product_id);
+    if (RETURN_ERROR == return_value)
     {
       ROS_ERROR("[POLHEMUS] Error connecting to viper device.\n");
       return -1;
@@ -356,22 +356,22 @@ int main(int argc, char** argv)
 
   device->device_handle = g_usbhnd;
 
-  retval = device->device_reset();
-  if (RETURN_ERROR == retval)
+  return_value = device->device_reset();
+  if (RETURN_ERROR == return_value)
   {
     ROS_ERROR("[POLHEMUS] Error resetting device.");
     return -1;
   }
 
-  retval = device->reset_boresight();
-  if (RETURN_ERROR == retval)
+  return_value = device->reset_boresight();
+  if (RETURN_ERROR == return_value)
   {
     ROS_ERROR("[POLHEMUS] Error resetting boresight.");
     return -1;
   }
 
-  retval = device->request_num_of_stations();
-  if (RETURN_ERROR == retval)
+  return_value = device->request_num_of_stations();
+  if (RETURN_ERROR == return_value)
   {
     ROS_ERROR("[POLHEMUS] Error reading number of stations.");
     return -1;
@@ -384,8 +384,8 @@ int main(int argc, char** argv)
 
   // define quaternion data type
   ROS_INFO("[POLHEMUS] Setting data type to quaternion");
-  retval = device->define_data_type(DATA_TYPE_QUAT);
-  if (RETURN_ERROR == retval)
+  return_value = device->define_data_type(DATA_TYPE_QUAT);
+  if (RETURN_ERROR == return_value)
   {
     ROS_ERROR("[POLHEMUS] Error setting data type.");
     return -1;
@@ -405,23 +405,23 @@ int main(int argc, char** argv)
   nh.getParam("z_hs", z_hs);
 
   ROS_INFO("[POLHEMUS] Setting the output hemisphere");
-  retval = device->set_hemisphere(x_hs, y_hs, z_hs);
-  if (RETURN_ERROR == retval)
+  return_value = device->set_hemisphere(x_hs, y_hs, z_hs);
+  if (RETURN_ERROR == return_value)
   {
     ROS_ERROR("[POLHEMUS] Error setting hemisphere.");
     return -1;
   }
 
   ROS_INFO("[POLHEMUS] Enabling continuous data mode...");
-  retval = device->device_data_mode(DATA_CONTINUOUS);
-  if (RETURN_ERROR == retval)
+  return_value = device->device_data_mode(DATA_CONTINUOUS);
+  if (RETURN_ERROR == return_value)
   {
     ROS_ERROR("[POLHEMUS] Error setting data mode to continuous.");
     return -1;
   }
 
-  retval = device->send_saved_calibration();
-  if (RETURN_ERROR == retval)
+  return_value = device->send_saved_calibration();
+  if (RETURN_ERROR == return_value)
   {
     ROS_ERROR("[POLHEMUS] Failed to load saved calibration.");
     ROS_INFO("Shutting down Polhemus device");
@@ -462,8 +462,8 @@ int main(int argc, char** argv)
       if (flag == 0 || flag == 2)
       {
         ROS_DEBUG("[POLHEMUS] No position and orientation data received from Polhemus system!!!");
-        retval = device->device_reset();
-        retval = device->device_data_mode(DATA_CONTINUOUS);
+        return_value = device->device_reset();
+        return_value = device->device_data_mode(DATA_CONTINUOUS);
         flag = 1;
       }
     }
@@ -472,8 +472,8 @@ int main(int argc, char** argv)
       if (flag < 2)
       {
         ROS_WARN("[POLHEMUS] Polhemus system is reporting 0 sensors.");
-        retval = device->device_reset();
-        retval = device->device_data_mode(DATA_CONTINUOUS);
+        return_value = device->device_reset();
+        return_value = device->device_data_mode(DATA_CONTINUOUS);
         flag = 2;
       }
     }
@@ -498,7 +498,7 @@ int main(int argc, char** argv)
       for (station_index=0; station_index < sensor_count; station_index++)
       {
         station_number = station_index;
-        retval = device->fill_pno_data(&transformStamped, station_number);
+        return_value = device->fill_pno_data(&transformStamped, station_number);
         if (product_type == "viper")
         {
           // We publish the first 5 sensors with frame_id polhemus_base_0 since they are
@@ -519,7 +519,7 @@ int main(int argc, char** argv)
           transformStamped.header.frame_id = "polhemus_base";
         }
         // Broadcast frame
-        if (retval == 0)
+        if (return_value == 0)
         {
           tf_queue.push_back(transformStamped);
         }
