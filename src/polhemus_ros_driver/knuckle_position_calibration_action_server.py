@@ -491,7 +491,7 @@ class SrGloveCalibration:
                 sphere_fit.plot_data()
 
             hand.finger_data[finger]['residual'] = residual
-            hand.finger_data[finger]['length'].append(np.around(radius, 4))
+            hand.finger_data[finger]['length'].append(np.around(radius, 4).item())
 
             center = np.around(center, 3)
             pose = Pose()
