@@ -114,7 +114,7 @@ optionally, position) with the user system coordinates. Argument reset_origin wi
 - receive_data_frame, Viper only, reads response from Viper system, called after sending all commands to check for errors. Argument is the type of command that a request is expected for, this assists with matching requests to responses, all options are in the viper_cmds_e enum.
 
 # Debugging/testing
-To use this package to test other dependent packages (e.g. sr_glove_calibration_gui):
+To mock the driver in order to test other programs (e.g. `knuckle_position_calibration_action_server.py`):
 ```bash
 roslaunch polhemus_ros_driver polhemus_mock.launch testing_in_isolation:=true rosbag_path:=<your_rosbag_path>
 roslaunch polhemus_ros_driver start.launch start_driver:=false
