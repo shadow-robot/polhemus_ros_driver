@@ -33,7 +33,9 @@
     <include file="$(find polhemus_ros_driver)/launch/polhemus_world_static_transform.launch"/>
     <node pkg="tf2_ros" type="static_transform_publisher" name="polhemus_base_to_base_0_tf_broadcaster" args="0 0 0.5 0 0 3.141592653589793 polhemus_base polhemus_base_0" />
     <node pkg="tf2_ros" type="static_transform_publisher" name="polhemus_base_to_base_1_tf_broadcaster" args="0 0 0.5 0 0 3.141592653589793 polhemus_base polhemus_base_1" />
-    <node pkg="tf2_ros" type="static_transform_publisher" name="world_to_polhemus_world_tf_broadcaster" args="0 0 0.5 0 0 3.141592653589793 world polhemus_world" />
+    <!-- by including the substring 'polhemus_tf_broadcaster' in the following static_transform_publisher...
+         we can trick the glove calibration gui into thinking the polhemus  driver has started -->
+    <node pkg="tf2_ros" type="static_transform_publisher" name="world_to_polhemus_world_polhemus_tf_broadcaster" args="0 0 0.5 0 0 3.141592653589793 world polhemus_world" />
   </group>
 
   <include file="$(find sr_utilities_common)/launch/real_time_tf_republisher.launch">
