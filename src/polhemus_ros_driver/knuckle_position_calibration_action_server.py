@@ -617,7 +617,7 @@ class SrGloveCalibration:
             hand.finger_data[finger]['last_radius_estimate'] = radius
 
             hand.finger_data[finger]['residual'] = residual
-            hand.finger_data[finger]['length'].append(np.around(radius, 4))
+            hand.finger_data[finger]['length'].append(np.around(radius, 4).item())
 
             center = np.around(center, 3)
             pose = Pose()
