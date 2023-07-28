@@ -35,6 +35,7 @@
   <arg name="boresight_calibration_file_path" default="$(find polhemus_ros_driver)/config"/>
   <arg name="boresight_calibration_file_name" default="$(arg product_type)_calibration.yaml"/>
   <arg name="boresight_calibration_file" default="$(arg boresight_calibration_file_path)/$(arg boresight_calibration_file_name)"/>
+  <arg name="desired_calibration_datapoints_per_sec" default="60"/>
 
   <arg name="start_driver" default="true"/>
 
@@ -54,6 +55,7 @@
 
   <node name="sr_knuckle_calibration" pkg="polhemus_ros_driver" type="knuckle_position_calibration_action_server.py" output="screen">
     <param name="side" value="$(arg hands)" type="string"/>
+    <param name="desired_datapoints_per_sec" value="$(arg desired_calibration_datapoints_per_sec)" type="int"/>
   </node>
 
 </launch>
