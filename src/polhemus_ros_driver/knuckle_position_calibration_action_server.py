@@ -185,7 +185,8 @@ class SrGloveCalibration:
         for hand in self._hands.values():
             if not os.path.exists(os.path.join(self._calibration_dir_path,
                                                f'default_calibration_{hand.side_name}.yaml')):
-                default_path = os.path.join(rospkg.RosPack().get_path('sr_hand_glove'),
+                default_path = os.path.join(rospkg.RosPack().get_path('polhemus_ros_driver'),
+                                            'config',
                                             'shadow_glove_user_calibration_defaults',
                                             f'default_calibration_{hand.side_name}.yaml')
                 if not os.path.exists(default_path):
