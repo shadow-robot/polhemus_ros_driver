@@ -39,7 +39,8 @@
 class Liberty : public Polhemus
 {
 public:
-    Liberty(std::string name, uint16_t rx_buffer_size, uint16_t tx_buffer_size);
+    Liberty(std::string name, uint16_t rx_buffer_size, uint16_t tx_buffer_size,
+            uint8_t sensors_right_glove, uint8_t sensors_left_glove);
     ~Liberty(void);
     void device_init();
     int request_num_of_stations(void);
@@ -55,7 +56,7 @@ public:
     int reset_boresight(void);
     tf2::Quaternion get_station_quaternion(int station_id);
     bool calibrate(std::string boresight_calibration_file);
-    int send_saved_calibration(int number_of_hands);
+    int send_saved_calibration();
 private:
     liberty_pno_frame_t *stations;
 };

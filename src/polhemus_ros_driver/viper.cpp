@@ -41,8 +41,9 @@
   if (!(CVPcontext::findPctx(pctx))) return E_VPERR_INVALID_CONTEXT; \
 }
 
-Viper::Viper(std::string name, uint16_t rx_buffer_size, uint16_t tx_buffer_size)
-    : Polhemus(name, rx_buffer_size, tx_buffer_size)
+Viper::Viper(std::string name, uint16_t rx_buffer_size, uint16_t tx_buffer_size,
+             uint8_t sensors_right_glove, uint8_t sensors_left_glove)
+    : Polhemus(name, rx_buffer_size, tx_buffer_size, sensors_right_glove, sensors_left_glove)
 {
 }
 
@@ -55,9 +56,9 @@ void Viper::device_init()
 
 int Viper::device_reset(void)
 {
-  int retval = device_data_mode(DATA_RESET);
+  int return_value = device_data_mode(DATA_RESET);
   device_clear_input();
-  return retval;
+  return return_value;
 }
 
 int Viper::device_data_mode(data_mode_e mode)
@@ -86,23 +87,23 @@ int Viper::device_data_mode(data_mode_e mode)
   viper_command.Prepare(g_txbuf, g_ntxcount);
   int nBytes = g_ntxcount;
   uint8_t *pbuf = g_txbuf;
-  int retval = device_send(pbuf, nBytes);
-  if (retval != RETURN_ERROR && action != CMD_ACTION_RESET)
+  int return_value = device_send(pbuf, nBytes);
+  if (return_value != RETURN_ERROR && action != CMD_ACTION_RESET)
   {
-    retval = receive_data_frame(cmd_type);
+    return_value = receive_data_frame(cmd_type);
   }
-  return retval;
+  return return_value;
 }
 
 int Viper::receive_data_frame(viper_cmds_e cmd_type)
 {
-  int retval = RETURN_ERROR;
+  int return_value = RETURN_ERROR;
   g_nrxcount = VIPER_RX_BUF_SIZE;
   int attempts = 3;
   for (int attempt = 0; attempt < attempts; attempt++)
   {
-    retval = device_read(g_rxbuf, g_nrxcount, true);
-    if (retval == 0)
+    return_value = device_read(g_rxbuf, g_nrxcount, true);
+    if (return_value == 0)
     {
       CFrameInfo frame_info(g_rxbuf, g_nrxcount);
       if ((frame_info.cmd() == -1) || (frame_info.action() == -1))
@@ -120,7 +121,7 @@ int Viper::receive_data_frame(viper_cmds_e cmd_type)
           ROS_ERROR("[POLHEMUS] Message reply is not valid after %d attempts, aborting...", attempts);
           ROS_ERROR("reply action: %d", frame_info.action());
           ROS_ERROR("cmd sent: %d", cmd_type);
-          retval = RETURN_ERROR;
+          return_value = RETURN_ERROR;
           break;
         }
       }
@@ -130,7 +131,7 @@ int Viper::receive_data_frame(viper_cmds_e cmd_type)
         ROS_ERROR("reply cmd: %d", frame_info.cmd());
         ROS_ERROR("reply action: %d", frame_info.action());
         ROS_ERROR("cmd sent: %d", cmd_type);
-        retval = RETURN_ERROR;
+        return_value = RETURN_ERROR;
         break;
       }
       else
@@ -140,15 +141,15 @@ int Viper::receive_data_frame(viper_cmds_e cmd_type)
       }
     }
   }
-  return retval;
+  return return_value;
 }
 
 int Viper::receive_pno_data_frame(void)
 {
-  int retval = RETURN_ERROR;
+  int return_value = RETURN_ERROR;
   g_nrxcount = VIPER_RX_BUF_SIZE;
-  retval = device_read(g_rxbuf, g_nrxcount, true);
-  if (retval == 0)
+  return_value = device_read(g_rxbuf, g_nrxcount, true);
+  if (return_value == 0)
   {
     CFrameInfo fi(g_rxbuf, g_nrxcount);
 
@@ -157,8 +158,8 @@ int Viper::receive_pno_data_frame(void)
 
     if (!bytesextracted)
     {
-      retval = RETURN_ERROR;
-      return retval;
+      return_value = RETURN_ERROR;
+      return return_value;
     }
     // bitmap of active sensors
     sensor_map = pno.SensorMap();
@@ -173,7 +174,7 @@ int Viper::receive_pno_data_frame(void)
 int Viper::fill_pno_data(geometry_msgs::TransformStamped *transform, int &index)
 {
   // Set translation (in metres)
-  int retval = 0;
+  int return_value = 0;
 
   transform->child_frame_id = "polhemus_station_" +
     std::to_string(pno.SensFrame(index)->SFinfo.bfSnum);
@@ -188,12 +189,12 @@ int Viper::fill_pno_data(geometry_msgs::TransformStamped *transform, int &index)
 
   index = pno.SensFrame(index)->SFinfo.bfSnum;
 
-  return retval;
+  return return_value;
 }
 
 int Viper::define_data_type(data_type_e data_type)
 {
-  int retval = RETURN_ERROR;
+  int return_value = RETURN_ERROR;
 
   viper_cmds_e cmd_type = CMD_UNITS;
   viper_cmd_actions_e action = CMD_ACTION_SET;
@@ -210,7 +211,7 @@ int Viper::define_data_type(data_type_e data_type)
   }
   else
   {
-    return retval;
+    return return_value;
   }
 
   cfg.pos_units = POS_METER;
@@ -219,18 +220,18 @@ int Viper::define_data_type(data_type_e data_type)
   viper_command.Prepare(g_txbuf, g_ntxcount);
   int nBytes = g_ntxcount;
   uint8_t *pbuf = g_txbuf;
-  retval = device_send(pbuf, nBytes);
-  if (retval == 0)
+  return_value = device_send(pbuf, nBytes);
+  if (return_value == 0)
   {
-    retval = receive_data_frame(cmd_type);
+    return_value = receive_data_frame(cmd_type);
   }
 
-  return retval;
+  return return_value;
 }
 
 int Viper::request_num_of_stations(void)
 {
-  int retval = RETURN_ERROR;
+  int return_value = RETURN_ERROR;
   viper_cmds_e cmd_type = CMD_STATION_MAP;
   viper_cmd_actions_e action = CMD_ACTION_GET;
   CVPcmd viper_command;
@@ -242,14 +243,14 @@ int Viper::request_num_of_stations(void)
   int nBytes = g_ntxcount;
   uint8_t *pbuf = g_txbuf;
 
-  retval = device_send(pbuf, nBytes);
+  return_value = device_send(pbuf, nBytes);
 
-  if (retval == 0)
+  if (return_value == 0)
   {
     g_nrxcount = VIPER_RX_BUF_SIZE;
-    retval = device_read(g_rxbuf, g_nrxcount, true);
+    return_value = device_read(g_rxbuf, g_nrxcount, true);
 
-    if (retval == 0)
+    if (return_value == 0)
     {
       CFrameInfo fi(g_rxbuf, g_nrxcount);
 
@@ -263,13 +264,13 @@ int Viper::request_num_of_stations(void)
   }
 
   station_count = cstamap.SnsDetectedCount();
-  return retval;
+  return return_value;
 }
 
 /* sets the zenith of the hemisphere in direction of vector (x, y, z) */
 int Viper::set_hemisphere(int x, int y, int z)
 {
-  int retval = RETURN_ERROR;
+  int return_value = RETURN_ERROR;
   viper_cmds_e cmd_type = CMD_HEMISPHERE;
   viper_cmd_actions_e action = CMD_ACTION_SET;
   viper_hemisphere_config_t cfg;
@@ -282,18 +283,18 @@ int Viper::set_hemisphere(int x, int y, int z)
   viper_command.Prepare(g_txbuf, g_ntxcount);
   int nBytes = g_ntxcount;
   uint8_t *pbuf = g_txbuf;
-  retval = device_send(pbuf, nBytes);
-  if (retval == 0)
+  return_value = device_send(pbuf, nBytes);
+  if (return_value == 0)
   {
-    retval = receive_data_frame(cmd_type);
+    return_value = receive_data_frame(cmd_type);
   }
-  return retval;
+  return return_value;
 }
 
 int Viper::set_boresight(bool reset_origin, int station,
     float arg_1, float arg_2, float arg_3, float arg_4)
 {
-  int retval = RETURN_ERROR;
+  int return_value = RETURN_ERROR;
   viper_cmds_e cmd_type = CMD_BORESIGHT;
   viper_cmd_actions_e action = CMD_ACTION_SET;
   viper_boresight_config_t cfg;
@@ -309,17 +310,17 @@ int Viper::set_boresight(bool reset_origin, int station,
 
   int nBytes = g_ntxcount;
   uint8_t *pbuf = g_txbuf;
-  retval = device_send(pbuf, nBytes);
-  if (retval == 0)
+  return_value = device_send(pbuf, nBytes);
+  if (return_value == 0)
   {
-    retval = receive_data_frame(cmd_type);
+    return_value = receive_data_frame(cmd_type);
   }
-  return retval;
+  return return_value;
 }
 
 int Viper::reset_boresight(void)
 {
-  int retval = RETURN_ERROR;
+  int return_value = RETURN_ERROR;
   viper_cmds_e cmd_type = CMD_BORESIGHT;
   viper_cmd_actions_e action = CMD_ACTION_RESET;
 
@@ -330,14 +331,14 @@ int Viper::reset_boresight(void)
 
   int nBytes = g_ntxcount;
   uint8_t *pbuf = g_txbuf;
-  retval = device_send(pbuf, nBytes);
+  return_value = device_send(pbuf, nBytes);
 
-  if (retval == 0)
+  if (return_value == 0)
   {
-    retval = receive_data_frame(cmd_type);
+    return_value = receive_data_frame(cmd_type);
   }
 
-  return retval;
+  return return_value;
 }
 
 tf2::Quaternion Viper::get_station_quaternion(int station_id)
@@ -360,14 +361,14 @@ tf2::Quaternion Viper::get_station_quaternion(int station_id)
 
 int Viper::set_source(int source, int station_id)
 {
-  int retval = RETURN_ERROR;
+  int return_value = RETURN_ERROR;
   viper_cmds_e cmd_type = CMD_SRC_SELECT;
   viper_cmd_actions_e action = CMD_ACTION_SET;
   viper_src_select_cfg_t cfg;
   if (source < 1)
   {
     ROS_WARN("[POLHEMUS] Failed to select source, source value must > 0");
-    return retval;
+    return return_value;
   }
   source = 1 << source - 1;
   cfg.src_select_map = source;
@@ -378,17 +379,17 @@ int Viper::set_source(int source, int station_id)
 
   int nBytes = g_ntxcount;
   uint8_t *pbuf = g_txbuf;
-  retval = device_send(pbuf, nBytes);
-  if (retval == 0)
+  return_value = device_send(pbuf, nBytes);
+  if (return_value == 0)
   {
-    retval = receive_data_frame(cmd_type);
+    return_value = receive_data_frame(cmd_type);
   }
-  return retval;
+  return return_value;
 }
 
 bool Viper::persist_commands(void)
 {
-  int retval = RETURN_ERROR;
+  int return_value = RETURN_ERROR;
   viper_cmds_e cmd_type = CMD_PERSIST;
   viper_cmd_actions_e action = CMD_ACTION_SET;
 
@@ -399,13 +400,13 @@ bool Viper::persist_commands(void)
 
   int nBytes = g_ntxcount;
   uint8_t *pbuf = g_txbuf;
-  retval = device_send(pbuf, nBytes);
-  if (retval == 0)
+  return_value = device_send(pbuf, nBytes);
+  if (return_value == 0)
   {
-    retval = receive_data_frame(cmd_type);
+    return_value = receive_data_frame(cmd_type);
   }
 
-  if (retval == 0)
+  if (return_value == 0)
   {
     return true;
   }
@@ -415,11 +416,11 @@ bool Viper::persist_commands(void)
   }
 }
 
-int Viper::send_saved_calibration(int number_of_hands)
+int Viper::send_saved_calibration()
 {
-  int retval = RETURN_ERROR;
-  retval = set_device_to_receive_saved_calibration(number_of_hands);
-  if (RETURN_ERROR == retval)
+  int return_value = RETURN_ERROR;
+  return_value = set_device_to_receive_saved_calibration();
+  if (RETURN_ERROR == return_value)
     return -1;
 
   // send the calibration saved in calibration.yaml
@@ -488,10 +489,10 @@ int Viper::send_saved_calibration(int number_of_hands)
     float correction_yaw = station_yaw - calibrated_yaw;
 
     define_data_type(DATA_TYPE_EULER);
-    retval = set_boresight(false, station_id, correction_yaw, correction_pitch, correction_roll);
+    return_value = set_boresight(false, station_id, correction_yaw, correction_pitch, correction_roll);
     define_data_type(DATA_TYPE_QUAT);
 
-    if (RETURN_ERROR == retval)
+    if (RETURN_ERROR == return_value)
     {
       ROS_ERROR("[POLHEMUS] Error sending calibration from file.");
       return -1;
@@ -504,13 +505,13 @@ int Viper::send_saved_calibration(int number_of_hands)
 
 bool Viper::calibrate(std::string boresight_calibration_file)
 {
-  int retval = RETURN_ERROR;
+  int return_value = RETURN_ERROR;
 
   // set data mode to single to allow correct boresight reset
   device_data_mode(DATA_SINGLE);
 
-  retval = set_device_for_calibration();
-  if (RETURN_ERROR == retval)
+  return_value = set_device_for_calibration();
+  if (RETURN_ERROR == return_value)
     return -1;
 
   for (int station_number = 0; station_number < station_count; ++station_number)
@@ -531,20 +532,20 @@ bool Viper::calibrate(std::string boresight_calibration_file)
   ROS_INFO("[POLHEMUS] Calibration file saved at: %s\n", boresight_calibration_file.c_str());
 
   define_data_type(DATA_TYPE_EULER);
-  retval = set_boresight(false, -1, 0, 0, 0);
+  return_value = set_boresight(false, -1, 0, 0, 0);
   define_data_type(DATA_TYPE_QUAT);
 
-  if (RETURN_ERROR == retval)
+  if (RETURN_ERROR == return_value)
   {
     ROS_ERROR("[POLHEMUS] Calibration failed.");
   }
 
   // set data mode back to continuous
-  retval = device_data_mode(DATA_CONTINUOUS);
-  if (RETURN_ERROR == retval)
+  return_value = device_data_mode(DATA_CONTINUOUS);
+  if (RETURN_ERROR == return_value)
   {
     ROS_ERROR("[POLHEMUS] Setting data mode to continuous, failed.\n");
-    return retval;
+    return return_value;
   }
 
   return true;

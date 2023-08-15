@@ -45,7 +45,6 @@
 #define VPUSB_WRITE_TIMEOUT_MS 100
 #define VPUSB_READ_TIMEOUT_MS 100
 #define PI 3.14159265359
-#define SENSORS_PER_GLOVE 6
 #define CALIBRATE_TIMEOUT_IN_SECS 3
 #define RETURN_ERROR -1
 
@@ -70,7 +69,8 @@ data_type_e;
 class Polhemus
 {
 public:
-  Polhemus(std::string name, uint16_t rx_buffer_size, uint16_t tx_buffer_size);
+  Polhemus(std::string name, uint16_t rx_buffer_size, uint16_t tx_buffer_size,
+           uint8_t sensors_right_glove, uint8_t sensors_left_glove);
   virtual ~Polhemus(void);
   int count_bits(uint16_t v);
   ros::NodeHandle *nh;
@@ -94,10 +94,10 @@ public:
   virtual int set_boresight(bool reset_origin, int station, float arg_1, float arg_2, float arg_3, float arg_4 = 0) = 0;
   virtual int reset_boresight(void) = 0;
   virtual tf2::Quaternion get_station_quaternion(int station_id) = 0;
-  int set_device_to_receive_saved_calibration(int number_of_hands);
+  int set_device_to_receive_saved_calibration();
   int set_device_for_calibration(void);
   void save_current_calibration_to_file(int station_id, int station_number);
-  virtual int send_saved_calibration(int number_of_hands) = 0;
+  virtual int send_saved_calibration() = 0;
   bool calibrate_srv(polhemus_ros_driver::calibrate::Request &req, polhemus_ros_driver::calibrate::Response &res,
     std::string boresight_calibration_file);
   virtual bool calibrate(std::string boresight_calibration_file) = 0;
@@ -112,6 +112,7 @@ public:
   int g_nrxcount;
   std::vector<std::string> station_names_;
   std::string name;
+  uint8_t sensors_right_glove, sensors_left_glove;
   uint8_t* g_txbuf;
   uint8_t* g_rxbuf;
 };

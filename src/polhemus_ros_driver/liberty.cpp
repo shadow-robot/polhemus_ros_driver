@@ -36,8 +36,9 @@
 #define warn(as...)
 #endif
 
-Liberty::Liberty(std::string name, uint16_t rx_buffer_size, uint16_t tx_buffer_size)
-    : Polhemus(name, rx_buffer_size, tx_buffer_size)
+Liberty::Liberty(std::string name, uint16_t rx_buffer_size, uint16_t tx_buffer_size,
+                 uint8_t sensors_right_glove, uint8_t sensors_left_glove)
+    : Polhemus(name, rx_buffer_size, tx_buffer_size, sensors_right_glove, sensors_left_glove)
 {
 }
 
@@ -62,67 +63,67 @@ int Liberty::device_reset(void)
   // reset c, this may produce "invalid command" answers
   unsigned char command[] = "p";
   int size = sizeof(command) - 1;
-  int retval = device_send(command, size);
+  int return_value = device_send(command, size);
   // remove everything from input
   device_clear_input();
-  return retval;
+  return return_value;
 }
 
 int Liberty::device_binary_mode(void)
 {
   unsigned char command[] = "f1\r";
   int size = sizeof(command) - 1;
-  int retval = device_send(command, size);
-  return retval;
+  int return_value = device_send(command, size);
+  return return_value;
 }
 
 int Liberty::device_data_mode(data_mode_e mode)
 {
   int size;
-  int retval = RETURN_ERROR;
+  int return_value = RETURN_ERROR;
   switch (mode)
   {
     case DATA_CONTINUOUS:
     {
       unsigned char command[] = "c\r";
       size = sizeof(command) - 1;
-      retval = device_send(command, size);
-      return retval;
+      return_value = device_send(command, size);
+      return return_value;
     }
     case DATA_SINGLE:
     {
       unsigned char command[] = "p";
       size = sizeof(command) - 1;
-      retval = device_send(command, size);
-      return retval;
+      return_value = device_send(command, size);
+      return return_value;
     }
     default:
-      return retval;
+      return return_value;
   }
 }
 
 int Liberty::receive_pno_data_frame(void)
 {
-  int retval = RETURN_ERROR;
+  int return_value = RETURN_ERROR;
   g_nrxcount = sizeof(liberty_pno_frame_t) * station_count;
 
   device_read(stations, g_nrxcount, true);
   if (g_nrxcount == 0)
   {
-    return retval;
+    return return_value;
   }
   if (stations->head.init_cmd == LIBERTY_CONTINUOUS_PRINT_OUTPUT_CMD)
   {
     // update this as a sensor may have been dropped
     station_count = g_nrxcount / sizeof(liberty_pno_frame_t);
-    retval = station_count;
+    return_value = station_count;
   }
-  return retval;
+  return return_value;
 }
 
 int Liberty::fill_pno_data(geometry_msgs::TransformStamped *transform, int &index)
 {
-  int retval = 0;
+  int return_value = 0;
 
   // Set translation (conversion: inches -> meters)
   transform->child_frame_id = "polhemus_station_" + std::to_string(stations[index].head.station - 1);
@@ -136,12 +137,12 @@ int Liberty::fill_pno_data(geometry_msgs::TransformStamped *transform, int &inde
   transform->transform.rotation.y = stations[index].quaternion[2];
   transform->transform.rotation.z = stations[index].quaternion[3];
 
-  return retval;
+  return return_value;
 }
 
 int Liberty::define_data_type(data_type_e data_type)
 {
-  int retval = RETURN_ERROR;
+  int return_value = RETURN_ERROR;
 
   unsigned char* command;
   int size = 0;
@@ -152,26 +153,26 @@ int Liberty::define_data_type(data_type_e data_type)
 
     command = c;
     size = sizeof(c) - 1;
-    retval = device_send(command, size);
+    return_value = device_send(command, size);
   }
   else if (data_type == DATA_TYPE_EULER)
   {
     unsigned char c[] = "O*,8,9,11,3,5\r";  // euler
     command = c;
     size = sizeof(c) - 1;
-    retval = device_send(command, size);
+    return_value = device_send(command, size);
   }
   else
   {
-    return retval;
+    return return_value;
   }
 
-  return retval;
+  return return_value;
 }
 
 int Liberty::request_num_of_stations(void)
 {
-  int retval = RETURN_ERROR;
+  int return_value = RETURN_ERROR;
   unsigned char command[] = { control('u'), '0', '\r', '\0' };
   active_station_state_response_t resp;
   int size = sizeof(command) - 1;
@@ -183,15 +184,15 @@ int Liberty::request_num_of_stations(void)
   if (resp.head.init_cmd == LIBERTY_ACTIVE_STATION_STATE_CMD)
   {
     station_count = count_bits(resp.detected & resp.active);
-    retval = 0;
+    return_value = 0;
   }
-  return retval;
+  return return_value;
 }
 
 /* sets the zenith of the hemisphere in direction of vector (x, y, z) */
 int Liberty::set_hemisphere(int x, int y, int z)
 {
-  int retval = RETURN_ERROR;
+  int return_value = RETURN_ERROR;
   int negative_sign_counter = 0;
   int initial_cmd_size = 10;
 
@@ -208,14 +209,14 @@ int Liberty::set_hemisphere(int x, int y, int z)
 
   int size = sizeof(command)-1;
 
-  retval = device_send(command, size);
+  return_value = device_send(command, size);
 
-  return retval;
+  return return_value;
 }
 
 int Liberty::set_boresight(bool reset_origin, int station, float arg_1, float arg_2, float arg_3, float arg_4)
 {
-  int retval = RETURN_ERROR;
+  int return_value = RETURN_ERROR;
   unsigned char command[32];
   int size = sizeof(command);
 
@@ -241,18 +242,18 @@ int Liberty::set_boresight(bool reset_origin, int station, float arg_1, float ar
     i++;
   }
 
-  retval = device_send(command, size);
-  return retval;
+  return_value = device_send(command, size);
+  return return_value;
 }
 
 int Liberty::reset_boresight(void)
 {
-  int retval = RETURN_ERROR;
+  int return_value = RETURN_ERROR;
   unsigned char command[] = {control('b'), '*', '\r', '\0' };
   int size = sizeof(command) - 1;
 
-  retval = device_send(command, size);
-  return retval;
+  return_value = device_send(command, size);
+  return return_value;
 }
 
 tf2::Quaternion Liberty::get_station_quaternion(int station_id)
@@ -263,11 +264,11 @@ tf2::Quaternion Liberty::get_station_quaternion(int station_id)
   return q;
 }
 
-int Liberty::send_saved_calibration(int number_of_hands)
+int Liberty::send_saved_calibration()
 {
-  int retval = RETURN_ERROR;
-  retval = set_device_to_receive_saved_calibration(number_of_hands);
-  if (RETURN_ERROR == retval)
+  int return_value = RETURN_ERROR;
+  return_value = set_device_to_receive_saved_calibration();
+  if (RETURN_ERROR == return_value)
     return -1;
 
   // send the calibration saved in calibration.yaml
@@ -322,9 +323,9 @@ int Liberty::send_saved_calibration(int number_of_hands)
     float correction_pitch = station_pitch - calibrated_pitch;
     float correction_yaw = station_yaw - calibrated_yaw;
 
-    retval = set_boresight(false, station_id + 1, correction_yaw, correction_pitch, correction_roll);
+    return_value = set_boresight(false, station_id + 1, correction_yaw, correction_pitch, correction_roll);
 
-    if (RETURN_ERROR == retval)
+    if (RETURN_ERROR == return_value)
     {
       ROS_ERROR("[POLHEMUS] Error sending calibration from file.");
       return -1;
@@ -337,9 +338,9 @@ int Liberty::send_saved_calibration(int number_of_hands)
 
 bool Liberty::calibrate(std::string boresight_calibration_file)
 {
-  int retval = RETURN_ERROR;
-  retval = set_device_for_calibration();
-  if (RETURN_ERROR == retval)
+  int return_value = RETURN_ERROR;
+  return_value = set_device_for_calibration();
+  if (RETURN_ERROR == return_value)
     return -1;
 
   for (int station_number = 0; station_number < station_count; ++station_number)
@@ -360,20 +361,20 @@ bool Liberty::calibrate(std::string boresight_calibration_file)
   ROS_INFO("[POLHEMUS] Calibration file saved at: %s\n", boresight_calibration_file.c_str());
 
   define_data_type(DATA_TYPE_EULER);
-  retval = set_boresight(false, -1, 0, 0, 0);
+  return_value = set_boresight(false, -1, 0, 0, 0);
   define_data_type(DATA_TYPE_QUAT);
 
-  if (RETURN_ERROR == retval)
+  if (RETURN_ERROR == return_value)
   {
     ROS_ERROR("[POLHEMUS] Calibration failed.");
   }
 
   // set data mode back to continuous
-  retval = device_data_mode(DATA_CONTINUOUS);
-  if (RETURN_ERROR == retval)
+  return_value = device_data_mode(DATA_CONTINUOUS);
+  if (RETURN_ERROR == return_value)
   {
     ROS_ERROR("[POLHEMUS] Setting data mode to continuous, failed.\n");
-    return retval;
+    return return_value;
   }
 
   return true;

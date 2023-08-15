@@ -37,9 +37,10 @@
 #endif
 
 
-Polhemus::Polhemus(std::string name, uint16_t rx_buffer_size, uint16_t tx_buffer_size):
+Polhemus::Polhemus(std::string name, uint16_t rx_buffer_size, uint16_t tx_buffer_size,
+                   uint8_t sensors_right_glove, uint8_t sensors_left_glove):
   name(name), rx_buffer_size(rx_buffer_size), tx_buffer_size(tx_buffer_size), g_rxbuf(new uint8_t[rx_buffer_size]),
-  g_txbuf(new uint8_t[tx_buffer_size])
+  g_txbuf(new uint8_t[tx_buffer_size]), sensors_right_glove(sensors_right_glove), sensors_left_glove(sensors_left_glove)
 {
 }
 
@@ -60,35 +61,35 @@ int Polhemus::count_bits(uint16_t v)
 int Polhemus::device_write(uint8_t *buf, int size, int timeout)
 {
   int nActual = 0;
-  int retval = RETURN_ERROR;
+  int return_value = RETURN_ERROR;
 
-  retval = libusb_bulk_transfer(device_handle, endpoint_out, buf, size, &nActual, timeout);
+  return_value = libusb_bulk_transfer(device_handle, endpoint_out, buf, size, &nActual, timeout);
 
-  if (retval != 0)
+  if (return_value != 0)
   {
-    ROS_ERROR("[POLHEMUS] USB write failed with code %d.", retval);
-    retval = RETURN_ERROR;
+    ROS_ERROR("[POLHEMUS] USB write failed with code %d.", return_value);
+    return_value = RETURN_ERROR;
   }
   else if (nActual != size)
   {
     size = nActual;
-    retval = RETURN_ERROR;
+    return_value = RETURN_ERROR;
     ROS_ERROR("[POLHEMUS] write count wrong.\n\n");
   }
   else if ((nActual % endpoint_out_max_packet_size) == 0)
   {
-    retval = RETURN_ERROR;
+    return_value = RETURN_ERROR;
     ROS_ERROR("[POLHEMUS] Device write, size larger than max packet size.");
     libusb_bulk_transfer(device_handle, endpoint_out, nullptr, 0, &nActual, timeout);
   }
 
-  return retval;
+  return return_value;
 }
 
 int Polhemus::device_send(uint8_t *cmd, int &count)
 {
-  int retval = device_write(cmd, count, TIMEOUT);
-  if (RETURN_ERROR == retval)
+  int return_value = device_write(cmd, count, TIMEOUT);
+  if (RETURN_ERROR == return_value)
   {
     ROS_WARN("[POLHEMUS] Sending cmd `%d' to device failed", *cmd);
     return RETURN_ERROR;
@@ -99,24 +100,24 @@ int Polhemus::device_send(uint8_t *cmd, int &count)
 int Polhemus::device_read(void *pbuf, int &size, bool bTOisErr)
 {
   uint32_t timeout = VPUSB_READ_TIMEOUT_MS;
-  int retval = RETURN_ERROR;
+  int return_value = RETURN_ERROR;
   int nActual = 0;
   unsigned char *pbuf_c = (unsigned char*) pbuf;
 
-  retval = libusb_bulk_transfer(device_handle, endpoint_in, pbuf_c, size, &nActual, timeout);
+  return_value = libusb_bulk_transfer(device_handle, endpoint_in, pbuf_c, size, &nActual, timeout);
 
-  if ((retval == LIBUSB_ERROR_TIMEOUT) && bTOisErr)
+  if ((return_value == LIBUSB_ERROR_TIMEOUT) && bTOisErr)
   {
-    retval = RETURN_ERROR;
+    return_value = RETURN_ERROR;
     size = 0;
   }
   else
   {
     size = nActual;
-    retval = 0;
+    return_value = 0;
   }
 
-  return retval;
+  return return_value;
 }
 
 void Polhemus::device_clear_input(void)
@@ -128,19 +129,19 @@ void Polhemus::device_clear_input(void)
   }
 }
 
-int Polhemus::set_device_to_receive_saved_calibration(int number_of_hands)
+int Polhemus::set_device_to_receive_saved_calibration()
 {
-  int retval = RETURN_ERROR;
-  int required_number_of_sensors = number_of_hands*SENSORS_PER_GLOVE;
+  int return_value = RETURN_ERROR;
+  uint16_t required_number_of_sensors = sensors_right_glove + sensors_left_glove;
 
   if (nh->hasParam(name + "_calibration/rotations"))
   {
-    retval = receive_pno_data_frame();
+    return_value = receive_pno_data_frame();
     ros::Time start_time = ros::Time::now();
 
-    while (retval < required_number_of_sensors)
+    while (return_value < required_number_of_sensors)
     {
-      retval = receive_pno_data_frame();
+      return_value = receive_pno_data_frame();
       if (ros::Time::now().toSec() - start_time.toSec() >= CALIBRATE_TIMEOUT_IN_SECS)
       {
         ROS_ERROR("[POLHEMUS] Calibration - error getting complete frame in required time.");
@@ -159,16 +160,17 @@ int Polhemus::set_device_to_receive_saved_calibration(int number_of_hands)
 
 int Polhemus::set_device_for_calibration(void)
 {
-  int retval = RETURN_ERROR;
+  int return_value = RETURN_ERROR;
+  uint16_t required_number_of_sensors = sensors_right_glove + sensors_left_glove;
 
   reset_boresight();
 
-  retval = receive_pno_data_frame();
+  return_value = receive_pno_data_frame();
   ros::Time start_time = ros::Time::now();
 
-  while (retval < SENSORS_PER_GLOVE)
+  while (return_value < required_number_of_sensors)
   {
-    retval = receive_pno_data_frame();
+    return_value = receive_pno_data_frame();
     if (ros::Time::now().toSec() - start_time.toSec() >= CALIBRATE_TIMEOUT_IN_SECS)
     {
       ROS_ERROR("[POLHEMUS] Calibration - error getting complete frame in required time.");
@@ -177,7 +179,7 @@ int Polhemus::set_device_for_calibration(void)
   }
 
   device_reset();
-  return retval;
+  return return_value;
 }
 
 void Polhemus::save_current_calibration_to_file(int station_id, int station_number)

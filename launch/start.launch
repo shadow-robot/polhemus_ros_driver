@@ -26,6 +26,10 @@
   <arg name="y_hs" default="0" />
   <arg name="z_hs" default="1" />
   <arg name="hands" default="right"/>
+
+  <arg name="sensors_right_glove" default="6" />
+  <arg name="sensors_left_glove" default="6" />
+
   <arg name="product_type" default="viper"/>
   <arg name="node_name" default="polhemus_tf_broadcaster"/>
   <arg name="boresight_calibration_file_path" default="$(find polhemus_ros_driver)/config"/>
@@ -39,6 +43,8 @@
     <param name="y_hs" value="$(arg y_hs)" type="int"/>
     <param name="z_hs" value="$(arg z_hs)" type="int"/>
     <param name="hands" value="$(arg hands)" type="string"/>
+    <param name="sensors_right_glove" value="$(arg sensors_right_glove)" type="int"/>
+    <param name="sensors_left_glove" value="$(arg sensors_left_glove)" type="int"/>
     <param name="product_type" value="$(arg product_type)" type="string"/>
   </node>
 
