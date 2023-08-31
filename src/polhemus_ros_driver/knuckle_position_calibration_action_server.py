@@ -17,15 +17,16 @@
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 
 import os
+import sys
 from enum import Enum
-
 from typing import List, Dict, Optional
 import actionlib
-from dynamic_reconfigure import client, DynamicReconfigureCallbackException, DynamicReconfigureParameterException
 import numpy as np
 import rospkg
 import rospy
+import rosbag
 import yaml
+from dynamic_reconfigure import client, DynamicReconfigureCallbackException, DynamicReconfigureParameterException
 from geometry_msgs.msg import (Point, Pose, Quaternion, TransformStamped,
                                Vector3)
 from interactive_markers.interactive_marker_server import \
@@ -40,7 +41,6 @@ from polhemus_ros_driver.msg import (CalibrateAction, CalibrateFeedback,
                                      CalibrateResult, CalibrateGoal)
 from polhemus_ros_driver.srv import Publish, PublishRequest
 from polhemus_ros_driver.sphere_fit import SphereFit
-import rosbag
 
 
 def calculate_distance(point1: Point, point2: Point):
@@ -180,7 +180,7 @@ class SrGloveCalibration:
         if self._testing_bag_file_path is not None:
             if not os.path.isfile(self._testing_bag_file_path):
                 rospy.logerr(f"Specified bag file {self._testing_bag_file_path} does not exist, exiting...")
-                exit(0)
+                sys.exit()
             self._glove_msg_period = self._get_average_bag_msg_period()
         self._bag_msgs_generator = None
         self._desired_datapoints_per_sec = desired_datapoints_per_sec
