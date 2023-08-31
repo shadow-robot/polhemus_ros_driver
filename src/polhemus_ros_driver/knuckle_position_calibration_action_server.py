@@ -638,7 +638,7 @@ class SrGloveCalibration:
         for finger in fingers:
             if len(hand.finger_data[finger]['residual']) == 0:
                 rospy.logwarn(f'No data received for finger {finger}')
-                quality_list.append(np.std(hand.finger_data[finger]['residual']))
+            quality_list.append(np.std(hand.finger_data[finger]['residual']))
         return quality_list
 
 
