@@ -1,0 +1,11 @@
+# Copyright (C) 2022 Shadow Robot Company Ltd - All Rights Reserved. Proprietary and Confidential.
+# Unauthorized copying of the content in this file, via any medium is strictly prohibited.
+
+mf_knuckle_to_glove_source_pose:
+   x: -0.048
+   y: 0.0
+   z: 0.026
+   yaw: 0.0
+   pitch: 0.1
+   roll: -3.14159265
+   side: left

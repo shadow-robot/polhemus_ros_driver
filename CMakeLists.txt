@@ -81,3 +81,9 @@ install(TARGETS polhemus_tf_broadcaster polhemus
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 install(FILES launch/start.launch
    DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/launch)
+
+install(FILES
+  config/shadow_glove_user_calibration_defaults/default_calibration_left.yaml
+  config/shadow_glove_user_calibration_defaults/default_calibration_right.yaml
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/config/shadow_glove_user_calibration_defaults
+)
