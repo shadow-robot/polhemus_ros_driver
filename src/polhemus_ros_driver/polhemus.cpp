@@ -106,6 +106,12 @@ int Polhemus::device_read(void *pbuf, int &size, bool bTOisErr)
 
   return_value = libusb_bulk_transfer(device_handle, endpoint_in, pbuf_c, size, &nActual, timeout);
 
+  if (return_value != LIBUSB_SUCCESS)
+  {
+    ROS_WARN("[POLHEMUS] USB read failed with code %d. Error: %s", return_value,
+      libusb_strerror(static_cast<libusb_error>(return_value)));
+  }
+
   if ((return_value == LIBUSB_ERROR_TIMEOUT) && bTOisErr)
   {
     return_value = RETURN_ERROR;
@@ -144,7 +150,7 @@ int Polhemus::set_device_to_receive_saved_calibration()
       return_value = receive_pno_data_frame();
       if (ros::Time::now().toSec() - start_time.toSec() >= CALIBRATE_TIMEOUT_IN_SECS)
       {
-        ROS_ERROR("[POLHEMUS] Calibration - error getting complete frame in required time.");
+        ROS_ERROR("[POLHEMUS] Calibration (boresight) - error getting complete frame in required time.");
         return -1;
       }
     }
@@ -152,7 +158,7 @@ int Polhemus::set_device_to_receive_saved_calibration()
   }
   else
   {
-    ROS_WARN("[POLHEMUS] No previous calibration data available, please calibrate before proceeding!!!");
+    ROS_WARN("[POLHEMUS] No previous calibration (boresight) data available, please boresight before proceeding!!!");
     return 0;
   }
   return 1;
@@ -173,7 +179,7 @@ int Polhemus::set_device_for_calibration(void)
     return_value = receive_pno_data_frame();
     if (ros::Time::now().toSec() - start_time.toSec() >= CALIBRATE_TIMEOUT_IN_SECS)
     {
-      ROS_ERROR("[POLHEMUS] Calibration - error getting complete frame in required time.");
+      ROS_ERROR("[POLHEMUS] Calibration (boresight) - error getting complete frame in required time.");
       return -1;
     }
   }

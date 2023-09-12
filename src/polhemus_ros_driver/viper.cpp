@@ -158,6 +158,7 @@ int Viper::receive_pno_data_frame(void)
 
     if (!bytesextracted)
     {
+      ROS_ERROR("[POLHEMUS] No bytes were extracted by pno.Extractseupno");
       return_value = RETURN_ERROR;
       return return_value;
     }
