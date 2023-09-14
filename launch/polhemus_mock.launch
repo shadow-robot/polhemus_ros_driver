@@ -1,5 +1,5 @@
 <!--
-  Copyright (C) 2022 Shadow Robot Company Ltd <software@shadowrobot.com>
+  Copyright (C) 2022, 2023 Shadow Robot Company Ltd <software@shadowrobot.com>
 
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -22,11 +22,21 @@
   <arg name="bimanual" default="false"/>
   <arg name="polhemus_base_right_tf_name" default="polhemus_base_0"/>
   <arg name="polhemus_base_left_tf_name" default="polhemus_base_1"/>
+  <arg name="testing_in_isolation" default="false"/>
 
   <node pkg="tf2_ros" type="static_transform_publisher" name="knuckle_to_polhemus_base_right_tf_broadcaster" args="-0.05 0 0.025 1 0 0 0 rh_mf_knuckle_glove $(arg polhemus_base_right_tf_name)" />
   <node pkg="tf2_ros" type="static_transform_publisher" name="knuckle_glove_right_tf_broadcaster" args="0.01 0 0.1 -0.5 -0.5 -0.5 0.5 rh_palm rh_mf_knuckle_glove" />
   <node pkg="tf2_ros" type="static_transform_publisher" name="knuckle_to_polhemus_base_tf_broadcaster" args="-0.05 0 0.025 1 0 0 0 lh_mf_knuckle_glove $(arg polhemus_base_left_tf_name)" />
   <node pkg="tf2_ros" type="static_transform_publisher" name="knuckle_glove_tf_broadcaster" args="0.01 0 0.1 -0.5 -0.5 -0.5 0.5 lh_palm lh_mf_knuckle_glove" />
+
+  <group if="$(arg testing_in_isolation)">
+    <include file="$(find polhemus_ros_driver)/launch/polhemus_world_static_transform.launch"/>
+    <node pkg="tf2_ros" type="static_transform_publisher" name="polhemus_base_to_base_0_tf_broadcaster" args="0 0 0.5 0 0 3.141592653589793 polhemus_base rh_palm" />
+    <node pkg="tf2_ros" type="static_transform_publisher" name="polhemus_base_to_base_1_tf_broadcaster" args="0 0 0.5 0 0 3.141592653589793 polhemus_base lh_palm" />
+    <!-- by including the substring 'polhemus_tf_broadcaster' in the following static_transform_publisher...
+         we can trick the glove calibration gui into thinking the polhemus  driver has started -->
+    <node pkg="tf2_ros" type="static_transform_publisher" name="world_to_polhemus_world_polhemus_tf_broadcaster" args="0 0 0.5 0 0 3.141592653589793 world polhemus_world" />
+  </group>
 
   <include file="$(find sr_utilities_common)/launch/real_time_tf_republisher.launch">
     <arg name="tf_topic_name" value="$(arg tf_topic_name)"/>

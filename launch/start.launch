@@ -36,19 +36,22 @@
   <arg name="boresight_calibration_file_name" default="$(arg product_type)_calibration.yaml"/>
   <arg name="boresight_calibration_file" default="$(arg boresight_calibration_file_path)/$(arg boresight_calibration_file_name)"/>
 
-  <arg name="tf_publish_topic" default="/tf_polhemus"/>
-
-  <node pkg="polhemus_ros_driver" type="polhemus_tf_broadcaster" name="$(arg node_name)" output="screen">
-    <rosparam param="boresight_calibration_file" subst_value="True">$(arg boresight_calibration_file)</rosparam>
-    <param name="x_hs" value="$(arg x_hs)" type="int"/>
-    <param name="y_hs" value="$(arg y_hs)" type="int"/>
-    <param name="z_hs" value="$(arg z_hs)" type="int"/>
-    <param name="hands" value="$(arg hands)" type="string"/>
-    <param name="sensors_right_glove" value="$(arg sensors_right_glove)" type="int"/>
-    <param name="sensors_left_glove" value="$(arg sensors_left_glove)" type="int"/>
-    <param name="product_type" value="$(arg product_type)" type="string"/>
-    <remap from="/tf_polhemus" to="$(arg tf_publish_topic)"/>
-  </node>
+  <arg name="tf_publish_topic" default="/tf_polhemus"/>  
+  <arg name="start_driver" default="true"/>
+  
+  <group if="$(arg start_driver)">
+    <node pkg="polhemus_ros_driver" type="polhemus_tf_broadcaster" name="$(arg node_name)" output="screen">
+      <rosparam param="boresight_calibration_file" subst_value="True">$(arg boresight_calibration_file)</rosparam>
+      <param name="x_hs" value="$(arg x_hs)" type="int"/>
+      <param name="y_hs" value="$(arg y_hs)" type="int"/>
+      <param name="z_hs" value="$(arg z_hs)" type="int"/>
+      <param name="hands" value="$(arg hands)" type="string"/>
+      <param name="sensors_right_glove" value="$(arg sensors_right_glove)" type="int"/>
+      <param name="sensors_left_glove" value="$(arg sensors_left_glove)" type="int"/>
+      <param name="product_type" value="$(arg product_type)" type="string"/>
+      <remap from="/tf_polhemus" to="$(arg tf_publish_topic)"/>
+    </node>
+  </group>
 
   <rosparam command="load" file="$(arg boresight_calibration_file)" ns="$(arg node_name)"/>
 
