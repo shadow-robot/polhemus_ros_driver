@@ -435,16 +435,17 @@ int Viper::send_saved_calibration()
     }
     else
     {
-      ROS_WARN("No pno frame for station, this is normal if there is no previous calibration data avaliable.");
+      ROS_WARN("No pno frame for station, this is normal if there is no previous calibration "
+        "(boresight) data avaliable.");
     }
 
     if (!nh->hasParam(name + "_calibration/rotations/station_" + std::to_string(station_id)))
     {
-      ROS_WARN("[POLHEMUS] No previous calibration data available, please calibrate before proceeding!!!");
+      ROS_WARN("[POLHEMUS] No previous calibration (boresight) data available, please calibrate before proceeding!!!");
       break;
     }
 
-    ROS_INFO("[POLHEMUS] Reading saved calibration data and calibrating station %d...", station_id);
+    ROS_INFO("[POLHEMUS] Reading saved calibration (boresight) data and calibrating station %d...", station_id);
 
     // retrieve calibration angles
     float calibrated_roll;
@@ -495,7 +496,7 @@ int Viper::send_saved_calibration()
 
     if (RETURN_ERROR == return_value)
     {
-      ROS_ERROR("[POLHEMUS] Error sending calibration from file.");
+      ROS_ERROR("[POLHEMUS] Error sending calibration (boresight) from file.");
       return -1;
     }
   }
