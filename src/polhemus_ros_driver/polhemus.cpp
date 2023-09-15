@@ -106,11 +106,24 @@ int Polhemus::device_read(void *pbuf, int &size, bool bTOisErr)
 
   return_value = libusb_bulk_transfer(device_handle, endpoint_in, pbuf_c, size, &nActual, timeout);
 
+
+
   if (return_value != LIBUSB_SUCCESS)
   {
-    ROS_WARN("[POLHEMUS] USB read failed with code %d. Error: %s", return_value,
-      libusb_strerror(static_cast<libusb_error>(return_value)));
+    if (latest_usb_read_result_ != static_cast<libusb_error>(return_value))
+    {
+      ROS_WARN("[POLHEMUS] USB read failed with code %d. Error: %s", return_value,
+        libusb_strerror(static_cast<libusb_error>(return_value)));
+    }
+    else
+    {
+      // Print the warning at most every 5 seconds to avoid flooding the console with the same message
+      ROS_WARN_THROTTLE(5, "[POLHEMUS] USB read failed with code %d. Error: %s", return_value,
+        libusb_strerror(static_cast<libusb_error>(return_value)));
+    }
   }
+
+  latest_usb_read_result_ = static_cast<libusb_error>(return_value);
 
   if ((return_value == LIBUSB_ERROR_TIMEOUT) && bTOisErr)
   {

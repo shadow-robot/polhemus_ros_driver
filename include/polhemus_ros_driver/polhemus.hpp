@@ -115,5 +115,6 @@ public:
   uint8_t sensors_right_glove, sensors_left_glove;
   uint8_t* g_txbuf;
   uint8_t* g_rxbuf;
+  libusb_error latest_usb_read_result_;
 };
 #endif
