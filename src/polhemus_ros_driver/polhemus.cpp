@@ -110,7 +110,7 @@ int Polhemus::device_read(void *pbuf, int &size, bool bTOisErr)
 
   if (return_value != LIBUSB_SUCCESS)
   {
-    if (latest_usb_read_result_ != static_cast<libusb_error>(return_value))
+    if (latest_usb_read_result_ != return_value)
     {
       ROS_WARN("[POLHEMUS] USB read failed with code %d. Error: %s", return_value,
         libusb_strerror(static_cast<libusb_error>(return_value)));
@@ -123,7 +123,7 @@ int Polhemus::device_read(void *pbuf, int &size, bool bTOisErr)
     }
   }
 
-  latest_usb_read_result_ = static_cast<libusb_error>(return_value);
+  latest_usb_read_result_ = return_value;
 
   if ((return_value == LIBUSB_ERROR_TIMEOUT) && bTOisErr)
   {
