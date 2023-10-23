@@ -490,13 +490,37 @@ int Viper::send_saved_calibration()
     float correction_pitch = station_pitch - calibrated_pitch;
     float correction_yaw = station_yaw - calibrated_yaw;
 
-    define_data_type(DATA_TYPE_EULER);
-    return_value = set_boresight(false, station_id, correction_yaw, correction_pitch, correction_roll);
-    define_data_type(DATA_TYPE_QUAT);
-
-    if (RETURN_ERROR == return_value)
+    bool station_boresight_success = false;
+    int nb_attempts = 5;
+    while(!station_boresight_success && nb_attempts > 0)
     {
-      ROS_ERROR("[POLHEMUS] Error sending calibration (boresight) from file.");
+      nb_attempts--;
+      return_value = define_data_type(DATA_TYPE_EULER);
+      if (RETURN_ERROR == return_value)
+      {
+        ROS_ERROR("[POLHEMUS] Error setting data type to EULER. %d attemps left.", nb_attempts);
+        continue;
+      }
+
+      return_value = set_boresight(false, station_id, correction_yaw, correction_pitch, correction_roll);
+      if (RETURN_ERROR == return_value)
+      {
+        ROS_ERROR("[POLHEMUS] Error sending calibration (boresight) from file. %d attemps left.", nb_attempts);
+        continue;
+      }
+
+      return_value = define_data_type(DATA_TYPE_QUAT);
+
+      if (RETURN_ERROR == return_value)
+      {
+        ROS_ERROR("[POLHEMUS] Error setting data type to QUAT. %d attemps left.", nb_attempts);
+        continue;
+      }
+      station_boresight_success = true;
+    }
+    if (!station_boresight_success)
+    {
+      ROS_ERROR("[POLHEMUS] Sending calibration (boresight) from file has failed.");
       return -1;
     }
   }

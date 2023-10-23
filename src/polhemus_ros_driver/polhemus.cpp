@@ -167,7 +167,12 @@ int Polhemus::set_device_to_receive_saved_calibration()
         return -1;
       }
     }
-    device_reset();
+    return_value = device_reset();
+    if (return_value == RETURN_ERROR)
+    {
+      ROS_ERROR("[POLHEMUS] Calibration (boresight) - error resetting device.");
+      return RETURN_ERROR;
+    }
   }
   else
   {
@@ -180,9 +185,15 @@ int Polhemus::set_device_to_receive_saved_calibration()
 int Polhemus::set_device_for_calibration(void)
 {
   int return_value = RETURN_ERROR;
+  int nb_sensors;
   uint16_t required_number_of_sensors = sensors_right_glove + sensors_left_glove;
 
-  reset_boresight();
+  return_value = reset_boresight();
+  if (return_value == RETURN_ERROR)
+  {
+    ROS_ERROR("[POLHEMUS] Calibration (boresight) - error resetting boresight.");
+    return RETURN_ERROR;
+  }
 
   return_value = receive_pno_data_frame();
   ros::Time start_time = ros::Time::now();
@@ -196,9 +207,15 @@ int Polhemus::set_device_for_calibration(void)
       return -1;
     }
   }
+  nb_sensors = return_value;
 
-  device_reset();
-  return return_value;
+  return_value = device_reset();
+  if (return_value == RETURN_ERROR)
+  {
+    ROS_ERROR("[POLHEMUS] Calibration (boresight) - error resetting device.");
+    return RETURN_ERROR;
+  }
+  return nb_sensors;
 }
 
 void Polhemus::save_current_calibration_to_file(int station_id, int station_number)
