@@ -459,7 +459,7 @@ int main(int argc, char** argv)
 
     if (sensor_count == -1)
     {
-      // TODO refactor this to get rid of this awful flag thingy
+      // TODO(toni) refactor this to get rid of this awful flag thingy
       if (flag == 0 || flag == 2)
       {
         ROS_DEBUG("[POLHEMUS] No position and orientation data received from Polhemus system!!!");
