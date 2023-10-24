@@ -492,7 +492,7 @@ int Viper::send_saved_calibration()
 
     bool station_boresight_success = false;
     int nb_attempts = 5;
-    while(!station_boresight_success && nb_attempts > 0)
+    while (!station_boresight_success && nb_attempts > 0)
     {
       nb_attempts--;
       return_value = define_data_type(DATA_TYPE_EULER);
