@@ -125,12 +125,8 @@ int Polhemus::device_read(void *pbuf, int &size, bool bTOisErr)
 
   latest_usb_read_result_ = return_value;
 
-  if ((return_value != LIBUSB_SUCCESS) && (return_value != LIBUSB_ERROR_TIMEOUT))
-  {
-    return_value = RETURN_ERROR;
-    size = 0;
-  }
-  else if ((return_value == LIBUSB_ERROR_TIMEOUT) && bTOisErr)
+  if (((return_value != LIBUSB_SUCCESS) && (return_value != LIBUSB_ERROR_TIMEOUT))
+      || ((return_value == LIBUSB_ERROR_TIMEOUT) && bTOisErr))
   {
     return_value = RETURN_ERROR;
     size = 0;
