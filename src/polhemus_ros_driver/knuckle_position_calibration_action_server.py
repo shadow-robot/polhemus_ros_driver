@@ -16,17 +16,17 @@
 #  along with this program; if not, write to the Free Software
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 
-import math
 import os
+import sys
 from enum import Enum
-
-from typing import List, Dict
+from typing import List, Dict, Optional
 import actionlib
-from dynamic_reconfigure import client, DynamicReconfigureCallbackException, DynamicReconfigureParameterException
 import numpy as np
 import rospkg
 import rospy
+import rosbag
 import yaml
+from dynamic_reconfigure import client, DynamicReconfigureCallbackException, DynamicReconfigureParameterException
 from geometry_msgs.msg import (Point, Pose, Quaternion, TransformStamped,
                                Vector3)
 from interactive_markers.interactive_marker_server import \
@@ -35,7 +35,7 @@ from std_msgs.msg import ColorRGBA
 from tf2_msgs.msg import TFMessage
 from tf2_ros import StaticTransformBroadcaster
 from visualization_msgs.msg import (InteractiveMarker,
-                                    InteractiveMarkerControl, Marker)
+                                    InteractiveMarkerControl, Marker, MarkerArray)
 
 from polhemus_ros_driver.msg import (CalibrateAction, CalibrateFeedback,
                                      CalibrateResult, CalibrateGoal)
@@ -73,10 +73,10 @@ class DataMarker(Marker):
     """ Class to store data about a marker to be published to rviz. """
     _id = 0
 
-    def __init__(self, frame_id: str, point: Point, color: ColorRGBA, size=0.002):
+    def __init__(self, frame_id: str, time_stamp: rospy.Time, point: Point, color: ColorRGBA, size=0.002) -> None:
         super().__init__()
         self.header.frame_id = frame_id
-        self.header.stamp = rospy.Time.now()
+        self.header.stamp = time_stamp
         self.type = self.POINTS
         #  Markers need to have unique ids. With the line below it's ensured that
         #  every new instance has a unique, incremental id
@@ -96,17 +96,49 @@ class Hand:
         self.polhemus_base_name = f"polhemus_base_{self.polhemus_base_index}"
         self.finger_data = {}
         self.current_knuckle_tf = TransformStamped()
-        self.pub = rospy.Publisher(f"/data_point_marker_{self.hand_prefix}", Marker, queue_size=1000)
+        self._marker_array = MarkerArray()
+        self._pub = rospy.Publisher(f"/data_point_marker_{self.hand_prefix}", MarkerArray, queue_size=1000)
+
+    def add_marker(self, frame_id: str, time_stamp: rospy.Time, point: Point, color: ColorRGBA) -> None:
+        data_point_marker = DataMarker(frame_id=frame_id, time_stamp=time_stamp, point=point, color=color)
+        self._marker_array.markers.append(data_point_marker)
+
+    def get_number_of_markers(self) -> int:
+        return len(self._marker_array.markers)
+
+    def publish_markers(self) -> None:
+        self._pub.publish(self._marker_array)
+        # Empty the marker array after publishing
+        self._marker_array = MarkerArray()
+
+    def remove_published_markers(self) -> None:
+        self._marker_array = MarkerArray()
+        marker = Marker()
+        marker.header.frame_id = self.polhemus_base_name
+        marker.action = marker.DELETEALL
+        self._marker_array.markers.append(marker)
+        self._pub.publish(self._marker_array)
+        self._marker_array = MarkerArray()
 
 
 class SrGloveCalibration:
     SOURCE_TO_KNUCKLE_LIMITS = [[-0.1, -0.1, -0.1], [0.1, 0.1, 0.1]]
     FINGER_LENGTH_LIMITS = [0.03, 0.15]
+    # How many times throughout the calibration process should we calculate the current quality, publish markers etc..
+    NUMBER_OF_CHECKPOINTS = 4
 
-    def __init__(self, side: str = "right"):
+    def __init__(self, side: str = "right",
+                 desired_datapoints_per_sec: int = 20,
+                 testing_bag_file_path: Optional[str] = None) -> None:
         """
         Initializes the calibration action server and the interactive marker server.
         @param side: The hand(s) to calibrate - can be left, right or both
+        @param desired_datapoints_per_sec: The desired number of tf datapoints to save per second. Fewer datapoints
+                                           will result in a faster calibration process but
+                                           potentially a less accurate result
+        @param testing_bag_file_path: Passing a bag file path will cause this class to use data
+                                      from the bag file instead of live data
+                                      (useful for figuring out the ideal desired_datapoints_per_sec)
         """
         # Interactive marker server for visualizing and interacting with the calibration process
         self._marker_server = InteractiveMarkerServer("knuckle_position_markers")
@@ -140,9 +172,21 @@ class SrGloveCalibration:
         # Action server allowing the GUI to trigger and monitor a calibration
         self._action_server = actionlib.SimpleActionServer("/calibration_action_server", CalibrateAction,
                                                            execute_cb=self._calibration, auto_start=False)
+        # How many times during calibration should we calculate the sphere fit and update quality %
+        self._progress_period = 1.0 / self.NUMBER_OF_CHECKPOINTS
+        # To store tf messages so we can process them outside the callback
+        self._saved_tf_msgs = []
+        self._testing_bag_file_path = testing_bag_file_path
+        if self._testing_bag_file_path is not None:
+            if not os.path.isfile(self._testing_bag_file_path):
+                rospy.logerr(f"Specified bag file {self._testing_bag_file_path} does not exist, exiting...")
+                sys.exit()
+            self._glove_msg_period = self._get_average_bag_msg_period()
+        self._bag_msgs_generator = None
+        self._desired_datapoints_per_sec = desired_datapoints_per_sec
         self._action_server.start()
 
-    def _update_current_knuckle_tf(self, hand: Hand):
+    def _update_current_knuckle_tf(self, hand: Hand) -> None:
         """ Updates the current knuckle TF for a hand
             @param hand: The hand to update the TF for
         """
@@ -337,6 +381,8 @@ class SrGloveCalibration:
                 hand.finger_data[finger]['residual'] = 0
                 hand.finger_data[finger]['data'] = []
                 hand.finger_data[finger]['center'] = self._create_marker(hand, finger, COLORS[i].value)
+                hand.finger_data[finger]['last_center_estimate'] = None
+                hand.finger_data[finger]['last_radius_estimate'] = None
                 self._marker_server.insert(hand.finger_data[finger]['center'])
 
     def _create_marker(self, hand: Hand, finger: str, color):
@@ -391,20 +437,63 @@ class SrGloveCalibration:
             control.interaction_mode = InteractiveMarkerControl.MOVE_AXIS
         return control
 
-    def _load_tf_callback(self, data):
-        """ Callback for received TF data. """
-        for individual_transform in data.transforms:
-            for hand in self._hands.values():
-                for color_index, finger in enumerate(fingers):
-                    if individual_transform.child_frame_id == hand.finger_data[finger]['polhemus_tf_name']:
-                        pos = [individual_transform.transform.translation.x,
-                               individual_transform.transform.translation.y,
-                               individual_transform.transform.translation.z]
+    def _tf_callback(self, data) -> None:
+        """
+            Callback for received TF data.
+            @param data: A TFMessage message from either the /tf topic or a bag
+        """
+        if 'polhemus' in data.transforms[0].child_frame_id:
+            self._saved_tf_msgs.append(data)
+            return
 
-                        hand.finger_data[finger]['data'].append(pos)
-                        data_point_marker = DataMarker(hand.polhemus_base_name, Point(*pos),
-                                                       COLORS[color_index].value)
-                        hand.pub.publish(data_point_marker)
+    def _process_tf_data(self, time_elapsed) -> None:
+        """
+            Processes a subsample of the saved TF data and publishes markers of this subsample
+            @param time_elapsed: Time elapsed since the start of this calibration (seconds)
+        """
+        # Subsample the saved_tf_msgs (temporally) to approximately the desired number of datapoints per second
+        num_msgs = len(self._saved_tf_msgs)
+        desired_num_msgs = time_elapsed * self._desired_datapoints_per_sec
+        subsample_stride = int(round((num_msgs / desired_num_msgs)+0.51))  # Ensure that this is always '1' or more
+        subsampled_tf_msgs = self._saved_tf_msgs[::subsample_stride]
+        for data in subsampled_tf_msgs:
+            for individual_transform in data.transforms:
+                for hand in self._hands.values():
+                    for color_index, finger in enumerate(fingers):
+                        if individual_transform.child_frame_id == hand.finger_data[finger]['polhemus_tf_name']:
+                            position = [individual_transform.transform.translation.x,
+                                        individual_transform.transform.translation.y,
+                                        individual_transform.transform.translation.z]
+
+                            hand.finger_data[finger]['data'].append(position)
+                            hand.add_marker(frame_id=hand.polhemus_base_name,
+                                            time_stamp=individual_transform.header.stamp,
+                                            point=Point(*position),
+                                            color=COLORS[color_index].value)
+        for hand in self._hands.values():
+            hand.publish_markers()
+
+    def _unpack_bag_msg_to_tf_callback(self, _event=False) -> None:
+        """
+            Grab the next message from the filtered generator and pass it to the tf_callback
+        """
+        try:
+            topic_msg_time = next(self._bag_msgs_generator)
+            msg = topic_msg_time[1]
+            data = TFMessage()
+            data.transforms.extend(msg.transforms)
+            self._tf_callback(data)
+        except StopIteration:
+            pass
+
+    def _get_average_bag_msg_period(self):
+        bag = rosbag.Bag(self._testing_bag_file_path)
+        polhemus_msgs = sorted((tm for m in bag if m.topic == '/tf' for tm in m.message.transforms),
+                               key=lambda tfm: tfm.header.stamp.to_nsec())
+        polhemus_msgs = filter(lambda m: m.header.frame_id == 'polhemus_base_0', polhemus_msgs)
+        polhemus_msgs = filter(lambda m: m.child_frame_id == 'polhemus_station_1', polhemus_msgs)
+        times = np.array([t.header.stamp for t in polhemus_msgs])
+        return (times[1:] - times[:-1]).mean().to_sec()
 
     def _calibration(self, goal: CalibrateGoal):
         """
@@ -424,26 +513,50 @@ class SrGloveCalibration:
         self._remove_all_markers(hand)
         rospy.loginfo("Starting calibration..")
 
+        # Clear saved tf messages from previous calibration
+        self._saved_tf_msgs = []
+
         start = rospy.Time.now().to_sec()
         _feedback = CalibrateFeedback()
         _result = CalibrateResult()
 
-        sub = rospy.Subscriber("/tf", TFMessage, self._load_tf_callback, queue_size=10)
+        if self._testing_bag_file_path is None:
+            # Use live /tf data (general use)
+            sub = rospy.Subscriber("/tf", TFMessage, self._tf_callback, queue_size=100)
+            rospy.sleep(0.5)  # Ensure the tf subscriber has had time to start receiving messages
+        else:
+            # Use /tf data from a bag file (for testing)
+            self._bag_msgs_generator = (topic_msg_t for topic_msg_t in
+                                        rosbag.Bag(self._testing_bag_file_path).read_messages()
+                                        if topic_msg_t[0] == "/tf"
+                                        and topic_msg_t[1].transforms
+                                        and 'polhemus' in topic_msg_t[1].transforms[0].child_frame_id)
+            timer = rospy.Timer(rospy.Duration(self._glove_msg_period),
+                                self._unpack_bag_msg_to_tf_callback)
+
+        current_progress = 0.0
         while rospy.Time.now().to_sec() - start < goal.time:
             if self._action_server.is_preempt_requested():
                 rospy.loginfo("Calibration stopped.")
                 self._action_server.set_preempted()
                 _result.success = False
                 break
-
-            _feedback.progress = ((rospy.Time.now().to_sec() - start)) / goal.time
-            if math.floor(_feedback.progress * 100) % 25 == 0 and math.floor(_feedback.progress * 100) != 0:
-                self._get_knuckle_positions(hand)
+            # Without this sleep, when testing with bag file, this loop consumes..
+            # all the CPU assigned to this process and _unpack_bag_msg_to_tf_callback never (rarely) gets called
+            rospy.sleep(0.001)
+            time_elapsed = rospy.Time.now().to_sec() - start
+            _feedback.progress = time_elapsed / goal.time
+            if (_feedback.progress - current_progress) > self._progress_period and _feedback.progress < 1.0:
+                self._compute_knuckle_positions(hand, time_elapsed)
                 _feedback.quality = self.get_calibration_quality(hand)
+                current_progress += self._progress_period
             self._action_server.publish_feedback(_feedback)
 
-        sub.unregister()
-        self._get_knuckle_positions(hand)
+        if self._testing_bag_file_path is None:
+            sub.unregister()
+        else:
+            timer.shutdown()
+        self._compute_knuckle_positions(hand, time_elapsed)
         _feedback.quality = self.get_calibration_quality(hand)
         if not self._action_server.is_preempt_requested():
             _result.success = True
@@ -467,29 +580,42 @@ class SrGloveCalibration:
             Removes markers previously displayed in Rviz
             @param hand: Selected hand
         """
-        marker = Marker()
-        marker.header.frame_id = hand.polhemus_base_name
-        marker.action = marker.DELETEALL
-        hand.pub.publish(marker)
+        hand.remove_published_markers()
 
-    def _get_knuckle_positions(self, hand: Hand, plot=False):
+    def _compute_knuckle_positions(self, hand: Hand, time_elapsed: float, plot=False):
         """
             Updates the current solution for all fingers on the selected hand.
             @param hand: Selected hand
+            @param time_elapsed: Time elapsed since the start of this calibration
             @param plot: If True, plots the data points and the fitted sphere
         """
+        self._process_tf_data(time_elapsed)
         for color_index, finger in enumerate(fingers):
-            solution_marker = DataMarker(hand.polhemus_base_name, hand.finger_data[finger]['center'].pose.position,
-                                         COLORS[color_index].value)
-            hand.pub.publish(solution_marker)
+            # Add and publish a solution marker
+            hand.add_marker(frame_id=hand.polhemus_base_name,
+                            time_stamp=rospy.Time.now(),
+                            point=hand.finger_data[finger]['center'].pose.position,
+                            color=COLORS[color_index].value)
+            hand.publish_markers()
             sphere_fit = SphereFit(data=hand.finger_data[finger]['data'], plot=plot)
+
+            initial_guess = None
+            if (hand.finger_data[finger]['last_center_estimate'] is not None and
+               hand.finger_data[finger]['last_radius_estimate'] is not None):
+                initial_guess = []
+                initial_guess.extend(hand.finger_data[finger]['last_center_estimate'].tolist())
+                initial_guess.append(hand.finger_data[finger]['last_radius_estimate'])
 
             radius, center, residual = sphere_fit.fit_sphere(
                 SrGloveCalibration.SOURCE_TO_KNUCKLE_LIMITS[0], SrGloveCalibration.SOURCE_TO_KNUCKLE_LIMITS[1],
-                SrGloveCalibration.FINGER_LENGTH_LIMITS[0], SrGloveCalibration.FINGER_LENGTH_LIMITS[1])
+                SrGloveCalibration.FINGER_LENGTH_LIMITS[0], SrGloveCalibration.FINGER_LENGTH_LIMITS[1],
+                initial_guess=initial_guess)
 
             if plot:
                 sphere_fit.plot_data()
+
+            hand.finger_data[finger]['last_center_estimate'] = center
+            hand.finger_data[finger]['last_radius_estimate'] = radius
 
             hand.finger_data[finger]['residual'] = residual
             hand.finger_data[finger]['length'].append(np.around(radius, 4).item())
@@ -510,6 +636,8 @@ class SrGloveCalibration:
         """
         quality_list: List[float] = []
         for finger in fingers:
+            if len(hand.finger_data[finger]['residual']) == 0:
+                rospy.logwarn(f'No data received for finger {finger}')
             quality_list.append(np.std(hand.finger_data[finger]['residual']))
         return quality_list
 
@@ -517,4 +645,6 @@ class SrGloveCalibration:
 if __name__ == "__main__":
     rospy.init_node('sr_knuckle_calibration')
     hand_side = rospy.get_param("~side", "both")
-    sr_glove_calibration = SrGloveCalibration(side=hand_side)
+    desired_number_of_datapoints_per_sec = rospy.get_param("~desired_datapoints_per_sec", 20)
+    sr_glove_calibration = SrGloveCalibration(side=hand_side,
+                                              desired_datapoints_per_sec=desired_number_of_datapoints_per_sec)
