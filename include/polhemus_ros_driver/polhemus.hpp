@@ -74,6 +74,7 @@ public:
   virtual ~Polhemus(void);
   int count_bits(uint16_t v);
   ros::NodeHandle *nh;
+  uint32_t frame_count;
 
   /* set up usb interface and configuration, send initial magic and reset */
   virtual void device_init(void) = 0;

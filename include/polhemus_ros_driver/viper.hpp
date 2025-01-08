@@ -48,6 +48,7 @@ public:
   int set_hemisphere(int x, int y, int z);
   bool src_select_srv(polhemus_ros_driver::set_source::Request &req, polhemus_ros_driver::set_source::Response &res);
   ros::ServiceServer source_select_service;
+
 private:
   uint32_t calc_crc_bytes(uint8_t *data, uint32_t count);
   void crc_16(uint32_t * crc, uint32_t data);

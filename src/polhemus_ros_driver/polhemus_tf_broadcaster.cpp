@@ -447,7 +447,7 @@ int main(int argc, char** argv)
   ros::Rate rate(120);
   int flag = 0;
   int station_number = 0;
-
+  device->frame_count = 0;
   // Start main loop
   while (ros::ok())
   {
@@ -455,6 +455,10 @@ int main(int argc, char** argv)
       break;
 
     // Update polhemus sensor count
+
+
+    int last_frame_count = device->frame_count;
+
     int sensor_count = device->receive_pno_data_frame();
 
     if (sensor_count == -1)
@@ -496,6 +500,7 @@ int main(int argc, char** argv)
       // Header info - acquired at same time = same timestamp
       transformStamped.header.stamp = ros::Time::now();
 
+
       for (station_index=0; station_index < sensor_count; station_index++)
       {
         station_number = station_index;
@@ -509,6 +514,7 @@ int main(int argc, char** argv)
           if (station_number < FIRST_STATION_NUMBER_LINKED_TO_LEFT_HAND)
           {
             transformStamped.header.frame_id = "polhemus_base_0";
+
           }
           else
           {
@@ -526,9 +532,22 @@ int main(int argc, char** argv)
         }
       }
 
+      int frame_change = device->frame_count - last_frame_count;
+
+      if (frame_change == 0)
+      {
+        ROS_WARN("[POLHEMUS] No new data received from Polhemus system!!!");
+      }
+      else if (frame_change > 1)
+      {
+        ROS_WARN("[POLHEMUS] Missed %d frames from Polhemus system!!!", frame_change - 1);
+      }
+
+
       tf_polhemus_relay_queue.transforms = tf_queue;
       tf_polhemus_publisher_.publish(tf_polhemus_relay_queue);
       tf_queue.clear();
+
     }
     ros::spinOnce();
     rate.sleep();
