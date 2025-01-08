@@ -156,7 +156,7 @@ int Viper::receive_pno_data_frame(void)
   if (return_value == 0)
   {
     CFrameInfo fi(g_rxbuf, g_nrxcount);
-    ROS_WARN_STREAM("rpno frame_count: " << frame_count);
+    ROS_WARN_STREAM("rpno frame_count: " << fi.uiFCountRx);
 
     uint32_t bytesextracted;
     bytesextracted = pno.Extractseupno(fi.PPnoBody());
@@ -184,6 +184,7 @@ int Viper::fill_pno_data(geometry_msgs::TransformStamped *transform, int &index)
 
   transform->child_frame_id = "polhemus_station_" +
     std::to_string(pno.SensFrame(index)->SFinfo.bfSnum);
+
 
   transform->transform.translation.x = pno.SensFrame(index)->pno.pos[0];
   transform->transform.translation.y = pno.SensFrame(index)->pno.pos[1];
