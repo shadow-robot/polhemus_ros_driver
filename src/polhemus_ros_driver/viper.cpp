@@ -103,9 +103,13 @@ int Viper::receive_data_frame(viper_cmds_e cmd_type)
   for (int attempt = 0; attempt < attempts; attempt++)
   {
     return_value = device_read(g_rxbuf, g_nrxcount, true);
+
     if (return_value == 0)
     {
       CFrameInfo frame_info(g_rxbuf, g_nrxcount);
+      frame_count = frame_info.uiFCountRx;
+      ROS_WARN_STREAM("rdf frame_count: " << frame_count);
+
       if ((frame_info.cmd() == -1) || (frame_info.action() == -1))
       {
         if (attempt < attempts - 1)
@@ -152,7 +156,7 @@ int Viper::receive_pno_data_frame(void)
   if (return_value == 0)
   {
     CFrameInfo fi(g_rxbuf, g_nrxcount);
-    frame_count = fi.uiFCountRx;
+    ROS_WARN_STREAM("rpno frame_count: " << frame_count);
 
     uint32_t bytesextracted;
     bytesextracted = pno.Extractseupno(fi.PPnoBody());
