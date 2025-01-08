@@ -534,7 +534,7 @@ int main(int argc, char** argv)
 
       int frame_change = device->frame_count - last_frame_count;
 
-      if (frame_change == 0 || last_frame_count != 0)
+      if (frame_change == 0 && last_frame_count != 0)
       {
         ROS_WARN("[POLHEMUS] No new data received from Polhemus system!!!");
       }

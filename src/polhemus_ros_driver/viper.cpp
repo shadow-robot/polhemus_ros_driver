@@ -154,8 +154,9 @@ int Viper::receive_pno_data_frame(void)
   if (return_value == 0)
   {
     CFrameInfo fi(g_rxbuf, g_nrxcount);
-    frame_count = *(reinterpret_cast<int32_t*>(g_rxbuf + 12));  /// OMG, DON'T LOOK, IT'S HIDEOUS
-
+    int32_t test = *(reinterpret_cast<int32_t*>(g_rxbuf + 12));
+    frame_count = test;
+    ROS_WARN_STREAM("rpno frame_count: " << test);
 
     uint32_t bytesextracted;
     bytesextracted = pno.Extractseupno(fi.PPnoBody());
@@ -193,7 +194,6 @@ int Viper::fill_pno_data(geometry_msgs::TransformStamped *transform, int &index)
   transform->transform.rotation.x = pno.SensFrame(index)->pno.ori[1];
   transform->transform.rotation.y = pno.SensFrame(index)->pno.ori[2];
   transform->transform.rotation.z = pno.SensFrame(index)->pno.ori[3];
-
 
   index = pno.SensFrame(index)->SFinfo.bfSnum;
 
