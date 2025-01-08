@@ -444,7 +444,7 @@ int main(int argc, char** argv)
   tf2_msgs::TFMessage tf_polhemus_relay_queue;
   std::vector<geometry_msgs::TransformStamped> tf_queue;
   tf_queue.reserve(16);
-  ros::Rate rate(120);
+  ros::Rate rate(240);  // 240 Hz
   int flag = 0;
   int station_number = 0;
   device->frame_count = 0;
@@ -520,11 +520,13 @@ int main(int argc, char** argv)
           {
             transformStamped.header.frame_id = "polhemus_base_1";
           }
+          transformStamped.header.seq = device->frame_count;
         }
         else
         {
           transformStamped.header.frame_id = "polhemus_base";
         }
+
         // Broadcast frame
         if (return_value == 0)
         {
@@ -540,7 +542,7 @@ int main(int argc, char** argv)
       }
       else if (frame_change > 1)
       {
-        ROS_WARN("[POLHEMUS] Missed %d frames from Polhemus system!!!", frame_change - 1);
+        ROS_WARN("[POLHEMUS] Missed %d frames from Polhemus system starting at frame %d!!!", frame_change - 1, last_frame_count);
       }
 
 
