@@ -156,7 +156,8 @@ int Viper::receive_pno_data_frame(void)
   if (return_value == 0)
   {
     CFrameInfo fi(g_rxbuf, g_nrxcount);
-    ROS_WARN_STREAM("rpno frame_count: " << fi.uiFCountRx);
+    int32_t test = *(reinterpret_cast<int32_t*>(g_rxbuf + 12));
+    ROS_WARN_STREAM("rpno frame_count: " << test);
 
     uint32_t bytesextracted;
     bytesextracted = pno.Extractseupno(fi.PPnoBody());
