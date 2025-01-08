@@ -444,7 +444,7 @@ int main(int argc, char** argv)
   tf2_msgs::TFMessage tf_polhemus_relay_queue;
   std::vector<geometry_msgs::TransformStamped> tf_queue;
   tf_queue.reserve(16);
-  ros::Rate rate(240);  // 240 Hz
+  ros::Rate rate(240);  // Previously hardcoded to 120 Hz
   int flag = 0;
   int station_number = 0;
   device->frame_count = 0;
